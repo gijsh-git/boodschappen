@@ -76,3 +76,26 @@ end $$;
 
 -- Realtime aanzetten voor items
 alter publication supabase_realtime add table public.items;
+
+-- Profiel per gebruiker: de weergavenaam die andere lijstleden te zien krijgen
+create table public.profiles (
+  user_id uuid primary key default auth.uid() references auth.users(id) on delete cascade,
+  display_name text not null check (char_length(trim(display_name)) between 1 and 40),
+  created_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+
+grant select, insert, update on public.profiles to authenticated;
+
+-- Je ziet je eigen profiel en dat van mensen met wie je een lijst deelt
+create policy "eigen profiel en lijstgenoten zien" on public.profiles for select using (
+  user_id = auth.uid()
+  or exists (
+    select 1 from public.list_members m
+    where m.user_id = profiles.user_id and public.is_member(m.list_id)
+  )
+);
+create policy "eigen profiel aanmaken" on public.profiles for insert with check (user_id = auth.uid());
+create policy "eigen profiel wijzigen" on public.profiles for update
+  using (user_id = auth.uid()) with check (user_id = auth.uid());

@@ -32,6 +32,10 @@
       <rect x="3" y="5" width="18" height="14" rx="2.5"/>
       <path d="M3.5 7l8.5 6 8.5-6"/>
     </symbol>
+    <symbol id="icon-persoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="8" r="4"/>
+      <path d="M4.5 20.500c1.200-3.600 4-5.500 7.500-5.500s6.300 1.900 7.500 5.500"/>
+    </symbol>
     <symbol id="icon-vinkje" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M5 12.5l4.5 4.5L19 7.5"/>
     </symbol>
@@ -135,6 +139,46 @@
       </div>
     </section>
 
+    <!-- Weergavenaam invullen (eerste keer) of aanpassen -->
+    <section id="view-naam" class="auth" hidden>
+      <div class="hero">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="24" height="24"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
+        <h1 id="naam-kop">Hoe heet je?</h1>
+        <p>Zo zien anderen op je lijst wie je bent.</p>
+      </div>
+      <div class="auth-body">
+        <form id="naam-form">
+          <label for="naam">Je naam</label>
+          <input id="naam" type="text" placeholder="Bijv. Sanne" required maxlength="40" autocomplete="given-name" autocapitalize="words">
+          <button type="submit">Naam opslaan</button>
+        </form>
+        <p id="naam-msg" class="msg" role="status"></p>
+        <p id="naam-annuleren-regel" class="auth-foot" hidden><button type="button" id="naam-annuleren" class="link">Annuleren</button></p>
+      </div>
+    </section>
+
+    <!-- Profiel inzien (voor nu alleen je naam) -->
+    <section id="view-profiel" hidden>
+      <header class="top">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
+        <h1>Profiel</h1>
+      </header>
+      <div class="content">
+        <h2>Naam</h2>
+        <p id="profiel-naam" class="profiel-waarde"></p>
+        <div class="actions">
+          <button id="naam-wijzigen" class="link">Naam wijzigen</button>
+          <button id="profiel-terug" class="link">Terug naar de lijst</button>
+        </div>
+      </div>
+    </section>
+
     <!-- Lijst kiezen of aanmaken -->
     <section id="view-setup" hidden>
       <header class="top">
@@ -165,9 +209,12 @@
     <!-- De lijst zelf -->
     <section id="view-list" hidden>
       <header class="top">
-        <div class="brand">
-          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
-          <span class="brand-name">BonusBuddy</span>
+        <div class="top-rij">
+          <div class="brand">
+            <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+            <span class="brand-name">BonusBuddy</span>
+          </div>
+          <button type="button" id="profiel-knop" class="profiel-knop" aria-label="Profiel"><svg width="20" height="20"><use href="#icon-persoon"/></svg></button>
         </div>
         <h1 id="list-title"></h1>
         <small>Code om te delen: <code id="invite-code"></code></small>

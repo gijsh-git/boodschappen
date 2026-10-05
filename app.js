@@ -11,8 +11,15 @@ let mustSetPassword = linkType === "invite" || linkType === "recovery";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const $ = (id) => document.getElementById(id);
-const views = ["login", "forgot", "sent", "password", "setup", "list"];
+const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "list"];
 let resetEmail = "";
+let userId = null;
+let mijnNaam = null;   // weergavenaam; null = nog niet opgehaald of nog niet ingevuld
+let naamOpen = false;  // het naam-scherm staat open
+let naamBewerken = false; // naam-scherm is geopend vanuit het profiel (niet de eerste keer)
+let profielOpen = false;  // het profiel-scherm (of het naam-scherm daarbinnen) staat open
+let namen = {};        // user_id -> weergavenaam van jezelf en je lijstgenoten
+let infoId = null;     // item waarvan de info ("toegevoegd door") openstaat
 let currentList = null;
 let channel = null;
 let items = [];
@@ -46,16 +53,31 @@ async function init() {
     return;
   }
   const { data: { session } } = await db.auth.getSession();
+  userId = session ? session.user.id : null;
   db.auth.onAuthStateChange((event, s) => {
     if (event === "PASSWORD_RECOVERY") mustSetPassword = true;
-    if (s) route(); else show("login");
+    userId = s ? s.user.id : null;
+    if (s) route(); else { mijnNaam = null; naamOpen = false; profielOpen = false; show("login"); }
   });
   if (session) route(); else show("login");
   if (linkError) say("login-msg", "De link is verlopen of al gebruikt. Vraag een nieuwe aan via 'Wachtwoord vergeten?'.");
 }
 
 async function route() {
-  if (mustSetPassword) return show("password");
+  if (mustSetPassword) { naamOpen = false; profielOpen = false; return show("password"); }
+  // Supabase meldt de sessie opnieuw als de app terug in beeld komt; dan niet wegspringen van naam of profiel
+  if (naamOpen || profielOpen) return;
+  if (mijnNaam === null) {
+    const { data: profiel, error: profielFout } = await db
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (mustSetPassword) return show("password");
+    // Bij een fout (bijv. tabel bestaat nog niet) gewoon door naar de lijst
+    if (!profielFout && !profiel) return toonNaam(false);
+    if (profiel) mijnNaam = profiel.display_name;
+  }
   const { data, error } = await db
     .from("list_members")
     .select("list_id, lists(id, name, invite_code)")
@@ -141,11 +163,59 @@ document.querySelectorAll(".pw-toggle").forEach((btn) => {
   });
 });
 
+// ---------- Weergavenaam ----------
+// bewerken = false: eerste keer invullen (verplicht); true: later aanpassen vanuit het profiel
+function toonNaam(bewerken) {
+  if (!naamOpen) $("naam").value = mijnNaam || "";
+  naamOpen = true;
+  naamBewerken = bewerken;
+  $("naam-kop").textContent = bewerken ? "Naam wijzigen" : "Hoe heet je?";
+  $("naam-annuleren-regel").hidden = !bewerken;
+  say("naam-msg", "");
+  show("naam");
+}
+
+$("naam-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const naam = $("naam").value.trim();
+  if (!naam) return say("naam-msg", "Vul je naam in.");
+  say("naam-msg", "Bezig...");
+  const { error } = await db.from("profiles").upsert({ user_id: userId, display_name: naam });
+  if (error) return say("naam-msg", nl(error));
+  mijnNaam = naam;
+  namen[userId] = naam;
+  naamOpen = false;
+  say("naam-msg", "");
+  if (naamBewerken) toonProfiel(); else route();
+});
+
+$("naam-annuleren").addEventListener("click", toonProfiel);
+$("naam-wijzigen").addEventListener("click", () => toonNaam(true));
+
+// ---------- Profiel ----------
+function toonProfiel() {
+  naamOpen = false;
+  profielOpen = true;
+  $("profiel-naam").textContent = mijnNaam || "Nog niet ingevuld";
+  show("profiel");
+}
+
+$("profiel-knop").addEventListener("click", toonProfiel);
+$("profiel-terug").addEventListener("click", () => {
+  profielOpen = false;
+  render();
+  show("list");
+});
+
 async function logout() {
   await db.auth.signOut();
   if (channel) db.removeChannel(channel);
   currentList = null;
   mustSetPassword = false;
+  mijnNaam = null;
+  naamOpen = false;
+  profielOpen = false;
+  namen = {};
   show("login");
 }
 $("logout").addEventListener("click", logout);
@@ -176,7 +246,16 @@ async function openList(list) {
   subscribe();
 }
 
+// Namen van jezelf en je lijstgenoten ophalen (de database geeft alleen die profielen terug)
+async function loadNamen() {
+  const { data, error } = await db.from("profiles").select("user_id, display_name");
+  if (error) return;
+  namen = Object.fromEntries(data.map((p) => [p.user_id, p.display_name]));
+  render();
+}
+
 async function loadItems() {
+  loadNamen();
   const { data, error } = await db
     .from("items")
     .select("*")
@@ -237,8 +316,36 @@ function itemRow(item) {
   del.setAttribute("aria-label", "Verwijderen");
   del.addEventListener("click", () => remove(item));
 
-  li.append(label, del);
+  const open = infoId === item.id;
+  const info = document.createElement("button");
+  info.className = "info";
+  info.textContent = "?";
+  info.setAttribute("aria-label", "Wie heeft dit toegevoegd?");
+  info.setAttribute("aria-expanded", open);
+  info.addEventListener("click", () => {
+    infoId = open ? null : item.id;
+    render();
+    // Naam nog onbekend (bijv. net ingevuld door de ander)? Dan opnieuw ophalen.
+    if (!open && item.added_by && !namen[item.added_by]) loadNamen();
+  });
+
+  li.append(label, info, del);
+  if (open) {
+    const p = document.createElement("p");
+    p.className = "item-info";
+    p.textContent = itemInfo(item);
+    li.append(p);
+  }
   return li;
+}
+
+// Tekst onder een item: door wie en wanneer het is toegevoegd
+function itemInfo(item) {
+  const d = new Date(item.created_at);
+  const dag = d.toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "long" });
+  const tijd = d.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+  const wie = namen[item.added_by] || "iemand zonder naam";
+  return `Toegevoegd door ${wie} op ${dag} om ${tijd}`;
 }
 
 function render() {
