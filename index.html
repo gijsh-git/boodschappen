@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2f7d4f">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <title>Boodschappen</title>
+</head>
+<body>
+  <main id="app">
+
+    <!-- Inloggen -->
+    <section id="view-login" hidden>
+      <h1>Boodschappen</h1>
+      <p>Vul je e-mailadres in. Je ontvangt een inloglink.</p>
+      <form id="login-form">
+        <input id="email" type="email" placeholder="E-mailadres" required autocomplete="email">
+        <button type="submit">Stuur inloglink</button>
+      </form>
+      <p id="login-msg" class="msg"></p>
+    </section>
+
+    <!-- Lijst kiezen of aanmaken -->
+    <section id="view-setup" hidden>
+      <h1>Jullie lijst</h1>
+      <h2>Nieuwe lijst maken</h2>
+      <form id="create-form">
+        <input id="list-name" type="text" placeholder="Bijv. Thuis" required>
+        <button type="submit">Aanmaken</button>
+      </form>
+      <h2>Aansluiten met code</h2>
+      <form id="join-form">
+        <input id="join-code" type="text" placeholder="Code van je partner" required autocapitalize="none">
+        <button type="submit">Aansluiten</button>
+      </form>
+      <p id="setup-msg" class="msg"></p>
+      <button id="logout-setup" class="link">Uitloggen</button>
+    </section>
+
+    <!-- De lijst zelf -->
+    <section id="view-list" hidden>
+      <header>
+        <div>
+          <h1 id="list-title"></h1>
+          <small>Code om te delen: <code id="invite-code"></code></small>
+        </div>
+      </header>
+
+      <form id="add-form">
+        <input id="item-name" type="text" placeholder="Wat moet er mee?" required autocomplete="off">
+        <input id="item-qty" type="text" placeholder="Aantal" class="qty" autocomplete="off">
+        <button type="submit" aria-label="Toevoegen">+</button>
+      </form>
+
+      <ul id="items"></ul>
+
+      <h2 id="done-title" hidden>Afgestreept</h2>
+      <ul id="done-items"></ul>
+
+      <div class="actions">
+        <button id="clear-done" class="link" hidden>Afgestreepte items verwijderen</button>
+        <button id="logout" class="link">Uitloggen</button>
+      </div>
+      <p id="status" class="msg"></p>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+:root {
+  --groen: #2f7d4f;
+  --groen-licht: #e8f3ec;
+  --tekst: #1d2521;
+  --grijs: #6b7670;
+  --rand: #d9dfdb;
+  --bg: #fafbfa;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --tekst: #e8ece9; --grijs: #98a49d; --rand: #2c3531; --bg: #141916; --groen-licht: #1c2a22; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--tekst);
+  font: 17px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+#app { max-width: 560px; margin: 0 auto; padding: 16px 16px calc(32px + env(safe-area-inset-bottom)); }
+h1 { font-size: 1.5rem; margin: 8px 0; }
+h2 { font-size: 1rem; color: var(--grijs); margin: 24px 0 8px; font-weight: 600; }
+header { display: flex; justify-content: space-between; align-items: flex-start; }
+small { color: var(--grijs); }
+code { background: var(--groen-licht); padding: 2px 6px; border-radius: 6px; }
+
+form { display: flex; gap: 8px; margin: 12px 0; }
+input[type=text], input[type=email] {
+  flex: 1; min-width: 0; padding: 12px; font-size: 1rem;
+  border: 1px solid var(--rand); border-radius: 10px; background: transparent; color: inherit;
+}
+input.qty { flex: 0 0 90px; }
+button {
+  padding: 12px 16px; font-size: 1rem; border: 0; border-radius: 10px;
+  background: var(--groen); color: #fff; cursor: pointer;
+}
+button.link { background: none; color: var(--groen); padding: 8px 0; }
+#add-form button { width: 48px; font-size: 1.4rem; padding: 0; }
+
+ul { list-style: none; margin: 0; padding: 0; }
+li { display: flex; align-items: center; border-bottom: 1px solid var(--rand); }
+li label { flex: 1; display: flex; align-items: center; gap: 12px; padding: 14px 0; cursor: pointer; }
+li input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--groen); }
+li.checked span { text-decoration: line-through; color: var(--grijs); }
+li small { margin-left: auto; padding-right: 8px; }
+button.del { background: none; color: var(--grijs); padding: 8px 12px; font-size: 1.3rem; }
+
+.actions { display: flex; flex-direction: column; align-items: flex-start; margin-top: 24px; gap: 4px; }
+.msg { color: var(--grijs); min-height: 1.4em; }
