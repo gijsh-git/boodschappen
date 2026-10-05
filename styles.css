@@ -185,4 +185,11 @@ button.info[aria-expanded=true] { border-color: var(--oranje-tekst); color: var(
 .lijst-rij .schakelaar:checked { background: var(--oranje); }
 .lijst-rij .schakelaar:checked::after { transform: translateX(18px); }
 
+/* Deelnemers van de lijst (uitklapbaar) */
+.leden { margin-bottom: 12px; }
+.leden summary { padding: 8px 0; color: var(--grijs); font-weight: 700; cursor: pointer; }
+.lid-rij span { flex: 1; min-width: 0; padding: 14px 0; }
+.lid-rij small { padding-right: 10px; }
+.lid-rij button.link { padding: 8px 8px 8px 4px; font-size: 0.9rem; }
+
 .actions { display: flex; flex-direction: column; align-items: flex-start; margin-top: 24px; gap: 4px; }

@@ -26,6 +26,7 @@ const LIJST_SLEUTEL = "bonusbuddy-lijst"; // localStorage: id van de laatst geop
 let currentList = null;
 let channel = null;
 let items = [];
+let leden = [];        // deelnemers van de huidige lijst: { user_id, joined_at }
 
 function show(view) {
   views.forEach((v) => ($("view-" + v).hidden = v !== view));
@@ -226,6 +227,7 @@ async function logout() {
   profielOpen = false;
   lijstenOpen = false;
   lijsten = [];
+  leden = [];
   namen = {};
   show("login");
 }
@@ -298,17 +300,33 @@ function lijstRij(lijst) {
 async function verwijderLijst(lijst) {
   if (!confirm(`Lijst "${lijst.name}" verwijderen? Alle items verdwijnen, ook voor de andere leden. Dit kan niet ongedaan worden gemaakt.`)) return;
   say("setup-msg", "");
+  // Vooraf loslaten: anders meldt realtime ons eigen verdwenen lidmaatschap als "je bent verwijderd"
+  if (currentList && currentList.id === lijst.id) sluitLijst();
   const { error } = await db.rpc("delete_list", { p_list: lijst.id });
   if (error) return say("setup-msg", error.message);
   lijsten = lijsten.filter((l) => l.id !== lijst.id);
-  if (currentList && currentList.id === lijst.id) {
-    if (channel) db.removeChannel(channel);
-    channel = null;
-    currentList = null;
-    items = [];
-    try { localStorage.removeItem(LIJST_SLEUTEL); } catch {}
-  }
   renderLijsten();
+}
+
+// De huidige lijst loslaten: geen live updates meer en niet meer onthouden als laatst geopend
+function sluitLijst() {
+  if (channel) db.removeChannel(channel);
+  channel = null;
+  currentList = null;
+  items = [];
+  leden = [];
+  try { localStorage.removeItem(LIJST_SLEUTEL); } catch {}
+}
+
+// Je bent geen lid meer van de open lijst (verwijderd door de maker, of de lijst is weg): terug naar het overzicht
+async function verlaatLijst() {
+  const id = currentList.id;
+  sluitLijst();
+  lijsten = lijsten.filter((l) => l.id !== id);
+  naamOpen = false;
+  profielOpen = false;
+  await toonLijsten();
+  say("setup-msg", "Je bent uit een lijst verwijderd, of de lijst bestaat niet meer.");
 }
 
 function renderLijsten() {
@@ -362,7 +380,7 @@ async function openList(list) {
   if (!lijsten.some((l) => l.id === list.id)) lijsten.push(list);
   try { localStorage.setItem(LIJST_SLEUTEL, list.id); } catch {}
   // Bij wisselen niet kort de items van de vorige lijst laten zien
-  if (gewisseld) { items = []; infoId = null; say("status", ""); render(); }
+  if (gewisseld) { items = []; leden = []; infoId = null; say("status", ""); render(); }
   $("list-title").textContent = list.name;
   $("invite-code").textContent = list.invite_code;
   show("list");
@@ -378,8 +396,70 @@ async function loadNamen() {
   render();
 }
 
+// Deelnemers van de huidige lijst ophalen
+async function loadLeden() {
+  const lijstId = currentList.id;
+  const { data, error } = await db
+    .from("list_members")
+    .select("user_id, joined_at")
+    .eq("list_id", lijstId)
+    .order("joined_at", { ascending: true });
+  if (!currentList || currentList.id !== lijstId) return;
+  if (error) return;
+  // Sta je er zelf niet meer in, dan ben je verwijderd (de database geeft dan niets terug)
+  if (!data.some((m) => m.user_id === userId)) return verlaatLijst();
+  leden = data;
+  renderLeden();
+}
+
+function lidRij(lid) {
+  const li = document.createElement("li");
+  li.className = "lid-rij";
+
+  const naam = document.createElement("span");
+  naam.textContent = (namen[lid.user_id] || "iemand zonder naam") + (lid.user_id === userId ? " (jij)" : "");
+  li.append(naam);
+
+  if (lid.user_id === currentList.created_by) {
+    const maker = document.createElement("small");
+    maker.textContent = "maker";
+    li.append(maker);
+  }
+  // Verwijderen kan alleen de maker; de database controleert dat ook
+  if (currentList.created_by === userId && lid.user_id !== userId) {
+    const weg = document.createElement("button");
+    weg.type = "button";
+    weg.className = "link";
+    weg.textContent = "Verwijderen";
+    weg.addEventListener("click", () => verwijderLid(lid));
+    li.append(weg);
+  }
+  return li;
+}
+
+function renderLeden() {
+  if (!currentList) return;
+  $("leden-aantal").textContent = leden.length ? `(${leden.length})` : "";
+  $("leden").replaceChildren(...leden.map(lidRij));
+}
+
+async function verwijderLid(lid) {
+  const naam = namen[lid.user_id] || "Deze deelnemer";
+  if (!confirm(`${naam} uit de lijst verwijderen? De code om te delen wordt daarna vernieuwd.`)) return;
+  const lijstId = currentList.id;
+  say("status", "");
+  const { data, error } = await db.rpc("remove_member", { p_list: lijstId, p_user: lid.user_id });
+  if (!currentList || currentList.id !== lijstId) return;
+  if (error) { say("status", error.message); return loadLeden(); }
+  leden = leden.filter((m) => m.user_id !== lid.user_id);
+  currentList.invite_code = data.invite_code;
+  $("invite-code").textContent = data.invite_code;
+  renderLeden();
+}
+
 async function loadItems() {
   loadNamen();
+  loadLeden();
   const lijstId = currentList.id;
   const { data, error } = await db
     .from("items")
@@ -408,6 +488,22 @@ function subscribe() {
           items = items.filter((i) => i.id !== p.old.id);
         }
         render();
+      })
+    .on("postgres_changes",
+      { event: "*", schema: "public", table: "list_members", filter: `list_id=eq.${currentList.id}` },
+      (p) => {
+        if (!currentList) return;
+        if (p.eventType === "INSERT") {
+          // Iemand sluit aan: leden en de naam van de nieuwkomer ophalen
+          loadLeden();
+          loadNamen();
+        } else if (p.eventType === "DELETE") {
+          // Bij verwijderen zelf controleren om welke lijst het gaat
+          if (p.old.list_id !== currentList.id) return;
+          if (p.old.user_id === userId) return verlaatLijst();
+          leden = leden.filter((m) => m.user_id !== p.old.user_id);
+          renderLeden();
+        }
       })
     .subscribe();
 }
@@ -482,6 +578,7 @@ function render() {
   $("done-items").replaceChildren(...done.map(itemRow));
   $("done-title").hidden = done.length === 0;
   $("clear-done").hidden = done.length === 0;
+  renderLeden();
 }
 
 $("add-form").addEventListener("submit", async (e) => {

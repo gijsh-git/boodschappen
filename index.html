@@ -249,6 +249,12 @@
         <small>Code om te delen: <code id="invite-code"></code></small>
       </header>
       <div class="content">
+        <!-- Wie doen er mee aan deze lijst? Standaard ingeklapt -->
+        <details class="leden">
+          <summary>Deelnemers <span id="leden-aantal"></span></summary>
+          <ul id="leden"></ul>
+        </details>
+
         <form id="add-form">
           <input id="item-name" type="text" placeholder="Wat moet er mee?" required autocomplete="off">
           <input id="item-qty" type="text" placeholder="Aantal" class="qty" autocomplete="off">

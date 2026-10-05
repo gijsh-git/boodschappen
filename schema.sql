@@ -94,8 +94,26 @@ begin
   if not found then raise exception 'Alleen de maker kan deze lijst verwijderen'; end if;
 end $$;
 
--- Realtime aanzetten voor items
+-- Deelnemer verwijderen (alleen de maker). Daarna krijgt de lijst een nieuwe code,
+-- anders kan de verwijderde persoon met de oude code zo weer aansluiten.
+create or replace function public.remove_member(p_list uuid, p_user uuid)
+returns public.lists language plpgsql security definer set search_path = public as $$
+declare l public.lists;
+begin
+  if not exists (select 1 from public.lists where id = p_list and created_by = auth.uid()) then
+    raise exception 'Alleen de maker kan deelnemers verwijderen';
+  end if;
+  if p_user = auth.uid() then raise exception 'Je kunt jezelf niet uit je eigen lijst verwijderen'; end if;
+  delete from public.list_members where list_id = p_list and user_id = p_user;
+  update public.lists
+    set invite_code = substr(replace(gen_random_uuid()::text, '-', ''), 1, 8)
+    where id = p_list returning * into l;
+  return l;
+end $$;
+
+-- Realtime aanzetten voor items en voor leden (wie sluit aan, wie is verwijderd)
 alter publication supabase_realtime add table public.items;
+alter publication supabase_realtime add table public.list_members;
 
 -- Profiel per gebruiker: de weergavenaam die andere lijstleden te zien krijgen
 create table public.profiles (
