@@ -37,3 +37,14 @@ Before the app does anything useful:
 **`items.normalized_name`** is a generated column (`lower(trim(name))`) that the client does not use yet; it exists as groundwork for later matching items against store discounts.
 
 **Service worker.** `sw.js` is network-first with a cache fallback, same-origin GET only, so Supabase and CDN requests are never cached. When adding a new static file, add it to `ASSETS`; bump the `CACHE` name to evict old caches.
+
+## Wensen
+
+- Gedeelde boodschappenlijst voor mij en mijn vriendin, wijzigingen direct zichtbaar bij de ander
+- Items toevoegen, afstrepen en verwijderen
+- Later: zien wie een item heeft toegevoegd, en items groeperen per afdeling
+- Op termijn: kortingen van supermarkten tonen bij items op de lijst
+
+## Werkwijze
+
+Leg bij elke wijziging kort uit wat je doet en waarom, in het Nederlands.
