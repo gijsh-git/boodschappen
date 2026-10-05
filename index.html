@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ff7a00">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" href="icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +23,17 @@
     <symbol id="icon-oog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M2 12s3.6-7 10-7 10 7 10 7-3.600 7-10 7S2 12 2 12z"/>
       <circle cx="12" cy="12" r="3"/>
+    </symbol>
+    <symbol id="icon-sleutel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="7.5" cy="16.5" r="4"/>
+      <path d="M10.4 13.6L20 4M16.5 7.5l3 3M13.5 10.5l2 2"/>
+    </symbol>
+    <symbol id="icon-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2.5"/>
+      <path d="M3.5 7l8.5 6 8.5-6"/>
+    </symbol>
+    <symbol id="icon-vinkje" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 12.5l4.5 4.5L19 7.5"/>
     </symbol>
   </svg>
 
@@ -55,6 +66,49 @@
         <p id="login-msg" class="msg" role="status"></p>
         <p class="divider"><span>Nog geen account?</span></p>
         <p class="hint">Meedoen kan alleen op uitnodiging van de beheerder.</p>
+      </div>
+    </section>
+
+    <!-- Wachtwoord vergeten: herstelmail aanvragen -->
+    <section id="view-forgot" class="auth" hidden>
+      <div class="hero">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="24" height="24"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
+        <span class="badge badge-icoon" aria-hidden="true"><svg width="32" height="32"><use href="#icon-sleutel"/></svg></span>
+        <h1>Wachtwoord vergeten?</h1>
+        <p>Geen probleem. We sturen je een link om een nieuw wachtwoord in te stellen.</p>
+      </div>
+      <div class="auth-body">
+        <form id="forgot-form">
+          <label for="forgot-email">E-mailadres</label>
+          <input id="forgot-email" type="email" placeholder="jouw@email.nl" required autocomplete="email">
+          <button type="submit">Herstelmail versturen</button>
+        </form>
+        <p id="forgot-msg" class="msg" role="status"></p>
+        <p class="auth-foot">Weet je het weer? <button type="button" class="link to-login">Terug naar inloggen</button></p>
+      </div>
+    </section>
+
+    <!-- Herstelmail is verstuurd -->
+    <section id="view-sent" class="auth" hidden>
+      <div class="hero">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="24" height="24"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
+        <span class="badge badge-icoon" aria-hidden="true"><svg width="32" height="32"><use href="#icon-mail"/></svg></span>
+        <span class="badge badge-vinkje" aria-hidden="true"><svg width="20" height="20"><use href="#icon-vinkje"/></svg></span>
+        <h1>Check je mail</h1>
+        <p>We hebben een herstelmail gestuurd naar <span id="sent-email"></span>.</p>
+      </div>
+      <div class="auth-body">
+        <p class="sent-tekst">Klik op de link in de mail om een nieuw wachtwoord in te stellen. De link is 1 uur geldig.</p>
+        <a id="open-mail" class="btn" href="mailto:">Open je mail-app</a>
+        <button type="button" class="btn btn-wit to-login">Terug naar inloggen</button>
+        <p id="sent-msg" class="msg" role="status"></p>
+        <p class="auth-foot">Niets ontvangen? Kijk in je spam of <button type="button" id="resend" class="link">stuur opnieuw</button>.</p>
       </div>
     </section>
 

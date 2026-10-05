@@ -11,7 +11,8 @@ let mustSetPassword = linkType === "invite" || linkType === "recovery";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const $ = (id) => document.getElementById(id);
-const views = ["login", "password", "setup", "list"];
+const views = ["login", "forgot", "sent", "password", "setup", "list"];
+let resetEmail = "";
 let currentList = null;
 let channel = null;
 let items = [];
@@ -29,7 +30,8 @@ function nl(error) {
   const m = error.message || "";
   if (/invalid login credentials/i.test(m)) return "E-mailadres of wachtwoord klopt niet. Nog geen wachtwoord? Kies 'Wachtwoord vergeten?'.";
   if (/signups not allowed/i.test(m)) return "Dit e-mailadres is niet uitgenodigd. Vraag de beheerder om een uitnodiging.";
-  if (/rate limit|security purposes/i.test(m)) return "Er zijn te veel mails verstuurd. Probeer het over een tijdje opnieuw.";
+  if (/security purposes/i.test(m)) return "Wacht een minuut voordat je opnieuw een mail aanvraagt.";
+  if (/rate limit/i.test(m)) return "Er zijn te veel mails verstuurd. Probeer het over een tijdje opnieuw.";
   if (/different from the old/i.test(m)) return "Kies een ander wachtwoord dan je vorige.";
   if (/password/i.test(m) && /at least|weak|short/i.test(m)) return "Kies een sterker wachtwoord van minstens 8 tekens.";
   if (/session missing|expired|invalid/i.test(m)) return "De link is verlopen of al gebruikt. Vraag een nieuwe aan via 'Wachtwoord vergeten?'.";
@@ -77,16 +79,43 @@ $("login-form").addEventListener("submit", async (e) => {
   say("login-msg", "");
 });
 
-// Wachtwoord vergeten: stuurt een mail met een link naar het scherm "Kies je wachtwoord"
-$("forgot").addEventListener("click", async () => {
-  const email = $("email").value.trim();
-  if (!email) { $("email").focus(); return say("login-msg", "Vul eerst je e-mailadres in."); }
-  say("login-msg", "Bezig...");
-  const { error } = await db.auth.resetPasswordForEmail(email, {
-    redirectTo: location.origin + location.pathname
-  });
-  say("login-msg", error ? nl(error) : "Als dit adres bekend is, krijg je een mail met een link. Open die op dit toestel.");
+// ---------- Wachtwoord vergeten ----------
+$("forgot").addEventListener("click", () => {
+  $("forgot-email").value = $("email").value.trim();
+  say("forgot-msg", "");
+  show("forgot");
 });
+
+// Stuurt een mail met een link naar het scherm "Kies je wachtwoord"
+function sendReset(email) {
+  return db.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+}
+
+$("forgot-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = $("forgot-email").value.trim();
+  say("forgot-msg", "Bezig...");
+  const { error } = await sendReset(email);
+  if (error) return say("forgot-msg", nl(error));
+  resetEmail = email;
+  $("sent-email").textContent = email;
+  say("forgot-msg", "");
+  say("sent-msg", "");
+  show("sent");
+});
+
+$("resend").addEventListener("click", async () => {
+  say("sent-msg", "Bezig...");
+  const { error } = await sendReset(resetEmail);
+  say("sent-msg", error ? nl(error) : "Opnieuw verstuurd.");
+});
+
+document.querySelectorAll(".to-login").forEach((btn) => {
+  btn.addEventListener("click", () => { say("login-msg", ""); show("login"); });
+});
+
+// Op iPhone/iPad opent message:// de Mail-app; elders is mailto: het beste alternatief
+if (/iPhone|iPad|iPod/.test(navigator.userAgent)) $("open-mail").href = "message://";
 
 // ---------- Wachtwoord kiezen ----------
 $("password-form").addEventListener("submit", async (e) => {
