@@ -11,7 +11,7 @@ let mustSetPassword = linkType === "invite" || linkType === "recovery";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const $ = (id) => document.getElementById(id);
-const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "list"];
+const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list"];
 let resetEmail = "";
 let userId = null;
 let mijnNaam = null;   // weergavenaam; null = nog niet opgehaald of nog niet ingevuld
@@ -20,6 +20,9 @@ let naamBewerken = false; // naam-scherm is geopend vanuit het profiel (niet de 
 let profielOpen = false;  // het profiel-scherm (of het naam-scherm daarbinnen) staat open
 let namen = {};        // user_id -> weergavenaam van jezelf en je lijstgenoten
 let infoId = null;     // item waarvan de info ("toegevoegd door") openstaat
+let lijsten = [];      // alle lijsten waar je lid van bent
+let lijstenOpen = false;  // het overzicht van lijsten staat open
+const LIJST_SLEUTEL = "bonusbuddy-lijst"; // localStorage: id van de laatst geopende lijst
 let currentList = null;
 let channel = null;
 let items = [];
@@ -57,16 +60,16 @@ async function init() {
   db.auth.onAuthStateChange((event, s) => {
     if (event === "PASSWORD_RECOVERY") mustSetPassword = true;
     userId = s ? s.user.id : null;
-    if (s) route(); else { mijnNaam = null; naamOpen = false; profielOpen = false; show("login"); }
+    if (s) route(); else { mijnNaam = null; naamOpen = false; profielOpen = false; lijstenOpen = false; show("login"); }
   });
   if (session) route(); else show("login");
   if (linkError) say("login-msg", "De link is verlopen of al gebruikt. Vraag een nieuwe aan via 'Wachtwoord vergeten?'.");
 }
 
 async function route() {
-  if (mustSetPassword) { naamOpen = false; profielOpen = false; return show("password"); }
-  // Supabase meldt de sessie opnieuw als de app terug in beeld komt; dan niet wegspringen van naam of profiel
-  if (naamOpen || profielOpen) return;
+  if (mustSetPassword) { naamOpen = false; profielOpen = false; lijstenOpen = false; return show("password"); }
+  // Supabase meldt de sessie opnieuw als de app terug in beeld komt; dan niet wegspringen van naam, profiel of overzicht
+  if (naamOpen || profielOpen || lijstenOpen) return;
   if (mijnNaam === null) {
     const { data: profiel, error: profielFout } = await db
       .from("profiles")
@@ -78,14 +81,20 @@ async function route() {
     if (!profielFout && !profiel) return toonNaam(false);
     if (profiel) mijnNaam = profiel.display_name;
   }
-  const { data, error } = await db
-    .from("list_members")
-    .select("list_id, lists(id, name, invite_code)")
-    .limit(1);
+  const fout = await loadLijsten();
   if (mustSetPassword) return show("password");
-  if (error) { show("setup"); say("setup-msg", error.message); return; }
-  if (data.length === 0) { show("setup"); return; }
-  openList(data[0].lists);
+  if (fout) {
+    renderLijsten();
+    $("lijsten-leeg").hidden = true; // onbekend of je lijsten hebt, dus niet "nog geen lijsten" tonen
+    show("setup");
+    say("setup-msg", "Je lijsten konden niet worden opgehaald: " + fout.message);
+    return;
+  }
+  if (lijsten.length === 0) return toonOverzicht();
+  // De laatst geopende lijst weer openen; anders de eerste
+  let laatste = null;
+  try { laatste = localStorage.getItem(LIJST_SLEUTEL); } catch {}
+  openList(lijsten.find((l) => l.id === laatste) || lijsten[0]);
 }
 
 // ---------- Inloggen ----------
@@ -215,30 +224,120 @@ async function logout() {
   mijnNaam = null;
   naamOpen = false;
   profielOpen = false;
+  lijstenOpen = false;
+  lijsten = [];
   namen = {};
   show("login");
 }
 $("logout").addEventListener("click", logout);
 $("logout-setup").addEventListener("click", logout);
 
+// ---------- Overzicht van lijsten ----------
+// Haalt al je lijsten op; geeft de fout terug als het misgaat
+async function loadLijsten() {
+  const { data, error } = await db
+    .from("list_members")
+    .select("list_id, lists(id, name, invite_code, counts_for_profile)")
+    .order("joined_at", { ascending: true });
+  if (error) return error;
+  lijsten = data.map((m) => m.lists).filter(Boolean);
+  return null;
+}
+
+function toonOverzicht() {
+  lijstenOpen = true;
+  say("setup-msg", "");
+  renderLijsten();
+  show("setup");
+}
+
+// Overzicht direct tonen met wat we al weten, daarna verversen (de ander kan iets gewijzigd hebben)
+async function toonLijsten() {
+  toonOverzicht();
+  const fout = await loadLijsten();
+  if (fout) return say("setup-msg", fout.message);
+  renderLijsten();
+}
+
+function lijstRij(lijst) {
+  const li = document.createElement("li");
+  li.className = "lijst-rij";
+
+  const naam = document.createElement("button");
+  naam.type = "button";
+  naam.className = "lijst-naam";
+  naam.textContent = lijst.name;
+  if (currentList && currentList.id === lijst.id) naam.setAttribute("aria-current", "true");
+  naam.addEventListener("click", () => openList(lijst));
+
+  const label = document.createElement("label");
+  label.className = "schakel-regel";
+  const tekst = document.createElement("span");
+  tekst.textContent = "Meetellen voor aankoopprofiel";
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.className = "schakelaar";
+  box.setAttribute("role", "switch");
+  box.checked = lijst.counts_for_profile !== false;
+  box.addEventListener("change", () => setTeltMee(lijst, box.checked));
+  label.append(tekst, box);
+
+  li.append(naam, label);
+  return li;
+}
+
+function renderLijsten() {
+  $("lijsten-leeg").hidden = lijsten.length > 0;
+  $("lijsten").replaceChildren(...lijsten.map(lijstRij));
+}
+
+// Aparte pagina om een lijst toe te voegen; lijstenOpen blijft aan zodat route() niet wegspringt
+$("nieuw-knop").addEventListener("click", () => {
+  say("nieuw-msg", "");
+  show("nieuw");
+});
+$("nieuw-terug").addEventListener("click", toonLijsten);
+
+// Geldt voor de hele lijst, dus ook voor de andere leden
+async function setTeltMee(lijst, aan) {
+  lijst.counts_for_profile = aan; // direct tonen, daarna opslaan
+  say("setup-msg", "");
+  const { error } = await db.rpc("set_list_profile", { p_list: lijst.id, p_counts: aan });
+  if (error) {
+    await loadLijsten();
+    renderLijsten();
+    say("setup-msg", error.message);
+  }
+}
+
+$("lijsten-knop").addEventListener("click", toonLijsten);
+
 // ---------- Lijst maken / aansluiten ----------
 $("create-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const { data, error } = await db.rpc("create_list", { p_name: $("list-name").value.trim() });
-  if (error) return say("setup-msg", error.message);
+  if (error) return say("nieuw-msg", error.message);
+  $("list-name").value = "";
   openList(data);
 });
 
 $("join-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const { data, error } = await db.rpc("join_list", { p_code: $("join-code").value });
-  if (error) return say("setup-msg", error.message);
+  if (error) return say("nieuw-msg", error.message);
+  $("join-code").value = "";
   openList(data);
 });
 
 // ---------- De lijst ----------
 async function openList(list) {
+  const gewisseld = !currentList || currentList.id !== list.id;
   currentList = list;
+  lijstenOpen = false;
+  if (!lijsten.some((l) => l.id === list.id)) lijsten.push(list);
+  try { localStorage.setItem(LIJST_SLEUTEL, list.id); } catch {}
+  // Bij wisselen niet kort de items van de vorige lijst laten zien
+  if (gewisseld) { items = []; infoId = null; say("status", ""); render(); }
   $("list-title").textContent = list.name;
   $("invite-code").textContent = list.invite_code;
   show("list");
@@ -256,11 +355,14 @@ async function loadNamen() {
 
 async function loadItems() {
   loadNamen();
+  const lijstId = currentList.id;
   const { data, error } = await db
     .from("items")
     .select("*")
-    .eq("list_id", currentList.id)
+    .eq("list_id", lijstId)
     .order("created_at", { ascending: true });
+  // Intussen van lijst gewisseld (of uitgelogd)? Dan dit antwoord negeren.
+  if (!currentList || currentList.id !== lijstId) return;
   if (error) return say("status", error.message);
   items = data;
   render();

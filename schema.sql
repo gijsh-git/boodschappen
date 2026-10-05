@@ -8,6 +8,8 @@ create table public.lists (
   name text not null,
   invite_code text not null unique default substr(replace(gen_random_uuid()::text, '-', ''), 1, 8),
   created_by uuid not null default auth.uid(),
+  -- telt deze lijst mee voor het aankoopprofiel? (uit voor bijv. een feestlijst)
+  counts_for_profile boolean not null default true,
   created_at timestamptz not null default now()
 );
 
@@ -71,6 +73,16 @@ begin
   select * into l from public.lists where invite_code = lower(trim(p_code));
   if not found then raise exception 'Code niet gevonden'; end if;
   insert into public.list_members (list_id, user_id) values (l.id, auth.uid()) on conflict do nothing;
+  return l;
+end $$;
+
+-- Instellen of een lijst meetelt voor het aankoopprofiel (alleen leden)
+create or replace function public.set_list_profile(p_list uuid, p_counts boolean)
+returns public.lists language plpgsql security definer set search_path = public as $$
+declare l public.lists;
+begin
+  if not public.is_member(p_list) then raise exception 'Geen lid van deze lijst'; end if;
+  update public.lists set counts_for_profile = p_counts where id = p_list returning * into l;
   return l;
 end $$;
 
