@@ -43,8 +43,12 @@ $("login-form").addEventListener("submit", async (e) => {
   say("login-msg", "Bezig...");
   const { error } = await db.auth.signInWithOtp({
     email: $("email").value.trim(),
-    options: { emailRedirectTo: location.origin + location.pathname }
+    // shouldCreateUser: false = alleen bestaande (uitgenodigde) accounts kunnen inloggen
+    options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: false }
   });
+  if (error && /signups not allowed/i.test(error.message)) {
+    return say("login-msg", "Dit e-mailadres is niet uitgenodigd. Vraag de beheerder om een uitnodiging.");
+  }
   say("login-msg", error ? error.message : "Check je mail en open de link op dit toestel.");
 });
 
