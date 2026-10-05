@@ -240,6 +240,8 @@ async function loadLijsten() {
   const { data, error } = await db
     .from("list_members")
     .select("list_id, lists(id, name, invite_code, counts_for_profile, created_by)")
+    // Alleen je eigen lidmaatschappen: je mag ook die van lijstgenoten zien, en dan staat een lijst er dubbel
+    .eq("user_id", userId)
     .order("joined_at", { ascending: true });
   if (error) return error;
   lijsten = data.map((m) => m.lists).filter(Boolean);
