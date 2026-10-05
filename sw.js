@@ -1,6 +1,6 @@
 // Eenvoudige service worker: app-bestanden cachen zodat de app snel opent.
 // Data (Supabase) wordt nooit gecachet.
-const CACHE = "boodschappen-v1";
+const CACHE = "bonusbuddy-v2";
 const ASSETS = ["./", "index.html", "styles.css", "app.js", "config.js", "icon.svg", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {

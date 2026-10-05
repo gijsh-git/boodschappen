@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-"Boodschappen" is a shared grocery-list PWA for a household (two partners sharing one list). It is a static site with no build step, no package manager, no tests and no linter: plain HTML/CSS/JS talking directly to Supabase from the browser. All UI text, code comments, SQL policy names and CSS variable names are in Dutch; keep new ones in Dutch.
+"BonusBuddy" (folder and repo are still called `boodschappen`) is a shared grocery-list PWA for a household (two partners sharing one list). It is a static site with no build step, no package manager, no tests and no linter: plain HTML/CSS/JS talking directly to Supabase from the browser. All UI text, code comments, SQL policy names and CSS variable names are in Dutch; keep new ones in Dutch.
 
 ## Running
 
@@ -18,13 +18,19 @@ Before the app does anything useful:
 
 1. Run `schema.sql` once in the Supabase SQL Editor of a fresh project. It is not idempotent (plain `create table` / `create policy`), so schema changes to an existing project need separate `alter` statements.
 2. Fill in `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `config.js`. While the URL still contains the `JOUW-PROJECT` placeholder, `init()` in `app.js` stops at the login view with a "fill in config.js" message.
-3. The origin you serve from must be an allowed redirect URL in Supabase Auth, since login is by magic link redirecting to `location.origin + location.pathname`.
+3. The origin you serve from must be an allowed redirect URL in Supabase Auth, since invite and password-reset mails link back to `location.origin + location.pathname`.
+
+The app is hosted on GitHub Pages from `main` (https://gijsh-git.github.io/boodschappen/), so pushing to `main` deploys.
 
 ## Architecture
 
 **Load order matters.** `index.html` loads three classic scripts in order: supabase-js v2 from the jsDelivr CDN (global `supabase`), `config.js` (sets `window.CONFIG`), then `app.js`. There are no modules or imports.
 
-**Views.** `index.html` holds three `<section id="view-…">` elements (`login`, `setup`, `list`); `show()` toggles their `hidden` attribute. Flow: `init()` → session check → `route()` looks up the user's first `list_members` row → either `setup` (create a list or join by invite code) or `openList()`. The client only ever opens one list per user (`.limit(1)`), although the schema allows membership of several.
+**Views.** `index.html` holds four `<section id="view-…">` elements (`login`, `password`, `setup`, `list`); `show()` toggles their `hidden` attribute. Flow: `init()` → session check → `route()` looks up the user's first `list_members` row → either `setup` (create a list or join by invite code) or `openList()`. The client only ever opens one list per user (`.limit(1)`), although the schema allows membership of several.
+
+**Auth is invite-only with passwords.** Signups are disabled in the Supabase dashboard; the owner adds people there with "Invite user". Login is `signInWithPassword`. Invite and "Wachtwoord vergeten?" mails land back on the app with `type=invite` / `type=recovery` in the URL hash, which `app.js` reads before creating the Supabase client (the client clears the hash). That sets `mustSetPassword`, which makes `route()` show the `password` view instead of the list until `updateUser({ password })` succeeds. Supabase's English auth errors are mapped to Dutch in `nl()`.
+
+**Styling.** `styles.css` uses CSS variables with a dark-mode override, except the `.auth` screens (login, password), which pin the light values so they always look like the design. Fonts come from Google Fonts.
 
 **State and sync.** `app.js` keeps a module-level `items` array as the single source of truth for rendering; `render()` rebuilds both `<ul>`s (open and checked) from it. Three things mutate it and must stay consistent:
 

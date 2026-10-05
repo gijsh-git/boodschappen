@@ -1,10 +1,10 @@
 {
-  "name": "Boodschappen",
-  "short_name": "Boodschappen",
+  "name": "BonusBuddy",
+  "short_name": "BonusBuddy",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#fafbfa",
-  "theme_color": "#2f7d4f",
+  "background_color": "#fff6ee",
+  "theme_color": "#ff7a00",
   "lang": "nl",
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
