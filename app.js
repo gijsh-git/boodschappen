@@ -237,7 +237,7 @@ $("logout-setup").addEventListener("click", logout);
 async function loadLijsten() {
   const { data, error } = await db
     .from("list_members")
-    .select("list_id, lists(id, name, invite_code, counts_for_profile)")
+    .select("list_id, lists(id, name, invite_code, counts_for_profile, created_by)")
     .order("joined_at", { ascending: true });
   if (error) return error;
   lijsten = data.map((m) => m.lists).filter(Boolean);
@@ -283,7 +283,32 @@ function lijstRij(lijst) {
   label.append(tekst, box);
 
   li.append(naam, label);
+  // Verwijderen kan alleen de maker; de database controleert dat ook
+  if (lijst.created_by === userId) {
+    const weg = document.createElement("button");
+    weg.type = "button";
+    weg.className = "link lijst-weg";
+    weg.textContent = "Lijst verwijderen";
+    weg.addEventListener("click", () => verwijderLijst(lijst));
+    li.append(weg);
+  }
   return li;
+}
+
+async function verwijderLijst(lijst) {
+  if (!confirm(`Lijst "${lijst.name}" verwijderen? Alle items verdwijnen, ook voor de andere leden. Dit kan niet ongedaan worden gemaakt.`)) return;
+  say("setup-msg", "");
+  const { error } = await db.rpc("delete_list", { p_list: lijst.id });
+  if (error) return say("setup-msg", error.message);
+  lijsten = lijsten.filter((l) => l.id !== lijst.id);
+  if (currentList && currentList.id === lijst.id) {
+    if (channel) db.removeChannel(channel);
+    channel = null;
+    currentList = null;
+    items = [];
+    try { localStorage.removeItem(LIJST_SLEUTEL); } catch {}
+  }
+  renderLijsten();
 }
 
 function renderLijsten() {

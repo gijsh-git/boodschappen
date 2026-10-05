@@ -86,6 +86,14 @@ begin
   return l;
 end $$;
 
+-- Lijst verwijderen (alleen de maker); items en leden gaan mee via on delete cascade
+create or replace function public.delete_list(p_list uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  delete from public.lists where id = p_list and created_by = auth.uid();
+  if not found then raise exception 'Alleen de maker kan deze lijst verwijderen'; end if;
+end $$;
+
 -- Realtime aanzetten voor items
 alter publication supabase_realtime add table public.items;
 

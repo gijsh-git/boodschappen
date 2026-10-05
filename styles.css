@@ -171,6 +171,7 @@ button.info[aria-expanded=true] { border-color: var(--oranje-tekst); color: var(
   flex-basis: 100%; justify-content: space-between; padding: 6px 8px 14px 0;
   color: var(--grijs); font-size: 0.9rem;
 }
+.lijst-rij .lijst-weg { flex-basis: 100%; padding: 0 8px 14px 0; text-align: left; font-size: 0.9rem; }
 /* Schuifje: een checkbox die eruitziet als schakelaar */
 .lijst-rij .schakelaar {
   -webkit-appearance: none; appearance: none; position: relative; flex: none;
