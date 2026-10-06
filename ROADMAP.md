@@ -80,7 +80,7 @@ Waarom: het aankoopprofiel (top 10, om de hoeveel dagen) en later het kortingsad
 Hoe het moet werken:
 - Een tabel met producten (vaste id, naam) en een tabel met aliassen: elke genormaliseerde naam hoort bij precies één product.
 - Koppelen gaat via de naam, niet via een keuze bij het invoeren: een item toevoegen blijft net zo snel als nu. Een naam die nog niet bekend is wordt vanzelf een eigen product.
-- Regel voor samenvoegen: alleen namen die voor iedereen hetzelfde product zijn (merk, verpakking, hoeveelheid, schrijfwijze, tikfout). Een algemene naam ("melk") wordt niet samengevoegd met een specifieke ("halfvolle melk"), omdat de betekenis per huishouden verschilt.
+- Regel voor samenvoegen: alleen namen die voor iedereen hetzelfde product zijn (verpakking, hoeveelheid, schrijfwijze, tikfout). Een algemene naam ("melk") wordt niet samengevoegd met een specifieke ("halfvolle melk"), omdat de betekenis per huishouden verschilt. Een A-merk blijft een eigen product; merken worden in een volgende stap ingedeeld in productgroepen.
 - Lijstitems, aankopen en bonregels komen zo bij hetzelfde product uit. De oorspronkelijke namen blijven staan.
 - Alleen een beheerder (ik) kan samenvoegen, losmaken en hernoemen. Leg de beheerdersrol vast in de database en controleer die in de schrijffuncties, niet alleen in de interface.
 - Sla elke samenvoeging op met wie, wanneer en welke aliassen er verhuisd zijn, zodat losmaken precies terugzet wat er was.
