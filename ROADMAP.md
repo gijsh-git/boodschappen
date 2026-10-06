@@ -91,24 +91,6 @@ Klaar als: ik als beheerder "halfvolle melk" en "AH halfvolle melk 1L" samenvoeg
 Grenzen: geef de SQL apart. Verander de namen in aankopen en items niet. Samenvoegen per huishouden komt niet in deze fase. De koppeling van aanbiedingen aan producten komt in fase 4, de koppeling aan supermarktartikelen later. Het matchen van bonregels en aanbiedingen (pg_trgm) blijft zoals het is.
 ```
 
-### [ ] 3a2 – Productgroepen
-
-```
-/plan
-Wat: productgroepen bovenop de bestaande producten, zodat "dr. oetker pizza" en "gondoliere pizza" eigen producten blijven maar samen onder "pizza" vallen.
-Waarom: kortingsadvies moet werken op het niveau waarop je koopt: wie vaak yoghurt koopt, moet yoghurtaanbiedingen zien, ongeacht het merk. Merken samenvoegen gooit informatie weg; groeperen niet.
-Hoe het moet werken:
-- Een tabel met productgroepen (vaste id, naam). Elk product hoort bij precies één groep.
-- Bestaande en nieuwe producten krijgen automatisch een eigen groep met dezelfde naam, tot de beheerder ze indeelt.
-- Groepen liggen op het niveau waarop een koper wisselt: "yoghurt", "pizza", "kwark", niet "zuivel" of "diepvries".
-- Een vlag op productniveau "telt niet mee in profiel" (alleen beheerder), voor dingen als draagtas en plastic zak. Deze producten tellen wel mee in totaal uitgegeven.
-- Doe een voorstel voor de eerste indeling, gesorteerd op impact (aantal aankopen en huishoudens), en laat mij per groep goedkeuren. Neem daarin in ieder geval de merken uit het eerdere voorstel mee (pizza, mayonaise, ketchup, kwark, yoghurt, chips, cola, skyr, siroop, enz.).
-- Op het scherm Producten: per product de groep zien en wijzigen, groepen hernoemen, en de vlag zetten. Alleen voor de beheerder, schrijven via databasefuncties met rolcontrole.
-- Indelen is terug te draaien en wordt gelogd zoals samenvoegen.
-Klaar als: "dr. oetker pizza" en "gondoliere pizza" onder "pizza" vallen en als product apart blijven, een nieuw product een eigen groep krijgt, draagtas de vlag heeft, en mijn vriendin het beheerscherm niet ziet. Laat een telling zien: aantal producten en aantal groepen na de indeling.
-Grenzen: geef de SQL apart. Verander producten en aliassen niet. Groepsindeling per huishouden komt niet in deze fase.
-```
-
 ### [ ] 3b – Aankoopprofiel op Mijn profiel
 
 ```
