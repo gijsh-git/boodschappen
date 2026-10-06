@@ -71,22 +71,43 @@ Grenzen: alleen lezen uit mijn AH-account, niets wijzigen.
 
 ## Fase 3 – Inzicht
 
-### [ ] 3 – Aankoopprofiel op Mijn profiel
+### [ ] 3a – Producten
 
 ```
 /plan
-Wat: mijn aankoopprofiel tonen op de pagina Mijn profiel.
-Waarom: ik wil zien wat de app over mijn koopgedrag weet en controleren of dat klopt; later de basis voor kortingsadvies.
+Wat: een producttabel, zodat "melk", "halfvolle melk" en "AH halfvolle melk 1L" als één product tellen.
+Waarom: het aankoopprofiel (top 10, om de hoeveel dagen) en later het kortingsadvies kloppen alleen als een product één ding is. Nu is elke schrijfwijze een apart product.
 Hoe het moet werken:
-- Sectie "Mijn aankoopprofiel" op Mijn profiel.
-- Periode: laatste 4 weken, 3 maanden, 12 maanden, alles.
+- Een tabel met producten (vaste id, naam) en een tabel met aliassen: elke genormaliseerde naam hoort bij precies één product.
+- Koppelen gaat via de naam, niet via een keuze bij het invoeren: een item toevoegen blijft net zo snel als nu. Een naam die nog niet bekend is wordt vanzelf een eigen product.
+- Lijstitems, aankopen en bonregels komen zo bij hetzelfde product uit. De oorspronkelijke namen blijven staan; samenvoegen is altijd terug te draaien.
+- Eerste vulling: elke naam die nu in aankopen en items voorkomt wordt een product. Doe daarna zelf een voorstel welke namen samen één product zijn (bijv. de melksoorten) en laat mij dat per groep goedkeuren voordat je iets samenvoegt.
+- Een scherm "Producten", bereikbaar vanaf Mijn profiel: zoeken, twee producten samenvoegen, een naam weer losmaken, een product hernoemen.
+- Producten zijn gedeeld door alle gebruikers van de app (het is geen persoonlijke informatie). Schrijven gaat via functies in de database.
+Klaar als: ik "melk" en "halfvolle melk" samenvoeg, mijn vriendin dat ook ziet, een nieuw item "halfvolle melk" bij hetzelfde product uitkomt, en ik het weer kan losmaken. Laat een telling zien: aantal namen voor en aantal producten na het samenvoegen.
+Grenzen: geef de SQL apart. Verander de namen in aankopen en items niet. De koppeling van aanbiedingen aan producten komt in fase 4, de koppeling aan supermarktartikelen later. Het matchen van bonregels en aanbiedingen (pg_trgm) blijft zoals het is.
+```
+
+### [ ] 3b – Aankoopprofiel op Mijn profiel
+
+```
+/plan
+Wat: het aankoopprofiel van ons huishouden tonen op de pagina Mijn profiel.
+Waarom: ik wil zien wat de app over ons koopgedrag weet en controleren of dat klopt; later de basis voor kortingsadvies.
+Hoe het moet werken:
+- Sectie "Aankoopprofiel" op Mijn profiel.
+- Periode: laatste 4 weken, 3 maanden, 12 maanden, alles. Rollend vanaf vandaag (4 weken = vandaag min 28 dagen), niet per kalendermaand.
 - Filter: alle lijsten, of één specifieke lijst.
-- Kerncijfers: aantal aankopen, aantal verschillende producten, totaal uitgegeven en bespaard (waar prijzen bekend zijn).
-- Top 10 producten met hoe vaak en gemiddeld om de hoeveel dagen.
-- Verdeling per supermarkt en uitgaven per maand als eenvoudige staafjes.
-- Kort uitlegtekstje per onderdeel.
-Klaar als: de cijfers kloppen met Supabase en filters en periodes werken.
-Grenzen: alleen aankopen uit lijsten waarvan ik deelnemer ben en die meetellen voor het profiel (ook gearchiveerde). Reken in de database. Geen grafiekbibliotheek. Goed leesbaar op een telefoon.
+- Kerncijfers over de gekozen periode: aantal aankopen (rijen in purchases), aantal verschillende producten (uit 3a), uitgegeven en bespaard.
+- Geld: de prijs van een aankoop is het bedrag van de hele regel vóór korting. Uitgegeven = prijs min korting, bespaard = korting, alleen over aankopen met een prijs. Toon erbij bij hoeveel procent van de aankopen de prijs bekend is.
+- Top 10 producten over de gekozen periode, gesorteerd op aantal aankoopdagen (meerdere keren op één dag telt als één keer; stuks tellen kan niet, want de hoeveelheid is vrije tekst).
+- Per product in de top 10: om de hoeveel dagen (de mediaan van de tussenpozen tussen aankoopdagen) en de datum van de laatste aankoop. Het interval wordt altijd over alle data berekend, los van de gekozen periode, en pas getoond vanaf 3 aankoopdagen; daaronder "te weinig data".
+- Verdeling per supermarkt over de gekozen periode als staafjes op aantal aankopen, met het bedrag erachter. De supermarkt komt van de bon; aankopen zonder bon vallen onder "onbekend".
+- Uitgaven per maand als staafjes: altijd de laatste 12 maanden, los van de gekozen periode. De lopende maand is gemarkeerd als onvolledig en een maand zonder prijsgegevens toont "geen prijsdata" in plaats van € 0.
+- Alle dagen en maanden in Nederlandse tijd (Europe/Amsterdam).
+- Kort uitlegtekstje per onderdeel. Daarin staat in elk geval: dit is het profiel van het huishouden (alle deelnemers, ook aankopen van vóór je toetreding), het interval kijkt naar alle data, en de bedragen zijn een ondergrens (alleen bonregels met een prijs, zonder statiegeld).
+Klaar als: de cijfers kloppen met Supabase en filters en periodes werken. Geef per kerncijfer een losse controlequery die ik in de SQL Editor naast de uitkomst kan leggen.
+Grenzen: alleen aankopen uit lijsten waarvan ik deelnemer ben en die meetellen voor het profiel (ook gearchiveerde). Reken in de database: één functie die alles in één keer teruggeeft, de frontend toont alleen. Geen grafiekbibliotheek. Goed leesbaar op een telefoon. Geen seizoenspatronen, geen "samen gekocht" en geen voorspellingen.
 ```
 
 ---
@@ -157,7 +178,7 @@ Grenzen: alleen privégebruik, alleen nodige velden opslaan, sleutels in Supabas
 
 - [ ] Binnenkort weer nodig: vaste producten waarvan het gebruikelijke interval bijna voorbij is, met één tik op de lijst
 - [ ] Kortingskansen: welke van mijn vaste producten nu in de bonus zijn
-- [ ] Profiel corrigeren: product uit profiel halen, producten samenvoegen
+- [ ] Profiel corrigeren: product uit profiel halen (samenvoegen zit in stap 3a)
 
 ---
 
