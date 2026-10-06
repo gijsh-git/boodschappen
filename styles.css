@@ -281,6 +281,19 @@ button.koop {
 .bonnen-regel { display: flex; align-items: baseline; gap: 12px; padding: 6px 0; border-top: 1px solid var(--rand); }
 .bonnen-regel span { flex: 1; min-width: 0; }
 
+/* ---------- Producten ---------- */
+#producten-zoek { display: block; width: 100%; margin: 0 0 8px; }
+/* Bezig met samenvoegen: de volgende tik op een product kiest het doel */
+.samenvoeg-balk {
+  display: flex; align-items: center; gap: 12px; margin: 0 0 8px; padding: 4px 14px;
+  border: 1.5px solid var(--oranje-tekst); border-radius: 14px;
+}
+.samenvoeg-balk span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.product-hernoem { margin: 0 0 8px; }
+.product-hernoem input[type=text] { padding: 10px 12px; }
+.product-hernoem button { padding: 10px 14px; }
+.bonnen-regel button.link { padding: 0; font-size: 0.9rem; white-space: nowrap; }
+
 /* ---------- Overzicht van lijsten ---------- */
 .lijst-rij .lijst-naam {
   flex-basis: 100%; padding: 14px 8px 2px 0; background: none; color: var(--tekst);

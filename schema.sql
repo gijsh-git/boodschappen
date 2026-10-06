@@ -428,3 +428,196 @@ begin
     where receipt_id = p_receipt;
   delete from public.receipts where id = p_receipt;
 end $$;
+
+-- ---------- Producten ----------
+-- Eén product voor alle schrijfwijzen van hetzelfde ("halfvolle melk", "ah halfvolle melk 1l").
+-- De koppeling loopt via de genormaliseerde naam: items en aankopen houden hun eigen naam en
+-- verwijzen nergens naar een product. Samenvoegen verandert dus alleen product_aliases.
+
+-- Beheerders: alleen zij mogen producten samenvoegen, losmaken en hernoemen.
+-- Vul deze tabel zelf in de SQL Editor:
+--   insert into public.admins (user_id) select id from auth.users where email = 'JOUW-EMAILADRES';
+create table public.admins (
+  user_id uuid primary key references auth.users(id) on delete cascade
+);
+
+alter table public.admins enable row level security;
+revoke all on public.admins from anon, authenticated;
+
+-- Hulpfunctie: is de ingelogde gebruiker beheerder?
+create or replace function public.is_admin()
+returns boolean language sql security definer set search_path = public stable as $$
+  select exists (select 1 from public.admins where user_id = auth.uid());
+$$;
+
+create table public.products (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  created_at timestamptz not null default now()
+);
+
+-- Elke genormaliseerde naam hoort bij precies één product
+create table public.product_aliases (
+  normalized_name text primary key,
+  product_id uuid not null references public.products(id),
+  created_at timestamptz not null default now()
+);
+
+create index product_aliases_product_idx on public.product_aliases(product_id);
+create index purchases_normalized_idx on public.purchases(normalized_name);
+
+-- Logboek van samenvoegingen: het bronproduct verdwijnt, hier staat wat er nodig is om het
+-- precies terug te zetten. Bewust zonder verwijzing naar products: de regel blijft bestaan
+-- als het doel later zelf wordt samengevoegd.
+create table public.product_merges (
+  id uuid primary key default gen_random_uuid(),
+  target_id uuid not null,
+  source_id uuid not null,
+  source_name text not null,
+  -- de namen die van het bronproduct naar het doel zijn verhuisd
+  aliases text[] not null,
+  merged_by uuid,
+  merged_at timestamptz not null default now(),
+  undone_by uuid,
+  undone_at timestamptz
+);
+
+create index product_merges_target_idx on public.product_merges(target_id);
+
+alter table public.products enable row level security;
+alter table public.product_aliases enable row level security;
+alter table public.product_merges enable row level security;
+
+-- Alleen lezen; schrijven kan alleen via de functies hieronder
+revoke all on public.products, public.product_aliases, public.product_merges from anon, authenticated;
+grant select on public.products, public.product_aliases, public.product_merges to authenticated;
+
+-- Een naam zie je alleen als die voorkomt op een lijst waar je lid van bent (de RLS op items en
+-- purchases regelt dat in de subquery's); de beheerder ziet alles.
+create policy "beheerder en lijstleden zien namen" on public.product_aliases for select to authenticated using (
+  public.is_admin()
+  or exists (select 1 from public.purchases a where a.normalized_name = product_aliases.normalized_name)
+  or exists (select 1 from public.items i where i.normalized_name = product_aliases.normalized_name)
+);
+-- Een product zie je als je een van zijn namen mag zien
+create policy "beheerder en lijstleden zien producten" on public.products for select to authenticated using (
+  public.is_admin()
+  or exists (select 1 from public.product_aliases a where a.product_id = products.id)
+);
+create policy "beheerder ziet samenvoegingen" on public.product_merges for select to authenticated
+  using (public.is_admin());
+
+-- Een naam die nog niet bekend is wordt vanzelf een eigen product. Draait bij elk nieuw of
+-- hernoemd item en elke nieuwe aankoop, dus ook voor bonregels.
+create or replace function public.ensure_product()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare v_id uuid;
+begin
+  if new.normalized_name = ''
+     or exists (select 1 from public.product_aliases where normalized_name = new.normalized_name) then
+    return new;
+  end if;
+  insert into public.products (name) values (new.normalized_name) returning id into v_id;
+  insert into public.product_aliases (normalized_name, product_id) values (new.normalized_name, v_id)
+    on conflict (normalized_name) do nothing;
+  -- een ander was net eerder met dezelfde naam: het losse product weer weg
+  if not found then delete from public.products where id = v_id; end if;
+  return new;
+end $$;
+
+create trigger items_product after insert or update of name on public.items
+  for each row execute function public.ensure_product();
+create trigger purchases_product after insert or update of name on public.purchases
+  for each row execute function public.ensure_product();
+
+-- Samenvoegen zonder rolcontrole: alle namen van p_source verhuizen naar p_target en p_source
+-- verdwijnt. Niet aan te roepen vanuit de app; alleen via merge_products en vanuit de SQL Editor.
+-- Geeft de id van de regel in het logboek terug.
+create or replace function public.merge_products_internal(p_source uuid, p_target uuid, p_by uuid)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare
+  v_naam text;
+  v_namen text[];
+  v_id uuid;
+begin
+  if p_source = p_target then raise exception 'Kies twee verschillende producten'; end if;
+  select name into v_naam from public.products where id = p_source for update;
+  if not found then raise exception 'Product niet gevonden'; end if;
+  if not exists (select 1 from public.products where id = p_target) then
+    raise exception 'Product niet gevonden';
+  end if;
+  select coalesce(array_agg(normalized_name order by normalized_name), '{}') into v_namen
+    from public.product_aliases where product_id = p_source;
+  insert into public.product_merges (target_id, source_id, source_name, aliases, merged_by)
+    values (p_target, p_source, v_naam, v_namen, p_by) returning id into v_id;
+  update public.product_aliases set product_id = p_target where product_id = p_source;
+  delete from public.products where id = p_source;
+  return v_id;
+end $$;
+
+revoke execute on function public.merge_products_internal(uuid, uuid, uuid) from public, anon, authenticated;
+
+-- Twee producten samenvoegen (alleen de beheerder); de naam van p_target blijft
+create or replace function public.merge_products(p_source uuid, p_target uuid)
+returns uuid language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'Alleen de beheerder kan producten samenvoegen'; end if;
+  return public.merge_products_internal(p_source, p_target, auth.uid());
+end $$;
+
+-- Samenvoeging losmaken (alleen de beheerder): het bronproduct komt terug met dezelfde id en naam
+-- en krijgt zijn namen terug. Is het doel daarna zelf samengevoegd, dan moet die eerst los.
+create or replace function public.undo_merge(p_merge uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  m public.product_merges;
+  v_aantal integer;
+begin
+  if not public.is_admin() then raise exception 'Alleen de beheerder kan producten losmaken'; end if;
+  select * into m from public.product_merges where id = p_merge and undone_at is null for update;
+  if not found then raise exception 'Samenvoeging niet gevonden'; end if;
+  if not exists (select 1 from public.products where id = m.target_id) then
+    raise exception 'Maak eerst de latere samenvoeging los';
+  end if;
+  insert into public.products (id, name) values (m.source_id, m.source_name);
+  update public.product_aliases set product_id = m.source_id
+    where normalized_name = any(m.aliases) and product_id = m.target_id;
+  get diagnostics v_aantal = row_count;
+  if v_aantal <> cardinality(m.aliases) then raise exception 'Maak eerst de latere samenvoeging los'; end if;
+  update public.product_merges set undone_at = now(), undone_by = auth.uid() where id = p_merge;
+end $$;
+
+-- Product hernoemen (alleen de beheerder)
+create or replace function public.rename_product(p_product uuid, p_name text)
+returns public.products language plpgsql security definer set search_path = public as $$
+declare p public.products;
+begin
+  if not public.is_admin() then raise exception 'Alleen de beheerder kan producten hernoemen'; end if;
+  if char_length(trim(coalesce(p_name, ''))) not between 1 and 80 then
+    raise exception 'Een productnaam heeft 1 tot 80 tekens';
+  end if;
+  update public.products set name = trim(p_name) where id = p_product returning * into p;
+  if not found then raise exception 'Product niet gevonden'; end if;
+  return p;
+end $$;
+
+-- Alle producten met hun namen en het aantal aankopen over alle lijsten, voor het scherm
+-- "Producten" (alleen de beheerder; anderen krijgen een lege lijst). Als één json-lijst,
+-- zodat de grens van 1000 rijen per antwoord niet meespeelt.
+create or replace function public.product_overview()
+returns jsonb language sql stable security definer set search_path = public as $$
+  select coalesce(jsonb_agg(jsonb_build_object('id', t.id, 'name', t.name, 'namen', t.namen, 'aankopen', t.aankopen)
+                            order by lower(t.name), t.id), '[]'::jsonb)
+  from (
+    select p.id, p.name,
+           coalesce(array_agg(a.normalized_name order by a.normalized_name) filter (where a.normalized_name is not null), '{}') as namen,
+           coalesce(sum(c.aantal), 0)::integer as aankopen
+    from public.products p
+    left join public.product_aliases a on a.product_id = p.id
+    left join (
+      select normalized_name, count(*) as aantal from public.purchases group by normalized_name
+    ) c on c.normalized_name = a.normalized_name
+    where public.is_admin()
+    group by p.id
+  ) t;
+$$;

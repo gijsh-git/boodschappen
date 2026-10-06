@@ -75,17 +75,20 @@ Grenzen: alleen lezen uit mijn AH-account, niets wijzigen.
 
 ```
 /plan
-Wat: een producttabel, zodat "melk", "halfvolle melk" en "AH halfvolle melk 1L" als één product tellen.
+Wat: een gedeelde producttabel, zodat varianten van hetzelfde product ("halfvolle melk", "AH halfvolle melk 1L", "halfvolle mlek") als één product tellen.
 Waarom: het aankoopprofiel (top 10, om de hoeveel dagen) en later het kortingsadvies kloppen alleen als een product één ding is. Nu is elke schrijfwijze een apart product.
 Hoe het moet werken:
 - Een tabel met producten (vaste id, naam) en een tabel met aliassen: elke genormaliseerde naam hoort bij precies één product.
 - Koppelen gaat via de naam, niet via een keuze bij het invoeren: een item toevoegen blijft net zo snel als nu. Een naam die nog niet bekend is wordt vanzelf een eigen product.
-- Lijstitems, aankopen en bonregels komen zo bij hetzelfde product uit. De oorspronkelijke namen blijven staan; samenvoegen is altijd terug te draaien.
-- Eerste vulling: elke naam die nu in aankopen en items voorkomt wordt een product. Doe daarna zelf een voorstel welke namen samen één product zijn (bijv. de melksoorten) en laat mij dat per groep goedkeuren voordat je iets samenvoegt.
-- Een scherm "Producten", bereikbaar vanaf Mijn profiel: zoeken, twee producten samenvoegen, een naam weer losmaken, een product hernoemen.
-- Producten zijn gedeeld door alle gebruikers van de app (het is geen persoonlijke informatie). Schrijven gaat via functies in de database.
-Klaar als: ik "melk" en "halfvolle melk" samenvoeg, mijn vriendin dat ook ziet, een nieuw item "halfvolle melk" bij hetzelfde product uitkomt, en ik het weer kan losmaken. Laat een telling zien: aantal namen voor en aantal producten na het samenvoegen.
-Grenzen: geef de SQL apart. Verander de namen in aankopen en items niet. De koppeling van aanbiedingen aan producten komt in fase 4, de koppeling aan supermarktartikelen later. Het matchen van bonregels en aanbiedingen (pg_trgm) blijft zoals het is.
+- Regel voor samenvoegen: alleen namen die voor iedereen hetzelfde product zijn (merk, verpakking, hoeveelheid, schrijfwijze, tikfout). Een algemene naam ("melk") wordt niet samengevoegd met een specifieke ("halfvolle melk"), omdat de betekenis per huishouden verschilt.
+- Lijstitems, aankopen en bonregels komen zo bij hetzelfde product uit. De oorspronkelijke namen blijven staan.
+- Alleen een beheerder (ik) kan samenvoegen, losmaken en hernoemen. Leg de beheerdersrol vast in de database en controleer die in de schrijffuncties, niet alleen in de interface.
+- Sla elke samenvoeging op met wie, wanneer en welke aliassen er verhuisd zijn, zodat losmaken precies terugzet wat er was.
+- Eerste vulling: elke naam die nu in aankopen en items voorkomt wordt een product. Doe daarna zelf een voorstel welke namen volgens de regel hierboven samen één product zijn en laat mij dat per groep goedkeuren voordat je iets samenvoegt.
+- Een scherm "Producten", bereikbaar vanaf Mijn profiel en alleen zichtbaar voor de beheerder: zoeken, twee producten samenvoegen, een naam weer losmaken, een product hernoemen.
+- Gewone gebruikers kunnen geen producten van anderen zien of doorzoeken. Een nieuwe naam is alleen zichtbaar voor de beheerder en voor leden van de lijst waarop de naam voorkomt.
+Klaar als: ik als beheerder "halfvolle melk" en "AH halfvolle melk 1L" samenvoeg, mijn vriendin dat in haar aankoopprofiel terugziet, zij het scherm Producten niet ziet, een nieuw item "AH halfvolle melk 1L" bij hetzelfde product uitkomt, "melk" een apart product blijft, en ik de samenvoeging weer kan losmaken. Laat een telling zien: aantal namen voor en aantal producten na het samenvoegen.
+Grenzen: geef de SQL apart. Verander de namen in aankopen en items niet. Samenvoegen per huishouden komt niet in deze fase. De koppeling van aanbiedingen aan producten komt in fase 4, de koppeling aan supermarktartikelen later. Het matchen van bonregels en aanbiedingen (pg_trgm) blijft zoals het is.
 ```
 
 ### [ ] 3b – Aankoopprofiel op Mijn profiel

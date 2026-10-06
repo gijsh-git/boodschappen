@@ -193,9 +193,33 @@
           <button type="button" id="naam-wijzigen" class="potlood" aria-label="Naam wijzigen"><svg width="20" height="20"><use href="#icon-potlood"/></svg></button>
         </p>
         <div class="actions">
+          <button type="button" id="producten-knop" class="link" hidden>Producten beheren</button>
           <button id="profiel-terug" class="link">Terug naar de lijst</button>
           <button id="logout" class="link">Uitloggen</button>
         </div>
+      </div>
+    </section>
+
+    <!-- Producten (alleen de beheerder): namen samenvoegen tot één product, losmaken en hernoemen -->
+    <section id="view-producten" hidden>
+      <header class="top">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
+        <h1>Producten</h1>
+      </header>
+      <div class="content">
+        <p class="uitleg">Voeg alleen namen samen die voor iedereen hetzelfde product zijn: een ander merk, een andere verpakking of hoeveelheid, een andere schrijfwijze of een tikfout. "Melk" en "halfvolle melk" blijven apart.</p>
+        <p id="samenvoeg-balk" class="samenvoeg-balk" hidden>
+          <span id="samenvoeg-tekst"></span>
+          <button type="button" id="samenvoeg-annuleren" class="link">Annuleren</button>
+        </p>
+        <input type="text" id="producten-zoek" placeholder="Zoek een product of naam" autocomplete="off" aria-label="Zoek een product of naam">
+        <p id="producten-telling" class="uitleg"></p>
+        <ul id="producten"></ul>
+        <p id="producten-msg" class="msg" role="status"></p>
+        <button type="button" id="producten-terug" class="link">Terug naar profiel</button>
       </div>
     </section>
 

@@ -11,13 +11,18 @@ let mustSetPassword = linkType === "invite" || linkType === "recovery";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const $ = (id) => document.getElementById(id);
-const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list", "aankopen", "foto", "bon", "bonnen", "stapel"];
+const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list", "aankopen", "foto", "bon", "bonnen", "stapel", "producten"];
 let resetEmail = "";
 let userId = null;
 let mijnNaam = null;   // weergavenaam; null = nog niet opgehaald of nog niet ingevuld
 let naamOpen = false;  // het naam-scherm staat open
 let naamBewerken = false; // naam-scherm is geopend vanuit het profiel (niet de eerste keer)
-let profielOpen = false;  // het profiel-scherm (of het naam-scherm daarbinnen) staat open
+let profielOpen = false;  // het profiel-scherm (of het naam- of productenscherm daarbinnen) staat open
+let beheerder = false; // je bent beheerder: je mag producten samenvoegen, losmaken en hernoemen
+let producten = null;  // alle producten: { id, name, namen, aankopen }; null = nog niet opgehaald
+let productOpen = null; // id van het product dat is opengeklapt
+let productHerkomst = {}; // product-id -> de samenvoegingen die nog in dat product zitten
+let samenvoegBron = null; // product dat je aan het samenvoegen bent; de volgende tik kiest het doel
 let namen = {};        // user_id -> weergavenaam van jezelf en je lijstgenoten
 let infoId = null;     // item waarvan de info ("toegevoegd door") openstaat
 let lijsten = [];      // de actieve lijsten waar je lid van bent
@@ -241,7 +246,16 @@ function toonProfiel() {
   $("profiel-naam").textContent = mijnNaam || "Nog niet ingevuld";
   // Het profiel is bereikbaar vanuit de lijst en vanuit het overzicht; terug gaat naar waar je vandaan kwam
   $("profiel-terug").textContent = lijstenOpen ? "Terug naar mijn lijsten" : "Terug naar de lijst";
+  $("producten-knop").hidden = !beheerder;
   show("profiel");
+  loadBeheerder();
+}
+
+// De rol staat in de database; de knop is alleen een gemak, de functies controleren het zelf
+async function loadBeheerder() {
+  const { data } = await db.rpc("is_admin");
+  beheerder = data === true;
+  $("producten-knop").hidden = !beheerder;
 }
 
 $("profiel-knop").addEventListener("click", toonProfiel);
@@ -271,6 +285,8 @@ async function logout() {
   deals = {};
   aankopen = null;
   namen = {};
+  beheerder = false;
+  producten = null;
   verbergOngedaan();
   show("login");
 }
@@ -1829,6 +1845,196 @@ $("bonnen-terug").addEventListener("click", () => {
   show("aankopen");
   loadAankopen();
 });
+
+// ---------- Producten ----------
+// Alleen voor de beheerder. Een product is een verzameling namen (aliassen); samenvoegen verhuist
+// de namen van het ene product naar het andere. Het scherm hoort bij het profiel:
+// profielOpen blijft aan, zodat route() er niet van wegspringt.
+function toonProducten() {
+  producten = null;
+  productOpen = null;
+  productHerkomst = {};
+  samenvoegBron = null;
+  $("producten-zoek").value = "";
+  say("producten-msg", "Bezig...");
+  renderProducten();
+  show("producten");
+  loadProducten();
+}
+
+async function loadProducten() {
+  const { data, error } = await db.rpc("product_overview");
+  if (!profielOpen) return;
+  if (error) return say("producten-msg", error.message);
+  producten = data;
+  say("producten-msg", "");
+  renderProducten();
+}
+
+// De samenvoegingen die nog in een product zitten; pas ophalen als je het product openklapt
+async function loadHerkomst(productId) {
+  const { data, error } = await db
+    .from("product_merges")
+    .select("id, source_name, aliases")
+    .eq("target_id", productId)
+    .is("undone_at", null)
+    .order("merged_at", { ascending: false });
+  if (!profielOpen) return;
+  if (error) return say("producten-msg", error.message);
+  productHerkomst[productId] = data;
+  renderProducten();
+}
+
+function productRij(product) {
+  const li = document.createElement("li");
+  const open = !samenvoegBron && productOpen === product.id;
+
+  const knop = document.createElement("button");
+  knop.type = "button";
+  knop.className = "bonnen-open";
+  if (!samenvoegBron) knop.setAttribute("aria-expanded", open);
+  const kop = document.createElement("div");
+  kop.className = "bonnen-kop";
+  const naam = document.createElement("span");
+  naam.textContent = product.name;
+  const aantal = document.createElement("small");
+  aantal.textContent = product.aankopen + "×";
+  kop.append(naam, aantal);
+  knop.append(kop);
+  const andere = product.namen.filter((n) => n !== product.name.toLowerCase());
+  if (andere.length > 0) {
+    const info = document.createElement("p");
+    info.className = "bonnen-info";
+    info.textContent = "Ook: " + andere.join(", ");
+    knop.append(info);
+  }
+  knop.addEventListener("click", () => {
+    if (samenvoegBron) return voegSamen(samenvoegBron, product);
+    productOpen = open ? null : product.id;
+    renderProducten();
+    if (!open) loadHerkomst(product.id);
+  });
+  li.append(knop);
+  if (!open) return li;
+
+  const blok = document.createElement("div");
+  blok.className = "bonnen-regels";
+
+  const form = document.createElement("form");
+  form.className = "product-hernoem";
+  const veld = document.createElement("input");
+  veld.type = "text";
+  veld.value = product.name;
+  veld.maxLength = 80;
+  veld.setAttribute("aria-label", "Naam van het product");
+  const opslaan = document.createElement("button");
+  opslaan.type = "submit";
+  opslaan.textContent = "Hernoemen";
+  form.append(veld, opslaan);
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    hernoemProduct(product, veld.value.trim());
+  });
+  blok.append(form);
+
+  // Per samenvoeging de namen die erbij kwamen; losmaken zet het oude product precies terug
+  const herkomst = productHerkomst[product.id];
+  if (!herkomst) {
+    const p = document.createElement("p");
+    p.textContent = "Bezig...";
+    blok.append(p);
+  } else {
+    blok.append(...herkomst.map((m) => {
+      const rij = document.createElement("div");
+      rij.className = "bonnen-regel";
+      const tekst = document.createElement("span");
+      tekst.textContent = "Samengevoegd: " + (m.aliases.length > 0 ? m.aliases.join(", ") : m.source_name);
+      const los = document.createElement("button");
+      los.type = "button";
+      los.className = "link";
+      los.textContent = "Losmaken";
+      los.addEventListener("click", () => maakLos(product, m));
+      rij.append(tekst, los);
+      return rij;
+    }));
+  }
+
+  const samen = document.createElement("button");
+  samen.type = "button";
+  samen.className = "link";
+  samen.textContent = "Samenvoegen met…";
+  samen.addEventListener("click", () => {
+    samenvoegBron = product;
+    say("producten-msg", "");
+    renderProducten();
+  });
+  blok.append(samen);
+
+  li.append(blok);
+  return li;
+}
+
+function renderProducten() {
+  const zoek = $("producten-zoek").value.trim().toLowerCase();
+  const alle = producten || [];
+  const lijst = alle.filter((p) =>
+    (!samenvoegBron || p.id !== samenvoegBron.id) &&
+    (!zoek || p.name.toLowerCase().includes(zoek) || p.namen.some((n) => n.includes(zoek))));
+  $("producten").replaceChildren(...lijst.map(productRij));
+  $("samenvoeg-balk").hidden = !samenvoegBron;
+  if (samenvoegBron) $("samenvoeg-tekst").textContent = `Kies het product waar "${samenvoegBron.name}" bij hoort.`;
+  $("producten-telling").textContent = !producten ? ""
+    : lijst.length === 0 ? "Geen producten gevonden."
+    : zoek || samenvoegBron ? `${lijst.length} van ${alle.length} producten` : `${alle.length} producten`;
+}
+
+// Na een wijziging alles opnieuw ophalen: samenvoegen en losmaken raken meerdere producten tegelijk
+async function herlaadProducten(openId) {
+  productOpen = openId;
+  productHerkomst = {};
+  await loadProducten();
+  if (openId) loadHerkomst(openId);
+}
+
+async function voegSamen(bron, doel) {
+  if (!confirm(`"${bron.name}" samenvoegen met "${doel.name}"? Alles wat als "${bron.name}" is gekocht telt daarna als "${doel.name}". Je kunt dit weer losmaken.`)) return;
+  say("producten-msg", "Bezig...");
+  const { error } = await db.rpc("merge_products", { p_source: bron.id, p_target: doel.id });
+  if (!profielOpen) return;
+  if (error) return say("producten-msg", error.message);
+  samenvoegBron = null;
+  $("producten-zoek").value = "";
+  herlaadProducten(doel.id);
+}
+
+async function maakLos(product, samenvoeging) {
+  if (!confirm(`"${samenvoeging.source_name}" weer losmaken van "${product.name}"?`)) return;
+  say("producten-msg", "Bezig...");
+  const { error } = await db.rpc("undo_merge", { p_merge: samenvoeging.id });
+  if (!profielOpen) return;
+  if (error) return say("producten-msg", error.message);
+  herlaadProducten(product.id);
+}
+
+async function hernoemProduct(product, naam) {
+  if (!naam) return say("producten-msg", "Vul een naam in.");
+  if (naam === product.name) return;
+  say("producten-msg", "Bezig...");
+  const { data, error } = await db.rpc("rename_product", { p_product: product.id, p_name: naam });
+  if (!profielOpen) return;
+  if (error) return say("producten-msg", error.message);
+  product.name = data.name;
+  say("producten-msg", "");
+  renderProducten();
+}
+
+$("producten-knop").addEventListener("click", toonProducten);
+$("producten-zoek").addEventListener("input", renderProducten);
+$("samenvoeg-annuleren").addEventListener("click", () => {
+  samenvoegBron = null;
+  renderProducten();
+});
+$("producten-terug").addEventListener("click", toonProfiel);
 
 // ---------- PWA ----------
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
