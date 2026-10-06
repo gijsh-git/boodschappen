@@ -177,6 +177,12 @@ button.koop {
   flex: none; width: 30px; height: 30px; padding: 0; margin-right: 10px; border-radius: 50%;
   background: none; border: 2px solid var(--groen); color: var(--groen); font-size: 1rem; line-height: 1;
 }
+/* Op een aanraakscherm veeg je; de knoppen voor gekocht en verwijderen zijn er alleen voor muis en toetsenbord */
+@media (hover: none) and (pointer: coarse) {
+  .item-voor .koop, .item-voor .del { display: none; }
+  .item-voor .info { margin-right: 8px; }
+  .item-deal, .item-info { padding-left: 0; }
+}
 /* Laag achter de rij: groen bij naar rechts (gekocht), rood bij naar links (verwijderen) */
 .item-achter {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between;
@@ -200,8 +206,11 @@ button.koop {
 #ongedaan button { flex: none; background: none; color: var(--oranje); padding: 12px 10px; }
 
 /* ---------- Aankopen ---------- */
-.aankoop-rij span { flex: 1; min-width: 0; padding: 14px 0 4px; }
-.aankoop-info { flex-basis: 100%; margin: 0; padding: 0 8px 12px 0; color: var(--grijs); font-size: 0.9rem; }
+.aankoop-rij { flex-wrap: nowrap; }
+.aankoop-tekst { flex: 1; min-width: 0; padding: 12px 0; }
+.aankoop-kop { display: flex; align-items: baseline; gap: 12px; }
+.aankoop-kop span { flex: 1; min-width: 0; }
+.aankoop-info { margin: 2px 0 0; color: var(--grijs); font-size: 0.9rem; }
 
 /* ---------- Overzicht van lijsten ---------- */
 .lijst-rij .lijst-naam {

@@ -882,13 +882,17 @@ function aankoopRij(aankoop) {
   const li = document.createElement("li");
   li.className = "aankoop-rij";
 
+  const tekst = document.createElement("div");
+  tekst.className = "aankoop-tekst";
+  const kop = document.createElement("div");
+  kop.className = "aankoop-kop";
   const naam = document.createElement("span");
   naam.textContent = aankoop.name;
-  li.append(naam);
+  kop.append(naam);
   if (aankoop.quantity) {
     const q = document.createElement("small");
     q.textContent = aankoop.quantity;
-    li.append(q);
+    kop.append(q);
   }
 
   // Bij aankopen uit oude afgestreepte items is niet bekend wie het kocht
@@ -896,8 +900,28 @@ function aankoopRij(aankoop) {
   const p = document.createElement("p");
   p.className = "aankoop-info";
   p.textContent = `Gekocht${wie} op ${datumTijd(aankoop.bought_at)}`;
-  li.append(p);
+  tekst.append(kop, p);
+
+  const del = document.createElement("button");
+  del.className = "del";
+  del.textContent = "×";
+  del.setAttribute("aria-label", "Aankoop verwijderen");
+  del.addEventListener("click", () => verwijderAankoop(aankoop));
+
+  li.append(tekst, del);
   return li;
+}
+
+// Aankoop weghalen (bijv. per ongeluk als gekocht gemarkeerd); het item komt niet terug op de lijst
+async function verwijderAankoop(aankoop) {
+  if (!confirm(`Aankoop "${aankoop.name}" verwijderen? Dit kan niet ongedaan worden gemaakt.`)) return;
+  const lijstId = currentList.id;
+  say("aankopen-msg", "");
+  aankopen = (aankopen || []).filter((a) => a.id !== aankoop.id); // direct tonen, daarna opslaan
+  renderAankopen();
+  const { error } = await db.from("purchases").delete().eq("id", aankoop.id);
+  if (!currentList || currentList.id !== lijstId) return;
+  if (error) { say("aankopen-msg", error.message); loadAankopen(); }
 }
 
 function renderAankopen() {

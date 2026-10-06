@@ -202,11 +202,12 @@ create index purchases_list_idx on public.purchases(list_id, bought_at desc);
 
 alter table public.purchases enable row level security;
 
--- Leden mogen lezen. Er zijn bewust geen policies om te schrijven:
--- dat gaat alleen via buy_item en undo_purchase.
+-- Leden mogen lezen en een aankoop verwijderen (bijv. bij een vergissing). Toevoegen en wijzigen
+-- kan bewust niet rechtstreeks: dat gaat alleen via buy_item en undo_purchase.
 revoke all on public.purchases from anon, authenticated;
-grant select on public.purchases to authenticated;
+grant select, delete on public.purchases to authenticated;
 create policy "leden zien aankopen" on public.purchases for select using (public.is_member(list_id));
+create policy "leden verwijderen aankopen" on public.purchases for delete using (public.is_member(list_id));
 
 -- Item als gekocht markeren: het item verdwijnt van de lijst en wordt, als de lijst meetelt
 -- voor het aankoopprofiel, bewaard als aankoop. Alles in één keer, zodat het niet half kan lukken.
