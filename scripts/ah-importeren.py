@@ -187,9 +187,10 @@ def main():
 
     db = Supabase(*lees_config())
     try:
-        gebruiker = db.login(input("\nE-mailadres van de app: ").strip(), getpass.getpass("Wachtwoord: "))
+        gebruiker = db.login(input("\nE-mailadres van de app: ").strip(), getpass.getpass("Wachtwoord (je ziet niets terwijl je typt; sluit af met Enter): "))
     except RuntimeError as fout:
         sys.exit(f"Inloggen mislukt: {fout}")
+    print("Ingelogd.")
     lijst = kies_lijst(db, gebruiker)
 
     tel = {"bonnen": 0, "dubbel": 0, "mislukt": 0, "toegevoegd": 0, "gekoppeld": 0, "overgeslagen": 0}
