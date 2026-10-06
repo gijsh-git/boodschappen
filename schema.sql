@@ -10,6 +10,9 @@ create table public.lists (
   created_by uuid not null default auth.uid(),
   -- telt deze lijst mee voor het aankoopprofiel? (uit voor bijv. een feestlijst)
   counts_for_profile boolean not null default true,
+  -- gearchiveerd sinds; leeg = actieve lijst. Een gearchiveerde lijst staat niet meer in het
+  -- overzicht en er kan niets meer bij, maar de aankopen en bonnen blijven bestaan.
+  archived_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -47,7 +50,11 @@ alter table public.items enable row level security;
 create policy "leden zien lijst" on public.lists for select using (public.is_member(id));
 create policy "leden zien leden" on public.list_members for select using (public.is_member(list_id));
 create policy "leden zien items" on public.items for select using (public.is_member(list_id));
-create policy "leden voegen items toe" on public.items for insert with check (public.is_member(list_id));
+-- Aan een gearchiveerde lijst kan niets meer worden toegevoegd
+create policy "leden voegen items toe" on public.items for insert with check (
+  public.is_member(list_id)
+  and exists (select 1 from public.lists l where l.id = items.list_id and l.archived_at is null)
+);
 create policy "leden wijzigen items" on public.items for update using (public.is_member(list_id));
 create policy "leden verwijderen items" on public.items for delete using (public.is_member(list_id));
 
@@ -70,6 +77,7 @@ begin
   if auth.uid() is null then raise exception 'Niet ingelogd'; end if;
   select * into l from public.lists where invite_code = lower(trim(p_code));
   if not found then raise exception 'Code niet gevonden'; end if;
+  if l.archived_at is not null then raise exception 'Deze lijst is gearchiveerd'; end if;
   insert into public.list_members (list_id, user_id) values (l.id, auth.uid()) on conflict do nothing;
   return l;
 end $$;
@@ -84,12 +92,17 @@ begin
   return l;
 end $$;
 
--- Lijst verwijderen (alleen de maker); items en leden gaan mee via on delete cascade
-create or replace function public.delete_list(p_list uuid)
-returns void language plpgsql security definer set search_path = public as $$
+-- Lijst archiveren of terugzetten (alleen de maker). Verwijderen kan bewust niet vanuit de app:
+-- dan zouden via on delete cascade ook de aankopen en bonnen verdwijnen, de basis van het aankoopprofiel.
+create or replace function public.archive_list(p_list uuid, p_archived boolean)
+returns public.lists language plpgsql security definer set search_path = public as $$
+declare l public.lists;
 begin
-  delete from public.lists where id = p_list and created_by = auth.uid();
-  if not found then raise exception 'Alleen de maker kan deze lijst verwijderen'; end if;
+  update public.lists
+    set archived_at = case when p_archived then coalesce(archived_at, now()) end
+    where id = p_list and created_by = auth.uid() returning * into l;
+  if not found then raise exception 'Alleen de maker kan deze lijst archiveren of terugzetten'; end if;
+  return l;
 end $$;
 
 -- Deelnemer verwijderen (alleen de maker). Daarna krijgt de lijst een nieuwe code,
@@ -109,9 +122,11 @@ begin
   return l;
 end $$;
 
--- Realtime aanzetten voor items en voor leden (wie sluit aan, wie is verwijderd)
+-- Realtime aanzetten voor items, voor leden (wie sluit aan, wie is verwijderd)
+-- en voor lijsten (de maker archiveert de lijst terwijl de ander hem open heeft)
 alter publication supabase_realtime add table public.items;
 alter publication supabase_realtime add table public.list_members;
+alter publication supabase_realtime add table public.lists;
 
 -- Profiel per gebruiker: de weergavenaam die andere lijstleden te zien krijgen
 create table public.profiles (
@@ -335,6 +350,9 @@ begin
   if not public.is_member(p_list) then raise exception 'Geen lid van deze lijst'; end if;
   if not exists (select 1 from public.lists where id = p_list and counts_for_profile) then
     raise exception 'Deze lijst telt niet mee voor het aankoopprofiel';
+  end if;
+  if exists (select 1 from public.lists where id = p_list and archived_at is not null) then
+    raise exception 'Deze lijst is gearchiveerd';
   end if;
   if nullif(trim(p_store), '') is null then raise exception 'Vul de supermarkt in'; end if;
   if p_date is null then raise exception 'Vul de datum van de bon in'; end if;

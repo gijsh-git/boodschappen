@@ -214,6 +214,12 @@
       <div class="content">
         <ul id="lijsten"></ul>
         <p id="lijsten-leeg" class="uitleg" hidden>Je hebt nog geen lijsten. Tik op de plus rechtsboven om er een te maken of bij een lijst aan te sluiten.</p>
+        <!-- Gearchiveerde lijsten: standaard ingeklapt, alleen zichtbaar als er een is -->
+        <details id="archief-blok" class="leden archief" hidden>
+          <summary>Gearchiveerd <span id="archief-aantal"></span></summary>
+          <p class="uitleg">De aankopen en bonnen van deze lijsten blijven bewaard en tellen mee voor je aankoopprofiel.</p>
+          <ul id="archief"></ul>
+        </details>
         <p id="setup-msg" class="msg" role="status"></p>
       </div>
     </section>

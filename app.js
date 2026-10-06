@@ -20,9 +20,11 @@ let naamBewerken = false; // naam-scherm is geopend vanuit het profiel (niet de 
 let profielOpen = false;  // het profiel-scherm (of het naam-scherm daarbinnen) staat open
 let namen = {};        // user_id -> weergavenaam van jezelf en je lijstgenoten
 let infoId = null;     // item waarvan de info ("toegevoegd door") openstaat
-let lijsten = [];      // alle lijsten waar je lid van bent
+let lijsten = [];      // de actieve lijsten waar je lid van bent
+let archief = [];      // de gearchiveerde lijsten waar je lid van bent
 let lijstenOpen = false;  // het overzicht van lijsten staat open
 const LIJST_SLEUTEL = "bonusbuddy-lijst"; // localStorage: id van de laatst geopende lijst
+const ARCHIEF_MELDING = "Deze lijst is gearchiveerd door de maker.";
 const UITLEG_SLEUTEL = "bonusbuddy-veeguitleg"; // localStorage: "weg" als de uitleg over vegen is weggeklikt
 let currentList = null;
 let channel = null;
@@ -264,6 +266,7 @@ async function logout() {
   fotoOpen = false;
   leegStapel();
   lijsten = [];
+  archief = [];
   leden = [];
   deals = {};
   aankopen = null;
@@ -278,12 +281,14 @@ $("logout").addEventListener("click", logout);
 async function loadLijsten() {
   const { data, error } = await db
     .from("list_members")
-    .select("list_id, lists(id, name, invite_code, counts_for_profile, created_by)")
+    .select("list_id, lists(id, name, invite_code, counts_for_profile, created_by, archived_at)")
     // Alleen je eigen lidmaatschappen: je mag ook die van lijstgenoten zien, en dan staat een lijst er dubbel
     .eq("user_id", userId)
     .order("joined_at", { ascending: true });
   if (error) return error;
-  lijsten = data.map((m) => m.lists).filter(Boolean);
+  const alle = data.map((m) => m.lists).filter(Boolean);
+  lijsten = alle.filter((l) => !l.archived_at);
+  archief = alle.filter((l) => l.archived_at);
   return null;
 }
 
@@ -326,26 +331,55 @@ function lijstRij(lijst) {
   label.append(tekst, box);
 
   li.append(naam, label);
-  // Verwijderen kan alleen de maker; de database controleert dat ook
+  // Archiveren kan alleen de maker; de database controleert dat ook
   if (lijst.created_by === userId) {
     const weg = document.createElement("button");
     weg.type = "button";
     weg.className = "link lijst-weg";
-    weg.textContent = "Lijst verwijderen";
-    weg.addEventListener("click", () => verwijderLijst(lijst));
+    weg.textContent = "Lijst archiveren";
+    weg.addEventListener("click", () => archiveerLijst(lijst));
     li.append(weg);
   }
   return li;
 }
 
-async function verwijderLijst(lijst) {
-  if (!confirm(`Lijst "${lijst.name}" verwijderen? Alle items en aankopen verdwijnen, ook voor de andere leden. Dit kan niet ongedaan worden gemaakt.`)) return;
+// Rij in het blok "Gearchiveerd": alleen de naam, en voor de maker een knop om terug te zetten
+function archiefRij(lijst) {
+  const li = document.createElement("li");
+  li.className = "lid-rij";
+  const naam = document.createElement("span");
+  naam.textContent = lijst.name;
+  li.append(naam);
+  if (lijst.created_by === userId) {
+    const terug = document.createElement("button");
+    terug.type = "button";
+    terug.className = "link";
+    terug.textContent = "Terugzetten";
+    terug.addEventListener("click", () => zetLijstTerug(lijst));
+    li.append(terug);
+  }
+  return li;
+}
+
+// Archiveren in plaats van verwijderen: de aankopen en bonnen blijven bewaard voor het aankoopprofiel
+async function archiveerLijst(lijst) {
+  if (!confirm(`Lijst "${lijst.name}" archiveren? De lijst verdwijnt uit het overzicht, ook voor de andere leden. De aankopen en bonnen blijven bewaard en je kunt de lijst later terugzetten.`)) return;
   say("setup-msg", "");
-  // Vooraf loslaten: anders meldt realtime ons eigen verdwenen lidmaatschap als "je bent verwijderd"
+  // Vooraf loslaten: anders meldt realtime onze eigen wijziging als "gearchiveerd door de maker"
   if (currentList && currentList.id === lijst.id) sluitLijst();
-  const { error } = await db.rpc("delete_list", { p_list: lijst.id });
+  const { data, error } = await db.rpc("archive_list", { p_list: lijst.id, p_archived: true });
   if (error) return say("setup-msg", error.message);
   lijsten = lijsten.filter((l) => l.id !== lijst.id);
+  archief = archief.filter((l) => l.id !== lijst.id).concat(data);
+  renderLijsten();
+}
+
+async function zetLijstTerug(lijst) {
+  say("setup-msg", "");
+  const { data, error } = await db.rpc("archive_list", { p_list: lijst.id, p_archived: false });
+  if (error) return say("setup-msg", error.message);
+  archief = archief.filter((l) => l.id !== lijst.id);
+  if (!lijsten.some((l) => l.id === lijst.id)) lijsten.push(data);
   renderLijsten();
 }
 
@@ -365,20 +399,23 @@ function sluitLijst() {
   try { localStorage.removeItem(LIJST_SLEUTEL); } catch {}
 }
 
-// Je bent geen lid meer van de open lijst (verwijderd door de maker, of de lijst is weg): terug naar het overzicht
-async function verlaatLijst() {
+// De open lijst is niet meer van jou (verwijderd door de maker, of de lijst is weg of gearchiveerd): terug naar het overzicht
+async function verlaatLijst(melding) {
   const id = currentList.id;
   sluitLijst();
   lijsten = lijsten.filter((l) => l.id !== id);
   naamOpen = false;
   profielOpen = false;
   await toonLijsten();
-  say("setup-msg", "Je bent uit een lijst verwijderd, of de lijst bestaat niet meer.");
+  say("setup-msg", melding || "Je bent uit een lijst verwijderd, of de lijst bestaat niet meer.");
 }
 
 function renderLijsten() {
   $("lijsten-leeg").hidden = lijsten.length > 0;
   $("lijsten").replaceChildren(...lijsten.map(lijstRij));
+  $("archief-blok").hidden = archief.length === 0;
+  $("archief-aantal").textContent = `(${archief.length})`;
+  $("archief").replaceChildren(...archief.map(archiefRij));
 }
 
 // Aparte pagina om een lijst toe te voegen; lijstenOpen blijft aan zodat route() niet wegspringt
@@ -507,9 +544,18 @@ async function verwijderLid(lid) {
   renderLeden();
 }
 
+// Heeft de maker de open lijst intussen gearchiveerd? (realtime mist dat als de telefoon in standby stond)
+async function controleerArchief() {
+  const lijstId = currentList.id;
+  const { data } = await db.from("lists").select("archived_at").eq("id", lijstId).maybeSingle();
+  if (!currentList || currentList.id !== lijstId) return;
+  if (data && data.archived_at) verlaatLijst(ARCHIEF_MELDING);
+}
+
 async function loadItems() {
   loadNamen();
   loadLeden();
+  controleerArchief();
   const lijstId = currentList.id;
   const { data, error } = await db
     .from("items")
@@ -579,6 +625,12 @@ function subscribe() {
           leden = leden.filter((m) => m.user_id !== p.old.user_id);
           renderLeden();
         }
+      })
+    .on("postgres_changes",
+      { event: "UPDATE", schema: "public", table: "lists", filter: `id=eq.${currentList.id}` },
+      (p) => {
+        // De maker heeft de lijst gearchiveerd terwijl jij hem open had
+        if (currentList && p.new.id === currentList.id && p.new.archived_at) verlaatLijst(ARCHIEF_MELDING);
       })
     .on("postgres_changes",
       { event: "*", schema: "public", table: "purchases", filter: `list_id=eq.${currentList.id}` },
