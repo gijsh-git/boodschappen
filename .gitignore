@@ -2,3 +2,7 @@
 data/
 .mcp.json
 .claude/
+.env
+.env.*
+!.env.example
+supabase/.temp/
