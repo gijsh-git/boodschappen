@@ -222,12 +222,16 @@ function toonProfiel() {
   naamOpen = false;
   profielOpen = true;
   $("profiel-naam").textContent = mijnNaam || "Nog niet ingevuld";
+  // Het profiel is bereikbaar vanuit de lijst en vanuit het overzicht; terug gaat naar waar je vandaan kwam
+  $("profiel-terug").textContent = lijstenOpen ? "Terug naar mijn lijsten" : "Terug naar de lijst";
   show("profiel");
 }
 
 $("profiel-knop").addEventListener("click", toonProfiel);
+$("profiel-knop-setup").addEventListener("click", toonProfiel);
 $("profiel-terug").addEventListener("click", () => {
   profielOpen = false;
+  if (lijstenOpen) return toonLijsten();
   render();
   show("list");
 });
@@ -252,7 +256,6 @@ async function logout() {
   show("login");
 }
 $("logout").addEventListener("click", logout);
-$("logout-setup").addEventListener("click", logout);
 
 // ---------- Overzicht van lijsten ----------
 // Haalt al je lijsten op; geeft de fout terug als het misgaat

@@ -46,6 +46,10 @@
       <path d="M4 8h3l1.500-2.500h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
       <circle cx="12" cy="13.500" r="3.500"/>
     </symbol>
+    <symbol id="icon-potlood" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 20l1-4.500L16.500 4a2.100 2.100 0 0 1 3 0l.500.500a2.100 2.100 0 0 1 0 3L8.500 19z"/>
+      <path d="M14.500 6l3.500 3.500"/>
+    </symbol>
     <symbol id="icon-vinkje" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M5 12.5l4.5 4.5L19 7.5"/>
     </symbol>
@@ -170,7 +174,7 @@
       </div>
     </section>
 
-    <!-- Profiel inzien (voor nu alleen je naam) -->
+    <!-- Profiel: je naam (potloodje om te wijzigen) en uitloggen -->
     <section id="view-profiel" hidden>
       <header class="top">
         <div class="brand">
@@ -181,10 +185,13 @@
       </header>
       <div class="content">
         <h2>Naam</h2>
-        <p id="profiel-naam" class="profiel-waarde"></p>
+        <p class="profiel-waarde">
+          <span id="profiel-naam"></span>
+          <button type="button" id="naam-wijzigen" class="potlood" aria-label="Naam wijzigen"><svg width="20" height="20"><use href="#icon-potlood"/></svg></button>
+        </p>
         <div class="actions">
-          <button id="naam-wijzigen" class="link">Naam wijzigen</button>
           <button id="profiel-terug" class="link">Terug naar de lijst</button>
+          <button id="logout" class="link">Uitloggen</button>
         </div>
       </div>
     </section>
@@ -197,7 +204,10 @@
             <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
             <span class="brand-name">BonusBuddy</span>
           </div>
-          <button type="button" id="nieuw-knop" class="top-knop" aria-label="Lijst toevoegen"><svg width="20" height="20"><use href="#icon-plus"/></svg></button>
+          <div class="top-knoppen">
+            <button type="button" id="nieuw-knop" class="top-knop" aria-label="Lijst toevoegen"><svg width="20" height="20"><use href="#icon-plus"/></svg></button>
+            <button type="button" id="profiel-knop-setup" class="top-knop" aria-label="Profiel"><svg width="20" height="20"><use href="#icon-persoon"/></svg></button>
+          </div>
         </div>
         <h1>Mijn lijsten</h1>
       </header>
@@ -205,7 +215,6 @@
         <ul id="lijsten"></ul>
         <p id="lijsten-leeg" class="uitleg" hidden>Je hebt nog geen lijsten. Tik op de plus rechtsboven om er een te maken of bij een lijst aan te sluiten.</p>
         <p id="setup-msg" class="msg" role="status"></p>
-        <button id="logout-setup" class="link">Uitloggen</button>
       </div>
     </section>
 
@@ -277,9 +286,6 @@
         </p>
         <ul id="items"></ul>
 
-        <div class="actions">
-          <button id="logout" class="link">Uitloggen</button>
-        </div>
         <p id="status" class="msg" role="status"></p>
       </div>
       <!-- Verschijnt kort na gekocht of verwijderd -->

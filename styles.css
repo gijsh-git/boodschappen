@@ -130,9 +130,13 @@ body:has(.auth:not([hidden])) { background: #fff6ee; }
   border-radius: 50%; background: #fff; color: var(--oranje);
 }
 .profiel-waarde {
-  margin: 0; padding: 14px; background: var(--vlak);
-  border: 1.5px solid var(--rand); border-radius: 16px; overflow-wrap: anywhere;
+  display: flex; align-items: center; gap: 8px;
+  margin: 0; padding: 4px 4px 4px 14px; background: var(--vlak);
+  border: 1.5px solid var(--rand); border-radius: 16px;
 }
+.profiel-waarde span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+/* Potloodje achter de naam */
+button.potlood { display: grid; place-items: center; flex: none; padding: 10px; background: none; color: var(--oranje-tekst); }
 .top .brand-icon { width: 30px; height: 30px; border-radius: 9px; }
 .top .brand-name { font-size: 1.05rem; }
 .top h1 { font-size: 1.9rem; }
