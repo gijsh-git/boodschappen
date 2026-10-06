@@ -197,6 +197,48 @@
           <button id="profiel-terug" class="link">Terug naar de lijst</button>
           <button id="logout" class="link">Uitloggen</button>
         </div>
+
+        <!-- Aankoopprofiel: wat de app over het koopgedrag van het huishouden weet -->
+        <h2>Aankoopprofiel</h2>
+        <p class="uitleg">Dit is het profiel van het huishouden: alle aankopen van alle deelnemers uit de lijsten die meetellen, ook gearchiveerde lijsten en aankopen van vóór je toetreding.</p>
+        <div id="ap-periode" class="ap-keuze" role="group" aria-label="Periode">
+          <button type="button" data-periode="4w">4 weken</button>
+          <button type="button" data-periode="3m">3 maanden</button>
+          <button type="button" data-periode="12m">12 maanden</button>
+          <button type="button" data-periode="alles">Alles</button>
+        </div>
+        <select id="ap-lijst" aria-label="Lijst"></select>
+        <p id="ap-msg" class="msg" role="status"></p>
+        <div id="ap-inhoud" hidden>
+          <p id="ap-bereik" class="uitleg"></p>
+          <div class="ap-cijfers">
+            <div><strong id="ap-aankopen"></strong><span>aankopen</span></div>
+            <div><strong id="ap-producten"></strong><span>producten</span></div>
+            <div><strong id="ap-uitgegeven"></strong><span>uitgegeven</span></div>
+            <div><strong id="ap-bespaard"></strong><span>bespaard</span></div>
+          </div>
+          <p id="ap-prijs" class="uitleg"></p>
+          <p class="uitleg">De bedragen zijn een ondergrens: alleen aankopen van een bon met een prijs, zonder statiegeld. Uitgegeven is de prijs min de korting.</p>
+
+          <details class="ap-blok">
+          <summary>Top 10 producten</summary>
+          <p class="uitleg">Gesorteerd op het aantal dagen waarop je het kocht in deze periode; meerdere keren op één dag telt als één. "Om de … dagen" is de gebruikelijke tijd tussen twee aankopen, berekend over alle data en niet alleen deze periode.</p>
+          <ol id="ap-top"></ol>
+          <p id="ap-top-leeg" class="uitleg" hidden>Geen aankopen in deze periode.</p>
+          </details>
+
+          <details class="ap-blok">
+          <summary>Per supermarkt</summary>
+          <p class="uitleg">Aantal aankopen in deze periode, met het bedrag erachter. De supermarkt komt van de bon; aankopen zonder bon staan onder "onbekend".</p>
+          <ul id="ap-winkels" class="ap-staven"></ul>
+          </details>
+
+          <details class="ap-blok">
+          <summary>Uitgaven per maand</summary>
+          <p class="uitleg">Altijd de laatste 12 maanden, los van de gekozen periode. De lopende maand is nog niet compleet.</p>
+          <ul id="ap-maanden" class="ap-staven"></ul>
+          </details>
+        </div>
       </div>
     </section>
 

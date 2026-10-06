@@ -91,7 +91,7 @@ Klaar als: ik als beheerder "halfvolle melk" en "AH halfvolle melk 1L" samenvoeg
 Grenzen: geef de SQL apart. Verander de namen in aankopen en items niet. Samenvoegen per huishouden komt niet in deze fase. De koppeling van aanbiedingen aan producten komt in fase 4, de koppeling aan supermarktartikelen later. Het matchen van bonregels en aanbiedingen (pg_trgm) blijft zoals het is.
 ```
 
-### [ ] 3b – Aankoopprofiel op Mijn profiel
+### [x] 3b – Aankoopprofiel op Mijn profiel
 
 ```
 /plan
@@ -157,6 +157,32 @@ Hoe het moet werken:
 - Gebruik ook het aankoopprofiel: producten die we vaak kopen wegen zwaarder.
 Klaar als: na twee keer dezelfde soort kaas kiezen staat die bovenaan, en een afgewezen match komt niet terug.
 Grenzen: uitlegbaar, geen ingewikkeld model.
+```
+
+### [ ] 4d – Favorieten
+
+```
+/plan
+Wat: gebruikers kunnen favorieten aangeven: producten waarvan ze altijd willen weten of ze in de aanbieding zijn.
+Waarom: een favoriet is een expliciet signaal en werkt vanaf dag één. Een nieuwe gebruiker heeft nog geen aankoopprofiel, maar krijgt via favorieten meteen relevante aanbiedingen.
+Hoe het moet werken:
+- Een favoriet hoort bij een gebruiker, niet bij een lijst.
+- Twee niveaus:
+  1. Algemeen: een product uit de productcatalogus, bijv. "pindakaas". Elke aanbieding binnen dat product telt, ongeacht merk of soort.
+  2. Specifiek: hetzelfde product plus een verplicht merk of variant, bijv. "pindakaas" + "calvé". Alleen aanbiedingen die daaraan voldoen tellen.
+- Het specifieke deel is vrije tekst die als extra zoekwoord op de aanbieding moet matchen (bijv. "calvé" in de naam of de zoekwoorden van de deal). Het product zelf blijft het product uit de catalogus, volgens docs/productregels.md.
+- Toevoegen kan op twee plekken:
+  - Op Mijn profiel, in een sectie "Mijn favorieten": product zoeken in de catalogus, optioneel een merk of variant invullen.
+  - Via een ster bij een item op de lijst of bij een aankoop. Dat maakt een algemene favoriet van het product dat erbij hoort.
+- Op Mijn profiel kan ik favorieten bekijken, het merk of de variant aanpassen en ze verwijderen.
+- Bij een favoriet die nu in de aanbieding is, toont Mijn profiel de aanbieding (supermarkt, korting, geldig tot), met één tik om het product op een lijst te zetten.
+- Valt een favoriet product later samen met een ander product (samenvoegen door de beheerder), dan schuift de favoriet mee.
+Klaar als:
+- ik "pindakaas" als favoriet heb en elke pindakaasaanbieding in de testdeals zie;
+- ik "pindakaas" + "calvé" als favoriet heb en alleen de Calvé-aanbieding zie, niet die van een ander merk;
+- Els mijn favorieten niet ziet en ik de hare niet;
+- een favoriet blijft werken nadat het product is samengevoegd met een ander product.
+Grenzen: gebruik de zoekwoordenmatch uit 4a; geen AI. Nog geen meldingen of pushberichten. Elke databasewijziging is een nieuw migratiebestand in supabase/migrations/. Verander swipen, bonscannen en het aankoopprofiel niet.
 ```
 
 ---

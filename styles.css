@@ -295,6 +295,52 @@ button.koop {
 .product-hernoem input[type=text] { padding: 10px 12px; }
 .product-hernoem button { padding: 10px 14px; }
 .bonnen-regel button.link { padding: 0; font-size: 0.9rem; white-space: nowrap; }
+/* Schuifje "Telt mee in aankoopprofiel" in het opengeklapte product */
+.product-telt { justify-content: space-between; padding: 6px 0 10px; color: var(--grijs); font-size: 0.9rem; }
+
+/* ---------- Aankoopprofiel ---------- */
+/* Top 10, supermarkten en maanden: ingeklapt tot je erop tikt */
+.ap-blok { border-top: 1px solid var(--rand); }
+.ap-blok:last-child { border-bottom: 1px solid var(--rand); }
+.ap-blok summary { padding: 14px 0; font-weight: 700; cursor: pointer; }
+.ap-blok[open] { padding-bottom: 14px; }
+.ap-blok[open] summary { color: var(--oranje-tekst); }
+/* Periode kiezen: vier knoppen naast elkaar, de gekozen is oranje */
+.ap-keuze { display: flex; gap: 6px; margin: 0 0 8px; }
+.ap-keuze button {
+  flex: 1; min-width: 0; padding: 10px 2px; font-size: 0.85rem; white-space: nowrap;
+  background: var(--vlak); color: var(--tekst); border: 1.5px solid var(--rand);
+}
+.ap-keuze button[aria-pressed=true] { background: var(--oranje); border-color: var(--oranje); color: #fff; }
+select {
+  display: block; width: 100%; padding: 12px 14px; font: inherit;
+  border: 1.5px solid var(--rand); border-radius: 14px; background: var(--vlak); color: var(--tekst);
+}
+/* Vier kerncijfers, twee naast elkaar */
+.ap-cijfers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 8px; }
+.ap-cijfers div { padding: 12px 14px; background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 16px; }
+.ap-cijfers strong { display: block; font-family: var(--kop); font-size: 1.5rem; line-height: 1.1; overflow-wrap: anywhere; }
+.ap-cijfers span { color: var(--grijs); font-size: 0.9rem; }
+#ap-top:not(:empty) { margin: 0; background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 16px; padding: 0 14px; list-style: none; }
+#ap-top li { flex-wrap: nowrap; align-items: baseline; gap: 10px; padding: 10px 0; }
+.ap-rang { flex: none; width: 1.4em; color: var(--grijs); font-size: 0.9rem; }
+.ap-product { flex: 1; min-width: 0; }
+.ap-product p { margin: 2px 0 0; color: var(--grijs); font-size: 0.85rem; }
+#ap-top li small { padding-right: 0; }
+/* Staafjes: naam, staaf op schaal van de grootste, waarde erachter */
+ul.ap-staven:not(:empty) { padding: 6px 14px; }
+.ap-staven li { flex-wrap: nowrap; gap: 10px; padding: 8px 0; border-bottom: 0; font-size: 0.9rem; }
+.ap-staaf-naam { flex: 0 0 5.2em; overflow-wrap: anywhere; }
+.ap-staaf-baan { flex: 1; min-width: 0; height: 10px; }
+.ap-staaf-baan i { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--oranje); }
+/* De lopende maand is nog niet compleet: gestreept */
+.ap-staven li.lopend .ap-staaf-baan i {
+  background: repeating-linear-gradient(135deg, var(--oranje) 0 4px, transparent 4px 7px);
+}
+/* Vaste breedte, anders krijgt elke rij een andere schaal */
+.ap-staaf-waarde { flex: 0 0 8.6em; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ap-staaf-naam small { display: block; margin: 0; padding: 0; white-space: normal; }
+.ap-staven li.leeg .ap-staaf-waarde { color: var(--grijs); }
 
 /* ---------- Overzicht van lijsten ---------- */
 .lijst-rij .lijst-naam {
@@ -310,17 +356,17 @@ button.koop {
 /* Prullenbakje rechts naast "Lijst archiveren" */
 .lijst-rij .lijst-prul { flex: none; display: flex; padding: 0 8px 14px 12px; background: none; color: var(--grijs); }
 /* Schuifje: een checkbox die eruitziet als schakelaar */
-.lijst-rij .schakelaar {
+.schakelaar {
   -webkit-appearance: none; appearance: none; position: relative; flex: none;
   width: 46px; height: 28px; margin: 0; border-radius: 14px;
   background: var(--grijs); cursor: pointer; transition: background 0.15s;
 }
-.lijst-rij .schakelaar::after {
+.schakelaar::after {
   content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px;
   border-radius: 50%; background: #fff; transition: transform 0.15s;
 }
-.lijst-rij .schakelaar:checked { background: var(--oranje); }
-.lijst-rij .schakelaar:checked::after { transform: translateX(18px); }
+.schakelaar:checked { background: var(--oranje); }
+.schakelaar:checked::after { transform: translateX(18px); }
 
 /* Deelnemers van de lijst (uitklapbaar) */
 .leden { margin-bottom: 12px; }

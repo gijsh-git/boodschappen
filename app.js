@@ -19,7 +19,11 @@ let naamOpen = false;  // het naam-scherm staat open
 let naamBewerken = false; // naam-scherm is geopend vanuit het profiel (niet de eerste keer)
 let profielOpen = false;  // het profiel-scherm (of het naam- of productenscherm daarbinnen) staat open
 let beheerder = false; // je bent beheerder: je mag producten samenvoegen, losmaken en hernoemen
-let producten = null;  // alle producten: { id, name, namen, aankopen }; null = nog niet opgehaald
+let producten = null;  // alle producten: { id, name, namen, aankopen, telt_mee }; null = nog niet opgehaald
+let aankoopprofiel = null; // het antwoord van purchase_profile; null = nog niet opgehaald
+let profielPeriode = "3m"; // gekozen periode van het aankoopprofiel: 4w, 3m, 12m of alles
+let profielLijst = "";  // id van de lijst waarop het aankoopprofiel is gefilterd; leeg = alle lijsten
+let profielVraag = 0;   // volgnummer, zodat een laat antwoord een nieuwere keuze niet overschrijft
 let productOpen = null; // id van het product dat is opengeklapt
 let productHerkomst = {}; // product-id -> de samenvoegingen die nog in dat product zitten
 let samenvoegBron = null; // product dat je aan het samenvoegen bent; de volgende tik kiest het doel
@@ -249,6 +253,8 @@ function toonProfiel() {
   $("producten-knop").hidden = !beheerder;
   show("profiel");
   loadBeheerder();
+  renderAankoopprofiel();
+  loadAankoopprofiel();
 }
 
 // De rol staat in de database; de knop is alleen een gemak, de functies controleren het zelf
@@ -265,6 +271,137 @@ $("profiel-terug").addEventListener("click", () => {
   if (lijstenOpen) return toonLijsten();
   render();
   show("list");
+});
+
+// ---------- Aankoopprofiel ----------
+// De database rekent alles uit (purchase_profile); hier wordt het alleen getoond
+async function loadAankoopprofiel() {
+  const vraag = ++profielVraag;
+  say("ap-msg", aankoopprofiel ? "" : "Bezig...");
+  const { data, error } = await db.rpc("purchase_profile", { p_period: profielPeriode, p_list: profielLijst || null });
+  if (vraag !== profielVraag || !profielOpen) return;
+  if (error) return say("ap-msg", error.message);
+  // De gekozen lijst telt niet meer mee of is weg: terug naar alle lijsten
+  if (profielLijst && !data.lijsten.some((l) => l.id === profielLijst)) {
+    profielLijst = "";
+    return loadAankoopprofiel();
+  }
+  aankoopprofiel = data;
+  say("ap-msg", "");
+  renderAankoopprofiel();
+}
+
+// Bedrag met euroteken, bijv. "€ 1.234,56"
+function euro(bedrag) {
+  return Number(bedrag).toLocaleString("nl-NL", { style: "currency", currency: "EUR" });
+}
+
+function getal(n) {
+  return Number(n).toLocaleString("nl-NL");
+}
+
+// Rij in de top 10: plaats, product met ritme en laatste aankoop, en het aantal aankoopdagen
+function topRij(product, i) {
+  const li = document.createElement("li");
+  const rang = document.createElement("span");
+  rang.className = "ap-rang";
+  rang.textContent = i + 1 + ".";
+  const blok = document.createElement("div");
+  blok.className = "ap-product";
+  const naam = document.createElement("span");
+  naam.textContent = product.naam;
+  const info = document.createElement("p");
+  const ritme = product.om_de == null ? "te weinig data"
+    : product.om_de === 1 ? "elke dag"
+    : `om de ${getal(product.om_de)} dagen`;
+  info.textContent = `${ritme} · laatst ${datum(product.laatste)}`;
+  blok.append(naam, info);
+  const dagen = document.createElement("small");
+  dagen.textContent = product.dagen === 1 ? "1 dag" : product.dagen + " dagen";
+  li.append(rang, blok, dagen);
+  return li;
+}
+
+// Eén staafje: naam, staaf als deel van de grootste, en de waarde als tekst erachter
+function staafRij(naam, deel, waarde, soort, onder) {
+  const li = document.createElement("li");
+  if (soort) li.className = soort;
+  const label = document.createElement("span");
+  label.className = "ap-staaf-naam";
+  label.textContent = naam;
+  if (onder) {
+    const klein = document.createElement("small");
+    klein.textContent = onder;
+    label.append(klein);
+  }
+  const baan = document.createElement("span");
+  baan.className = "ap-staaf-baan";
+  if (deel > 0) {
+    const staaf = document.createElement("i");
+    staaf.style.width = Math.round(deel * 100) + "%";
+    baan.append(staaf);
+  }
+  const tekst = document.createElement("span");
+  tekst.className = "ap-staaf-waarde";
+  tekst.textContent = waarde;
+  li.append(label, baan, tekst);
+  return li;
+}
+
+function renderAankoopprofiel() {
+  for (const knop of $("ap-periode").children) knop.setAttribute("aria-pressed", knop.dataset.periode === profielPeriode);
+  const p = aankoopprofiel;
+  $("ap-inhoud").hidden = !p;
+  $("ap-lijst").hidden = !p;
+  if (!p) return;
+
+  const alle = document.createElement("option");
+  alle.value = "";
+  alle.textContent = "Alle lijsten";
+  $("ap-lijst").replaceChildren(alle, ...p.lijsten.map((l) => {
+    const o = document.createElement("option");
+    o.value = l.id;
+    o.textContent = l.gearchiveerd ? `${l.name} (gearchiveerd)` : l.name;
+    return o;
+  }));
+  $("ap-lijst").value = profielLijst;
+
+  $("ap-bereik").textContent = p.van ? `Vanaf ${datum(p.van)} tot en met vandaag.`
+    : p.eerste ? `Alles sinds de eerste aankoop op ${datum(p.eerste)}.` : "";
+  $("ap-aankopen").textContent = getal(p.aankopen);
+  $("ap-producten").textContent = getal(p.producten);
+  $("ap-uitgegeven").textContent = euro(p.uitgegeven);
+  $("ap-bespaard").textContent = euro(p.bespaard);
+  $("ap-prijs").textContent = p.rijen === 0 ? ""
+    : `Prijs bekend bij ${Math.round((p.met_prijs / p.rijen) * 100)}% van de aankopen (${getal(p.met_prijs)} van ${getal(p.rijen)}).`;
+
+  $("ap-top").replaceChildren(...p.top.map(topRij));
+  $("ap-top-leeg").hidden = p.top.length > 0;
+
+  const meeste = Math.max(1, ...p.winkels.map((w) => w.aankopen));
+  $("ap-winkels").replaceChildren(...p.winkels.map((w) =>
+    staafRij(w.winkel || "onbekend", w.aankopen / meeste,
+      w.bedrag == null ? getal(w.aankopen) : `${getal(w.aankopen)} · ${euro(w.bedrag)}`)));
+
+  const hoogste = Math.max(1, ...p.maanden.map((m) => Number(m.bedrag) || 0));
+  $("ap-maanden").replaceChildren(...p.maanden.map((m) => {
+    const naam = new Date(m.maand + "-01").toLocaleDateString("nl-NL", { month: "short", year: "2-digit" });
+    const onder = m.lopend ? "tot nu toe" : "";
+    if (m.bedrag == null) return staafRij(naam, 0, "geen prijsdata", "leeg", onder);
+    return staafRij(naam, m.bedrag / hoogste, euro(m.bedrag), m.lopend ? "lopend" : "", onder);
+  }));
+}
+
+$("ap-periode").addEventListener("click", (e) => {
+  const knop = e.target.closest("button[data-periode]");
+  if (!knop) return;
+  profielPeriode = knop.dataset.periode;
+  renderAankoopprofiel();
+  loadAankoopprofiel();
+});
+$("ap-lijst").addEventListener("change", () => {
+  profielLijst = $("ap-lijst").value;
+  loadAankoopprofiel();
 });
 
 async function logout() {
@@ -287,6 +424,9 @@ async function logout() {
   namen = {};
   beheerder = false;
   producten = null;
+  aankoopprofiel = null;
+  profielLijst = "";
+  profielVraag++;
   verbergOngedaan();
   show("login");
 }
@@ -1908,6 +2048,12 @@ function productRij(product) {
     info.textContent = "Ook: " + andere.join(", ");
     knop.append(info);
   }
+  if (product.telt_mee === false) {
+    const info = document.createElement("p");
+    info.className = "bonnen-info";
+    info.textContent = "Telt niet mee in het aankoopprofiel";
+    knop.append(info);
+  }
   knop.addEventListener("click", () => {
     if (samenvoegBron) return voegSamen(samenvoegBron, product);
     productOpen = open ? null : product.id;
@@ -1936,6 +2082,20 @@ function productRij(product) {
     hernoemProduct(product, veld.value.trim());
   });
   blok.append(form);
+
+  // Voor dingen die geen boodschappen zijn (draagtas, plastic zak): buiten het aankoopprofiel houden
+  const label = document.createElement("label");
+  label.className = "product-telt";
+  const tekst = document.createElement("span");
+  tekst.textContent = "Telt mee in aankoopprofiel";
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.className = "schakelaar";
+  box.setAttribute("role", "switch");
+  box.checked = product.telt_mee !== false;
+  box.addEventListener("change", () => setProductTelt(product, box.checked));
+  label.append(tekst, box);
+  blok.append(label);
 
   // Per samenvoeging de namen die erbij kwamen; losmaken zet het oude product precies terug
   const herkomst = productHerkomst[product.id];
@@ -2025,6 +2185,15 @@ async function hernoemProduct(product, naam) {
   if (error) return say("producten-msg", error.message);
   product.name = data.name;
   say("producten-msg", "");
+  renderProducten();
+}
+
+async function setProductTelt(product, aan) {
+  say("producten-msg", "Bezig...");
+  const { data, error } = await db.rpc("set_product_profile", { p_product: product.id, p_counts: aan });
+  if (!profielOpen) return;
+  if (!error) product.telt_mee = data.counts_in_profile;
+  say("producten-msg", error ? error.message : "");
   renderProducten();
 }
 
