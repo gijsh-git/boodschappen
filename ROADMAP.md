@@ -71,7 +71,7 @@ Grenzen: alleen lezen uit mijn AH-account, niets wijzigen.
 
 ## Fase 3 – Inzicht
 
-### [ ] 3a – Producten
+### [x] 3a – Producten
 
 ```
 /plan
