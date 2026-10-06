@@ -102,15 +102,19 @@ def maak_bon(bon, namen):
     # AH geeft de tijd in UTC; de bondatum is de dag in Nederland
     moment = datetime.fromisoformat(bon["datum"].replace("Z", "+00:00"))
     datum = moment.astimezone(ZoneInfo("Europe/Amsterdam")).date().isoformat()
-    # Hetzelfde product op meerdere regels wordt één regel, net als bij het scannen
+    # Hetzelfde product op meerdere regels wordt één regel, net als bij het scannen. Dat geldt ook voor
+    # bonteksten die dezelfde leesbare naam krijgen: de database telt een naam per dag maar één keer.
     per_naam = {}
     for r in bon["regels"]:
         if r["naam"] in OVERSLAAN or r["aantal"] <= 0:
             continue
-        regel = per_naam.setdefault(r["naam"], {
-            "name": leesbaar(r["naam"], namen), "receipt_name": r["naam"],
+        naam = leesbaar(r["naam"], namen)
+        regel = per_naam.setdefault(naam, {
+            "name": naam, "receipt_name": r["naam"],
             "aantal": 0, "price": 0, "discount": None, "purchase_id": None,
         })
+        if r["naam"] not in regel["receipt_name"].split(" + "):
+            regel["receipt_name"] += " + " + r["naam"]
         regel["aantal"] += r["aantal"]
         regel["price"] = round(regel["price"] + r["bedrag"], 2)
     regels = list(per_naam.values())
