@@ -85,6 +85,50 @@ Witte wijn, ongeacht druif of merk. Rosé is apart.
 
 "melk" en "biologische melk" vormen één product. Halfvolle en volle melk zijn aparte producten.
 
+### pasta
+
+Alle gedroogde pasta, ongeacht vorm, merk of biologisch: penne, rigatoni, schelpenpasta. Ravioli is apart.
+
+### rijst
+
+Rijst, pandan rijst en basmatirijst. Risottorijst is apart.
+
+### tomaten
+
+Tomaten, trostomaten en vleestomaten. Cherrytomaten (met romaatjes) zijn een apart product, net als tomatenblokjes en passata.
+
+### kaas
+
+Kaas aan het stuk of in plakken, ongeacht merk of leeftijd: goudse plakken, old amsterdam, tostikaas. Geraspte kaas (met pizzakaas) is apart.
+
+### skyr
+
+Alle skyr, ongeacht merk of smaak.
+
+### chips
+
+Alle chips, ongeacht merk of soort: lay's, chio. Ribbelchips, doritos, pringles en cheetos zijn (nog) apart.
+
+### ice tea
+
+Alle ice tea, ongeacht merk of smaak: lipton, fuze tea.
+
+### water
+
+Water zonder koolzuur, ongeacht merk. Koolzuurhoudend water is apart.
+
+### appels
+
+Alle appels, ongeacht ras: elstar, granny smith, pink lady.
+
+### eieren
+
+Eieren en scharreleieren.
+
+### kipfilet en kipdijfilet
+
+Twee producten. Onder "kipfilet": biologische kipfilet, blokjes en haasjes. Onder "kipdijfilet": kipdijreepjes.
+
 ## Nog open
 
 - Belegde broodjes: carpaccio, caprese en kip pesto samen als "belegd broodje"?
