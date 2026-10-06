@@ -67,10 +67,6 @@ Klaar als: ik in de app bij "Gescande bonnen" mijn historische AH-bonnen zie, me
 Grenzen: alleen lezen uit mijn AH-account, niets wijzigen.
 ```
 
-### [ ] 2b – AVG-gegevens van AH importeren (zodra die binnen zijn)
-
-Opdracht schrijven als het bestand er is; formaat is nog onbekend.
-
 ---
 
 ## Fase 3 – Inzicht
