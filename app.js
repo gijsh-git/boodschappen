@@ -11,7 +11,7 @@ let mustSetPassword = linkType === "invite" || linkType === "recovery";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const $ = (id) => document.getElementById(id);
-const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list", "aankopen", "foto"];
+const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list", "aankopen", "foto", "bon", "bonnen", "stapel"];
 let resetEmail = "";
 let userId = null;
 let mijnNaam = null;   // weergavenaam; null = nog niet opgehaald of nog niet ingevuld
@@ -36,6 +36,21 @@ let fotoOpen = false;  // het scherm "Foto controleren" staat open
 let fotoProducten = []; // producten uit de foto: { naam, hoeveelheid, aan }
 let fotoVraag = 0;     // volgnummer, zodat een antwoord na annuleren genegeerd wordt
 const FOTO_MAX = 2000; // langste zijde in pixels waarmee de foto wordt verstuurd
+const BON_PDF_MAX = 4_000_000; // grootste pdf in bytes; past na base64 binnen de grens van de functie
+let bonnen = null;     // gescande bonnen van de huidige lijst, nieuwste eerst; null = nog niet opgehaald
+let bonInzien = null;  // id van de bon die is opengeklapt
+let bonInhoud = {};    // bon-id -> de aankopen die bij die bon horen
+let bonOpen = false;   // het scherm "Bon controleren" staat open
+const BON_MAX = 20;    // meeste bonnen in één stapel; rem op de kosten van het lezen
+const BON_TEGELIJK = 2; // zoveel bonnen worden tegelijk gelezen
+// Stapel gekozen bonnen: { nr, bestand, bestandsnaam, status, melding, supermarkt, datum, totaal, regels, dubbel, gecontroleerd, controleFout, controle, uitkomst }
+// status: "wacht", "lezen", "klaar" (gelezen, nog op te slaan), "fout" of "opgeslagen"
+// regels: { bonNaam, naam, aantal, prijs, korting, aan, koppel, koppelAan }
+let bonStapel = [];
+let bonNr = 0;         // volgnummer voor de bonnen in de stapel
+let bonHuidig = null;  // de bon uit de stapel die in "Bon controleren" open staat
+let bonVraag = 0;      // volgnummer van de stapel, zodat een antwoord na leegmaken genegeerd wordt
+let stapelBezig = false; // "Alles zonder bijzonderheden opslaan" loopt
 let slepen = 0;        // aantal rijen dat nu wordt versleept (of nog uitschuift)
 let renderWacht = false;  // er is een render() overgeslagen tijdens het slepen
 let ongedaan = null;   // laatste actie die nog terug te draaien is: { item, aankoopId }
@@ -74,16 +89,16 @@ async function init() {
   db.auth.onAuthStateChange((event, s) => {
     if (event === "PASSWORD_RECOVERY") mustSetPassword = true;
     userId = s ? s.user.id : null;
-    if (s) route(); else { mijnNaam = null; naamOpen = false; profielOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; show("login"); }
+    if (s) route(); else { mijnNaam = null; naamOpen = false; profielOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; leegStapel(); show("login"); }
   });
   if (session) route(); else show("login");
   if (linkError) say("login-msg", "De link is verlopen of al gebruikt. Vraag een nieuwe aan via 'Wachtwoord vergeten?'.");
 }
 
 async function route() {
-  if (mustSetPassword) { naamOpen = false; profielOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; return show("password"); }
-  // Supabase meldt de sessie opnieuw als de app terug in beeld komt; dan niet wegspringen van naam, profiel, overzicht, aankopen of foto
-  if (naamOpen || profielOpen || lijstenOpen || aankopenOpen || fotoOpen) return;
+  if (mustSetPassword) { naamOpen = false; profielOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; bonOpen = false; return show("password"); }
+  // Supabase meldt de sessie opnieuw als de app terug in beeld komt; dan niet wegspringen van naam, profiel, overzicht, aankopen, foto of bon
+  if (naamOpen || profielOpen || lijstenOpen || aankopenOpen || fotoOpen || bonOpen) return;
   if (mijnNaam === null) {
     const { data: profiel, error: profielFout } = await db
       .from("profiles")
@@ -97,8 +112,8 @@ async function route() {
   }
   const fout = await loadLijsten();
   if (mustSetPassword) return show("password");
-  // Terug van de camera komt de sessiemelding vaak net vóór de gekozen foto; dan staat het fotoscherm inmiddels open
-  if (fotoOpen) return;
+  // Terug van de camera komt de sessiemelding vaak net vóór de gekozen foto; dan staat het foto- of bonscherm inmiddels open
+  if (fotoOpen || bonOpen) return;
   if (fout) {
     renderLijsten();
     $("lijsten-leeg").hidden = true; // onbekend of je lijsten hebt, dus niet "nog geen lijsten" tonen
@@ -247,6 +262,7 @@ async function logout() {
   lijstenOpen = false;
   aankopenOpen = false;
   fotoOpen = false;
+  leegStapel();
   lijsten = [];
   leden = [];
   deals = {};
@@ -344,6 +360,7 @@ function sluitLijst() {
   aankopen = null;
   aankopenOpen = false;
   fotoOpen = false;
+  leegStapel();
   verbergOngedaan();
   try { localStorage.removeItem(LIJST_SLEUTEL); } catch {}
 }
@@ -409,10 +426,11 @@ async function openList(list) {
   lijstenOpen = false;
   aankopenOpen = false;
   fotoOpen = false;
+  bonOpen = false;
   if (!lijsten.some((l) => l.id === list.id)) lijsten.push(list);
   try { localStorage.setItem(LIJST_SLEUTEL, list.id); } catch {}
   // Bij wisselen niet kort de items van de vorige lijst laten zien
-  if (gewisseld) { items = []; leden = []; deals = {}; aankopen = null; infoId = null; verbergOngedaan(); say("status", ""); render(); }
+  if (gewisseld) { leegStapel(); items = []; leden = []; deals = {}; aankopen = null; infoId = null; verbergOngedaan(); say("status", ""); render(); }
   $("list-title").textContent = list.name;
   $("invite-code").textContent = list.invite_code;
   show("list");
@@ -570,6 +588,11 @@ function subscribe() {
         if (p.eventType === "INSERT") {
           if (p.new.list_id !== currentList.id) return;
           if (!aankopen.some((a) => a.id === p.new.id)) aankopen.unshift(p.new);
+          // Een aankoop van een bon heeft de bondatum en hoort dus niet altijd bovenaan
+          aankopen.sort((a, b) => new Date(b.bought_at) - new Date(a.bought_at));
+        } else if (p.eventType === "UPDATE") {
+          // Een bestaande aankoop is aan een bon gekoppeld en heeft nu een prijs
+          aankopen = aankopen.map((a) => (a.id === p.new.id ? p.new : a));
         } else if (p.eventType === "DELETE") {
           // Bij verwijderen stuurt de database alleen de id mee
           aankopen = aankopen.filter((a) => a.id !== p.old.id);
@@ -720,14 +743,31 @@ function maakSwipebaar(li, voor, item) {
   voor.addEventListener("pointercancel", (e) => einde(e, true));
 }
 
-// Datum en tijd in gewone taal, bijv. "di 6 oktober om 14:32"
-function datumTijd(iso) {
+// Datum in gewone taal, bijv. "di 6 oktober"
+function datum(iso) {
   const d = new Date(iso);
   const opmaak = { weekday: "short", day: "numeric", month: "long" };
   if (d.getFullYear() !== new Date().getFullYear()) opmaak.year = "numeric";
-  const dag = d.toLocaleDateString("nl-NL", opmaak);
-  const tijd = d.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
-  return `${dag} om ${tijd}`;
+  return d.toLocaleDateString("nl-NL", opmaak);
+}
+
+// Datum en tijd in gewone taal, bijv. "di 6 oktober om 14:32"
+function datumTijd(iso) {
+  const tijd = new Date(iso).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+  return `${datum(iso)} om ${tijd}`;
+}
+
+// Bedrag zoals je het in Nederland schrijft, bijv. "2,49"; leeg als het bedrag onbekend is
+function bedragTekst(bedrag) {
+  return bedrag == null ? "" : Number(bedrag).toFixed(2).replace(".", ",");
+}
+
+// Bedrag uit een invoerveld ("2,49" of "2.49"); null als het leeg is of geen bedrag
+function leesBedrag(tekst) {
+  const t = String(tekst).replace(/[€\s]/g, "").replace(",", ".");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
 }
 
 // Tekst onder een item: door wie en wanneer het is toegevoegd
@@ -830,6 +870,8 @@ function toonAankopen() {
   aankopen = null;
   $("aankopen-lijst").textContent = currentList.name;
   $("aankopen-uitleg").hidden = currentList.counts_for_profile !== false;
+  // Een bon scannen heeft alleen zin bij een lijst die meetelt; de database weigert het anders ook
+  $("bon-knop").hidden = currentList.counts_for_profile === false;
   say("aankopen-msg", "");
   renderAankopen();
   show("aankopen");
@@ -841,7 +883,7 @@ async function loadAankopen() {
   const lijstId = currentList.id;
   const { data, error } = await db
     .from("purchases")
-    .select("id, list_id, name, quantity, bought_by, bought_at")
+    .select("id, list_id, item_id, name, quantity, bought_by, bought_at, receipt_id, receipt_name, price, discount")
     .eq("list_id", lijstId)
     .order("bought_at", { ascending: false })
     .limit(200);
@@ -867,12 +909,24 @@ function aankoopRij(aankoop) {
     q.textContent = aankoop.quantity;
     kop.append(q);
   }
+  // Prijs van de bon: wat er na aftrek van de korting is betaald
+  if (aankoop.price != null) {
+    const prijs = document.createElement("small");
+    prijs.className = "aankoop-prijs";
+    prijs.textContent = "€ " + bedragTekst(aankoop.price - (aankoop.discount || 0));
+    kop.append(prijs);
+  }
 
   // Bij aankopen uit oude afgestreepte items is niet bekend wie het kocht
   const wie = aankoop.bought_by ? ` door ${namen[aankoop.bought_by] || "iemand zonder naam"}` : "";
+  // Een aankoop die alleen van een bon komt heeft geen tijdstip, alleen de datum van de bon
+  const vanBon = aankoop.receipt_id && !aankoop.item_id;
   const p = document.createElement("p");
   p.className = "aankoop-info";
-  p.textContent = `Gekocht${wie} op ${datumTijd(aankoop.bought_at)}`;
+  p.textContent = vanBon
+    ? `Gekocht op ${datum(aankoop.bought_at)}, van de bon`
+    : `Gekocht${wie} op ${datumTijd(aankoop.bought_at)}`;
+  if (aankoop.discount) p.textContent += `, € ${bedragTekst(aankoop.discount)} korting`;
   tekst.append(kop, p);
 
   const del = document.createElement("button");
@@ -941,6 +995,8 @@ async function fotoFout(error) {
     const inhoud = await error.context.json();
     if (inhoud && inhoud.fout) return inhoud.fout;
   } catch {}
+  // Supabase kent de functie niet: hij is nog niet uitgerold (of heet anders)
+  if (error.context && error.context.status === 404) return "Deze functie is nog niet uitgerold in Supabase.";
   return "De foto kon niet worden gelezen. Controleer je verbinding en probeer het opnieuw.";
 }
 
@@ -1042,6 +1098,665 @@ $("foto-toevoegen").addEventListener("click", async () => {
   data.forEach((nieuw) => { if (!items.some((i) => i.id === nieuw.id)) items.push(nieuw); });
   sluitFoto();
   loadDeals();
+});
+
+// ---------- Bon ----------
+// Bonnen die je kiest komen in een stapel (bonStapel) en worden op de achtergrond gelezen. Eén bon opent
+// meteen "Bon controleren"; bij meer bonnen krijg je eerst het overzicht "Bonnen controleren".
+// De stapel bestaat alleen in het geheugen: de bestanden gaan naar de Edge Function en worden nergens bewaard;
+// opslaan gebeurt pas na controle, via save_receipt.
+
+// Bestand klaarmaken om te versturen: een foto wordt verkleind, een pdf (bijv. de digitale bon
+// uit de app van de supermarkt) gaat zoals hij is
+function leesBonBestand(bestand) {
+  if (bestand.type !== "application/pdf") return verkleinFoto(bestand).then((afbeelding) => ({ afbeelding, type: "image/jpeg" }));
+  if (bestand.size > BON_PDF_MAX) return Promise.reject(new Error("Deze pdf is te groot."));
+  return new Promise((klaar, mislukt) => {
+    const lezer = new FileReader();
+    lezer.onload = () => klaar({ afbeelding: lezer.result.split(",")[1], type: "application/pdf" });
+    lezer.onerror = () => mislukt(new Error("Deze pdf kan niet worden geopend."));
+    lezer.readAsDataURL(bestand);
+  });
+}
+
+// Gekozen bestanden op de stapel leggen en beginnen met lezen
+function startStapel(bestanden) {
+  const nieuw = bestanden.slice(0, Math.max(0, BON_MAX - bonStapel.length)).map((bestand) => ({
+    nr: ++bonNr, bestand, bestandsnaam: bestand.name || "Bon", status: "wacht", melding: "",
+    supermarkt: "", datum: "", totaal: "", regels: [],
+    dubbel: false, gecontroleerd: false, controleFout: false, controle: 0, uitkomst: null
+  }));
+  bonStapel.push(...nieuw);
+  if (bonStapel.length === 1) openStapelBon(bonStapel[0]); else toonStapel();
+  if (nieuw.length < bestanden.length) say("stapel-msg", `Je kunt hoogstens ${BON_MAX} bonnen tegelijk controleren. De rest is niet meegenomen.`);
+  leesVolgende();
+}
+
+// Wachtende bonnen laten lezen, hoogstens BON_TEGELIJK tegelijk
+function leesVolgende() {
+  let lopend = bonStapel.filter((b) => b.status === "lezen").length;
+  for (const bon of bonStapel) {
+    if (lopend >= BON_TEGELIJK) break;
+    if (bon.status !== "wacht") continue;
+    lopend++;
+    leesBon(bon);
+  }
+}
+
+// Eén bon uit de stapel (foto of pdf) laten lezen door de Edge Function
+async function leesBon(bon) {
+  const lijstId = currentList.id;
+  const vraag = bonVraag;
+  bon.status = "lezen";
+  bon.melding = "";
+  renderStapel();
+
+  let gelezen = null, melding = "";
+  try {
+    // De foto wordt pas hier verkleind, zodat niet alle bonnen tegelijk in het geheugen staan
+    const { data, error } = await db.functions.invoke("bon-uploaden", { body: await leesBonBestand(bon.bestand) });
+    if (error) melding = await fotoFout(error);
+    else gelezen = (data && data.bon) || { regels: [] };
+  } catch (e) {
+    melding = e.message;
+  }
+  // Stapel intussen leeggemaakt, bon eruit gehaald of van lijst gewisseld? Dan dit antwoord negeren.
+  if (vraag !== bonVraag || !bonStapel.includes(bon) || !currentList || currentList.id !== lijstId) return;
+  if (gelezen && !(gelezen.regels || []).length) { gelezen = null; melding = "Er is geen kassabon gevonden op deze foto."; }
+  if (gelezen) {
+    bon.status = "klaar";
+    bon.bestand = null; // de foto is niet meer nodig
+    bon.supermarkt = gelezen.supermarkt || "";
+    bon.datum = gelezen.datum || "";
+    bon.totaal = bedragTekst(gelezen.totaal);
+    bon.regels = gelezen.regels.map((r) => ({
+      bonNaam: r.bon_naam, naam: r.naam, aantal: r.aantal > 1 ? String(r.aantal) : "",
+      prijs: bedragTekst(r.prijs), korting: r.korting || null,
+      aan: true, koppel: null, koppelAan: true
+    }));
+  } else {
+    // Het bestand blijft staan, zodat "Opnieuw" in het overzicht het nog eens kan proberen
+    bon.status = "fout";
+    bon.melding = melding;
+  }
+  if (bonHuidig === bon && bonOpen) vulBon();
+  renderStapel();
+  leesVolgende();
+  controleerBon(bon);
+}
+
+// Vraagt de database of deze bon al eens is toegevoegd, en welke regels lijken op een aankoop
+// van dezelfde dag. Opnieuw na het wijzigen van supermarkt, datum, totaal of een productnaam,
+// en na het opslaan van een andere bon uit de stapel. Geeft false als de controle is ingehaald of afgebroken.
+async function controleerBon(bon = bonHuidig) {
+  if (!bon || bon.status !== "klaar" || !currentList) return false;
+  const lijstId = currentList.id;
+  const vraag = ++bon.controle;
+  const winkel = bon.supermarkt.trim();
+  let dubbel = false, koppels = [], fout = false;
+  if (bon.datum) {
+    const [bestaat, gevonden] = await Promise.all([
+      winkel
+        ? db.rpc("receipt_exists", { p_list: lijstId, p_store: winkel, p_date: bon.datum, p_total: leesBedrag(bon.totaal) })
+        : { data: false },
+      db.rpc("match_receipt_lines", { p_list: lijstId, p_date: bon.datum, p_names: bon.regels.map((r) => r.naam) })
+    ]);
+    if (vraag !== bon.controle || bon.status !== "klaar" || !bonStapel.includes(bon) || !currentList || currentList.id !== lijstId) return false;
+    fout = Boolean(bestaat.error || gevonden.error);
+    dubbel = !bestaat.error && bestaat.data === true;
+    koppels = gevonden.error ? [] : gevonden.data;
+  }
+  bon.dubbel = dubbel;
+  bon.controleFout = fout;
+  bon.gecontroleerd = true;
+  if (bonHuidig === bon) $("bon-dubbel").hidden = !dubbel;
+  const perRegel = {};
+  koppels.forEach((k) => { perRegel[k.regel - 1] = { id: k.purchase_id, naam: k.name, heeftBon: k.has_receipt }; });
+  // Alleen het regeltje over de koppeling bijwerken: de rij opnieuw opbouwen zou je uit een invoerveld gooien
+  bon.regels.forEach((regel, i) => { regel.koppel = perRegel[i] || null; toonKoppel(regel); });
+  renderStapel();
+  return true;
+}
+
+// Som van de aangevinkte regels, na aftrek van korting
+function bonSom(bon) {
+  return bon.regels
+    .filter((r) => r.aan)
+    .reduce((s, r) => s + (leesBedrag(r.prijs) || 0) - (r.korting || 0), 0);
+}
+
+// Staat dezelfde bon (supermarkt, datum en totaal) al eerder in de stapel?
+function dubbelInStapel(bon) {
+  const winkel = bon.supermarkt.trim().toLowerCase();
+  if (!winkel || !bon.datum) return false;
+  return bonStapel.slice(0, bonStapel.indexOf(bon)).some((b) =>
+    b.status === "klaar" && b.supermarkt.trim().toLowerCase() === winkel && b.datum === bon.datum
+    && leesBedrag(b.totaal) === leesBedrag(bon.totaal));
+}
+
+// Alles wat aan een gelezen bon opvalt en eerst bekeken moet worden; leeg = kan zo worden opgeslagen
+function bonTwijfels(bon) {
+  const twijfels = [];
+  const aan = bon.regels.filter((r) => r.aan);
+  const totaal = leesBedrag(bon.totaal);
+  const vandaag = new Date().toLocaleDateString("sv-SE"); // JJJJ-MM-DD in de eigen tijdzone
+  if (!bon.supermarkt.trim()) twijfels.push("De supermarkt is niet gelezen.");
+  if (!bon.datum) twijfels.push("De datum is niet gelezen.");
+  else if (bon.datum > vandaag) twijfels.push("De datum ligt in de toekomst.");
+  if (totaal === null) twijfels.push(bon.totaal.trim() ? "Het totaal is geen geldig bedrag." : "Het totaal is niet gelezen.");
+  else if (Math.abs(bonSom(bon) - totaal) >= 0.005) twijfels.push(`De regels tellen op tot € ${bedragTekst(bonSom(bon))}, op de bon staat € ${bedragTekst(totaal)}.`);
+  if (aan.length === 0) twijfels.push("Er is geen regel aangevinkt.");
+  const zonderPrijs = aan.filter((r) => leesBedrag(r.prijs) === null).length;
+  if (zonderPrijs) twijfels.push(zonderPrijs === 1 ? "Bij 1 regel ontbreekt de prijs." : `Bij ${zonderPrijs} regels ontbreekt de prijs.`);
+  if (bon.dubbel) twijfels.push("Deze bon lijkt al te zijn toegevoegd.");
+  if (dubbelInStapel(bon)) twijfels.push("Deze bon staat twee keer in deze stapel.");
+  const gekoppeld = aan.filter((r) => r.koppel).length;
+  if (gekoppeld) twijfels.push(gekoppeld === 1 ? "1 regel lijkt op een aankoop van dezelfde dag." : `${gekoppeld} regels lijken op een aankoop van dezelfde dag.`);
+  if (bon.controleFout) twijfels.push("De controle op dubbelingen is niet gelukt.");
+  return twijfels;
+}
+
+// Gelezen, gecontroleerd en niets op aan te merken: mag mee met "Alles zonder bijzonderheden opslaan"
+function zonderTwijfel(bon) {
+  return bon.status === "klaar" && bon.gecontroleerd && bonTwijfels(bon).length === 0;
+}
+
+// Wat er mis is met de invoer van een bon; leeg als hij zo kan worden opgeslagen
+function bonFout(bon) {
+  const gekozen = bon.regels.filter((r) => r.aan && r.naam.trim());
+  if (!bon.supermarkt.trim()) return "Vul de supermarkt in.";
+  if (!bon.datum) return "Vul de datum van de bon in.";
+  if (bon.totaal.trim() && leesBedrag(bon.totaal) === null) return "Het totaal is geen geldig bedrag.";
+  if (gekozen.length === 0) return "Vink minstens één regel aan.";
+  if (gekozen.some((r) => r.prijs.trim() && leesBedrag(r.prijs) === null)) return "Een van de prijzen is geen geldig bedrag.";
+  return "";
+}
+
+// De aangevinkte regels van een bon in één keer opslaan als aankopen, met de bondatum als aankoopdatum.
+// Geeft de foutmelding terug, of "" als het is gelukt.
+async function bewaarBon(bon) {
+  const fout = bonFout(bon);
+  if (fout) return fout;
+  const regels = bon.regels.filter((r) => r.aan && r.naam.trim()).map((r) => ({
+    name: r.naam.trim(), receipt_name: r.bonNaam, quantity: r.aantal.trim() || null,
+    price: leesBedrag(r.prijs), discount: r.korting,
+    purchase_id: r.koppel && r.koppelAan ? r.koppel.id : null
+  }));
+  const { data, error } = await db.rpc("save_receipt", {
+    p_list: currentList.id, p_store: bon.supermarkt.trim(), p_date: bon.datum, p_total: leesBedrag(bon.totaal), p_lines: regels
+  });
+  if (error) return error.message;
+  bon.status = "opgeslagen";
+  bon.uitkomst = data || {};
+  return "";
+}
+
+// Samenvatting van wat er van de opgeslagen bonnen bij de aankopen is gekomen
+function uitkomstTekst(bonnen) {
+  const tel = (veld) => bonnen.reduce((s, b) => s + (b.uitkomst[veld] || 0), 0);
+  const delen = [`${tel("toegevoegd")} toegevoegd`];
+  if (tel("gekoppeld")) delen.push(`${tel("gekoppeld")} gekoppeld aan een bestaande aankoop`);
+  if (tel("overgeslagen")) delen.push(`${tel("overgeslagen")} overgeslagen omdat ze die dag al geteld zijn`);
+  return delen.join(", ");
+}
+
+// ----- Het scherm "Bon controleren" -----
+function openStapelBon(bon) {
+  bonHuidig = bon;
+  bonOpen = true;
+  $("bon-lijst").textContent = currentList.name;
+  $("bon-terug").textContent = bonStapel.length > 1 ? "Terug naar de bonnen" : "Annuleren";
+  $("bon-opslaan").disabled = false;
+  vulBon();
+  show("bon");
+}
+
+// Velden en regels van de open bon op het scherm zetten
+function vulBon() {
+  const bon = bonHuidig;
+  $("bon-supermarkt").value = bon.supermarkt;
+  $("bon-datum").value = bon.datum;
+  $("bon-totaal").value = bon.totaal;
+  $("bon-dubbel").hidden = !bon.dubbel;
+  renderBon();
+  say("bon-msg", bon.status === "klaar" ? "" : bon.status === "fout" ? bon.melding : "Bon wordt gelezen...");
+}
+
+// Regeltje onder een bonregel als het product die dag al bij de aankopen staat
+function toonKoppel(regel) {
+  if (!regel.koppelVak) return;
+  regel.koppelVak.replaceChildren();
+  regel.koppelVak.hidden = !regel.koppel;
+  if (!regel.koppel) return;
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.checked = regel.koppelAan;
+  box.addEventListener("change", () => { regel.koppelAan = box.checked; });
+  const tekst = document.createElement("span");
+  tekst.textContent = regel.koppel.heeftBon
+    ? `Staat die dag al op een andere bon als "${regel.koppel.naam}": telt niet opnieuw`
+    : `Die dag al gekocht als "${regel.koppel.naam}": telt één keer, de prijs komt erbij`;
+  regel.koppelVak.append(box, tekst);
+}
+
+function bonRij(regel) {
+  const li = document.createElement("li");
+  li.className = "bon-rij";
+
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.className = "bon-aan";
+  box.checked = regel.aan;
+  box.setAttribute("aria-label", "Opslaan als aankoop");
+  box.addEventListener("change", () => { regel.aan = box.checked; toonBonSom(); });
+
+  const naam = document.createElement("input");
+  naam.type = "text";
+  naam.value = regel.naam;
+  naam.autocomplete = "off";
+  naam.setAttribute("aria-label", "Product");
+  naam.addEventListener("input", () => { regel.naam = naam.value; });
+  naam.addEventListener("change", () => controleerBon());
+
+  const aantal = document.createElement("input");
+  aantal.type = "text";
+  aantal.className = "bon-aantal";
+  aantal.value = regel.aantal;
+  aantal.placeholder = "1";
+  aantal.autocomplete = "off";
+  aantal.setAttribute("aria-label", "Aantal");
+  aantal.addEventListener("input", () => { regel.aantal = aantal.value; });
+
+  const prijs = document.createElement("input");
+  prijs.type = "text";
+  prijs.className = "bon-prijs";
+  prijs.inputMode = "decimal";
+  prijs.value = regel.prijs;
+  prijs.placeholder = "0,00";
+  prijs.autocomplete = "off";
+  prijs.setAttribute("aria-label", "Prijs");
+  prijs.addEventListener("input", () => { regel.prijs = prijs.value; toonBonSom(); });
+
+  const info = document.createElement("p");
+  info.className = "bon-info";
+  info.textContent = "Op de bon: " + regel.bonNaam + (regel.korting ? `, € ${bedragTekst(regel.korting)} korting` : "");
+
+  // <label>, zodat een tik op de tekst het vinkje omzet
+  regel.koppelVak = document.createElement("label");
+  regel.koppelVak.className = "bon-koppel";
+  toonKoppel(regel);
+
+  li.append(box, naam, aantal, prijs, info, regel.koppelVak);
+  return li;
+}
+
+// Som van de aangevinkte regels naast het totaal van de bon: zo zie je of er iets mist of verkeerd is gelezen
+function toonBonSom() {
+  if (!bonHuidig) return say("bon-som", "");
+  const som = bonSom(bonHuidig);
+  const totaal = leesBedrag(bonHuidig.totaal);
+  let tekst = `Som van de regels: € ${bedragTekst(som)}`;
+  if (totaal !== null) {
+    tekst += `, totaal op de bon: € ${bedragTekst(totaal)}.`;
+    if (Math.abs(som - totaal) >= 0.005) tekst += " Een verschil kan komen door statiegeld of door regels die niet zijn meegenomen.";
+  }
+  say("bon-som", tekst);
+}
+
+function renderBon() {
+  const regels = bonHuidig ? bonHuidig.regels : [];
+  $("bon-regels").replaceChildren(...regels.map(bonRij));
+  $("bon-inhoud").hidden = regels.length === 0;
+  $("bon-opslaan").hidden = regels.length === 0;
+  toonBonSom();
+}
+
+// Weg van "Bon controleren" zonder op te slaan: terug naar het overzicht van de stapel (de wijzigingen
+// blijven daar staan), of bij een losse bon terug naar de aankopen en de bon weggooien
+function sluitBon() {
+  if (bonStapel.length > 1) return toonStapel();
+  rondStapelAf();
+}
+
+$("bon-knop").addEventListener("click", () => $("bon-invoer").click());
+$("bon-invoer").addEventListener("change", () => {
+  const bestanden = [...$("bon-invoer").files];
+  $("bon-invoer").value = ""; // zodat dezelfde foto daarna opnieuw gekozen kan worden
+  if (bestanden.length && currentList) startStapel(bestanden);
+});
+$("bon-terug").addEventListener("click", sluitBon);
+// De kopvelden schrijven hun waarde meteen in de open bon, zodat die bewaard blijft in de stapel
+[["bon-supermarkt", "supermarkt"], ["bon-datum", "datum"], ["bon-totaal", "totaal"]].forEach(([id, veld]) => {
+  $(id).addEventListener("input", () => { if (bonHuidig) bonHuidig[veld] = $(id).value; });
+  $(id).addEventListener("change", () => {
+    if (bonHuidig) bonHuidig[veld] = $(id).value;
+    toonBonSom();
+    controleerBon();
+  });
+});
+
+$("bon-opslaan").addEventListener("click", async () => {
+  const bon = bonHuidig;
+  if (!bon || bon.status !== "klaar") return;
+  const lijstId = currentList.id;
+  const fout = bonFout(bon);
+  if (fout) return say("bon-msg", fout);
+  if (bon.dubbel && !confirm("Deze bon lijkt al te zijn toegevoegd. Toch opslaan?")) return;
+
+  say("bon-msg", "Bezig...");
+  $("bon-opslaan").disabled = true;
+  const melding = await bewaarBon(bon);
+  if (bonHuidig !== bon || !currentList || currentList.id !== lijstId) return;
+  $("bon-opslaan").disabled = false;
+  if (melding) return say("bon-msg", melding);
+  naOpslaan();
+});
+
+// ----- Het overzicht "Bonnen controleren" -----
+function toonStapel() {
+  bonHuidig = null;
+  bonOpen = false;
+  $("stapel-lijst").textContent = currentList.name;
+  say("stapel-msg", "");
+  renderStapel();
+  show("stapel");
+}
+
+// Na het opslaan van één of meer bonnen: klaar als alles is opgeslagen, anders verder met de rest.
+// Die wordt opnieuw gecontroleerd, want een net opgeslagen bon kan een andere dubbel hebben gemaakt.
+function naOpslaan() {
+  if (bonStapel.every((b) => b.status === "opgeslagen")) return rondStapelAf();
+  toonStapel();
+  bonStapel.forEach((b) => controleerBon(b));
+}
+
+// Stapel leegmaken en terug naar de aankopen, met een samenvatting van wat er is opgeslagen
+function rondStapelAf() {
+  const klaar = bonStapel.filter((b) => b.status === "opgeslagen");
+  const tekst = klaar.length
+    ? (klaar.length === 1 ? "Bon verwerkt: " : `${klaar.length} bonnen verwerkt: `) + uitkomstTekst(klaar) + "."
+    : "";
+  leegStapel();
+  renderAankopen();
+  show("aankopen");
+  say("aankopen-msg", tekst);
+  loadAankopen();
+}
+
+// De stapel weggooien; antwoorden van bonnen die nog gelezen worden, worden daarna genegeerd
+function leegStapel() {
+  bonStapel = [];
+  bonHuidig = null;
+  bonOpen = false;
+  stapelBezig = false;
+  bonVraag++;
+  renderStapel();
+}
+
+function stapelRij(bon) {
+  const li = document.createElement("li");
+  li.className = "stapel-rij";
+  const gelezen = bon.status === "klaar" || bon.status === "opgeslagen";
+
+  // Alleen een gelezen bon die nog niet is opgeslagen kun je openen
+  const knop = document.createElement(bon.status === "klaar" ? "button" : "div");
+  knop.className = "bonnen-open";
+  if (bon.status === "klaar") {
+    knop.type = "button";
+    knop.disabled = stapelBezig;
+    knop.addEventListener("click", () => openStapelBon(bon));
+  }
+  const kop = document.createElement("div");
+  kop.className = "bonnen-kop";
+  const winkel = document.createElement("span");
+  winkel.textContent = gelezen ? bon.supermarkt.trim() || "Onbekende supermarkt" : bon.bestandsnaam;
+  kop.append(winkel);
+  if (gelezen && leesBedrag(bon.totaal) !== null) {
+    const totaal = document.createElement("small");
+    totaal.textContent = "€ " + bedragTekst(leesBedrag(bon.totaal));
+    kop.append(totaal);
+  }
+  const info = document.createElement("p");
+  info.className = "bonnen-info";
+  if (bon.status === "wacht") info.textContent = "Wacht op lezen";
+  else if (bon.status === "lezen") info.textContent = "Wordt gelezen...";
+  else if (bon.status === "fout") info.textContent = bon.melding || "De bon kon niet worden gelezen.";
+  else {
+    const aantal = bon.regels.filter((r) => r.aan).length;
+    info.textContent = (bon.datum ? datum(bon.datum) : "Geen datum") + `, ${aantal} ${aantal === 1 ? "regel" : "regels"}`;
+  }
+  knop.append(kop, info);
+  li.append(knop);
+
+  if (bon.status === "fout") {
+    const opnieuw = document.createElement("button");
+    opnieuw.type = "button";
+    opnieuw.className = "link";
+    opnieuw.textContent = "Opnieuw";
+    opnieuw.disabled = stapelBezig;
+    opnieuw.addEventListener("click", () => { bon.status = "wacht"; renderStapel(); leesVolgende(); });
+    li.append(opnieuw);
+  }
+  if (bon.status !== "opgeslagen") {
+    const del = document.createElement("button");
+    del.className = "del";
+    del.textContent = "×";
+    del.disabled = stapelBezig;
+    del.setAttribute("aria-label", "Bon uit de stapel halen");
+    del.addEventListener("click", () => {
+      bonStapel = bonStapel.filter((b) => b !== bon);
+      if (bonStapel.length === 0 || bonStapel.every((b) => b.status === "opgeslagen")) return rondStapelAf();
+      renderStapel();
+      leesVolgende();
+    });
+    li.append(del);
+  }
+
+  if (bon.status === "opgeslagen") {
+    const p = document.createElement("p");
+    p.className = "stapel-goed";
+    p.textContent = "Opgeslagen: " + uitkomstTekst([bon]) + ".";
+    li.append(p);
+  } else if (bon.status === "klaar") {
+    const twijfels = bon.gecontroleerd ? bonTwijfels(bon) : [];
+    if (twijfels.length) {
+      const vak = document.createElement("div");
+      vak.className = "waarschuwing stapel-twijfels";
+      vak.append(...twijfels.map((t) => { const p = document.createElement("p"); p.textContent = t; return p; }));
+      li.append(vak);
+    } else {
+      const p = document.createElement("p");
+      p.className = "stapel-goed";
+      p.textContent = bon.gecontroleerd ? "Geen bijzonderheden" : "Wordt gecontroleerd...";
+      li.append(p);
+    }
+  }
+  return li;
+}
+
+// Overzicht van de stapel, plus de knop bij de aankopen waarmee je er weer naartoe kunt
+function renderStapel() {
+  $("stapel").replaceChildren(...bonStapel.map(stapelRij));
+  const open = bonStapel.filter((b) => b.status !== "opgeslagen").length;
+  const goed = bonStapel.filter(zonderTwijfel).length;
+  $("stapel-opslaan").hidden = goed === 0;
+  $("stapel-opslaan").disabled = stapelBezig;
+  $("stapel-opslaan").textContent = stapelBezig ? "Bezig..." : `Alles zonder bijzonderheden opslaan (${goed})`;
+  $("stapel-terug").disabled = stapelBezig;
+  $("stapel-leeg").disabled = stapelBezig;
+  $("stapel-knop").hidden = open === 0;
+  $("stapel-knop").textContent = `Bonnen controleren (${open})`;
+}
+
+// Alle bonnen zonder bijzonderheden één voor één opslaan
+$("stapel-opslaan").addEventListener("click", async () => {
+  if (stapelBezig || !currentList) return;
+  const lijstId = currentList.id;
+  const vraag = bonVraag;
+  const weg = () => vraag !== bonVraag || !currentList || currentList.id !== lijstId;
+  stapelBezig = true;
+  say("stapel-msg", "");
+  renderStapel();
+  let melding = "", opgeslagen = 0;
+  for (const bon of [...bonStapel]) {
+    if (!zonderTwijfel(bon)) continue;
+    // Vlak voor het opslaan opnieuw controleren: een bon die net is opgeslagen kan deze dubbel hebben gemaakt
+    const gecontroleerd = await controleerBon(bon);
+    if (weg()) return;
+    if (!gecontroleerd || !zonderTwijfel(bon)) continue;
+    melding = await bewaarBon(bon);
+    if (weg()) return;
+    if (melding) break;
+    opgeslagen++;
+  }
+  stapelBezig = false;
+  naOpslaan();
+  if (bonStapel.length) say("stapel-msg", melding || `${opgeslagen} ${opgeslagen === 1 ? "bon" : "bonnen"} opgeslagen. De rest heeft nog een controle nodig.`);
+});
+$("stapel-knop").addEventListener("click", toonStapel);
+// Terug naar de aankopen; de stapel blijft staan en het lezen loopt door
+$("stapel-terug").addEventListener("click", () => {
+  renderAankopen();
+  show("aankopen");
+  loadAankopen();
+});
+$("stapel-leeg").addEventListener("click", () => {
+  const open = bonStapel.filter((b) => b.status !== "opgeslagen").length;
+  if (open && !confirm(open === 1 ? "Er staat nog 1 bon die niet is opgeslagen. Weggooien?" : `Er staan nog ${open} bonnen die niet zijn opgeslagen. Weggooien?`)) return;
+  rondStapelAf();
+});
+
+// ---------- Bonnen ----------
+// Overzicht van de gescande bonnen van deze lijst. Het scherm hoort bij de aankopen:
+// aankopenOpen blijft aan, zodat route() er niet van wegspringt.
+function toonBonnen() {
+  bonnen = null;
+  bonInzien = null;
+  bonInhoud = {};
+  $("bonnen-lijst").textContent = currentList.name;
+  say("bonnen-msg", "");
+  renderBonnen();
+  show("bonnen");
+  loadBonnen();
+}
+
+async function loadBonnen() {
+  if (!currentList) return;
+  const lijstId = currentList.id;
+  const { data, error } = await db
+    .from("receipts")
+    .select("id, list_id, store, receipt_date, total, added_by")
+    .eq("list_id", lijstId)
+    .order("receipt_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (!currentList || currentList.id !== lijstId) return;
+  if (error) return say("bonnen-msg", error.message);
+  bonnen = data;
+  renderBonnen();
+}
+
+// De aankopen die bij een bon horen; pas ophalen als je de bon openklapt
+async function loadBonInhoud(bon) {
+  const { data, error } = await db
+    .from("purchases")
+    .select("id, name, quantity, receipt_name, price, discount")
+    .eq("receipt_id", bon.id)
+    .order("name", { ascending: true });
+  if (!currentList || currentList.id !== bon.list_id) return;
+  if (error) return say("bonnen-msg", error.message);
+  bonInhoud[bon.id] = data;
+  renderBonnen();
+}
+
+function bonnenRij(bon) {
+  const li = document.createElement("li");
+  const open = bonInzien === bon.id;
+
+  const knop = document.createElement("button");
+  knop.type = "button";
+  knop.className = "bonnen-open";
+  knop.setAttribute("aria-expanded", open);
+  const kop = document.createElement("div");
+  kop.className = "bonnen-kop";
+  const winkel = document.createElement("span");
+  winkel.textContent = bon.store;
+  kop.append(winkel);
+  if (bon.total != null) {
+    const totaal = document.createElement("small");
+    totaal.textContent = "€ " + bedragTekst(bon.total);
+    kop.append(totaal);
+  }
+  const info = document.createElement("p");
+  info.className = "bonnen-info";
+  info.textContent = datum(bon.receipt_date) + (bon.added_by ? `, toegevoegd door ${namen[bon.added_by] || "iemand zonder naam"}` : "");
+  knop.append(kop, info);
+  knop.addEventListener("click", () => {
+    bonInzien = open ? null : bon.id;
+    renderBonnen();
+    if (!open) loadBonInhoud(bon);
+  });
+
+  const del = document.createElement("button");
+  del.className = "del";
+  del.textContent = "×";
+  del.setAttribute("aria-label", "Bon verwijderen");
+  del.addEventListener("click", () => verwijderBon(bon));
+
+  li.append(knop, del);
+  if (!open) return li;
+
+  const regels = document.createElement("div");
+  regels.className = "bonnen-regels";
+  const inhoud = bonInhoud[bon.id];
+  if (!inhoud || inhoud.length === 0) {
+    const p = document.createElement("p");
+    p.textContent = inhoud ? "Van deze bon staan geen aankopen meer in de lijst." : "Bezig...";
+    regels.append(p);
+  } else {
+    regels.append(...inhoud.map((a) => {
+      const rij = document.createElement("div");
+      rij.className = "bonnen-regel";
+      const naam = document.createElement("span");
+      naam.textContent = a.name + (a.quantity ? ` (${a.quantity})` : "");
+      if (a.receipt_name) naam.title = a.receipt_name; // de tekst zoals die op de bon stond
+      rij.append(naam);
+      if (a.price != null) {
+        const prijs = document.createElement("small");
+        prijs.textContent = "€ " + bedragTekst(a.price - (a.discount || 0));
+        rij.append(prijs);
+      }
+      return rij;
+    }));
+  }
+  li.append(regels);
+  return li;
+}
+
+function renderBonnen() {
+  $("bonnen").replaceChildren(...(bonnen || []).map(bonnenRij));
+  $("bonnen-uitleg").hidden = !bonnen || bonnen.length === 0;
+  $("bonnen-leeg").hidden = !bonnen || bonnen.length > 0;
+}
+
+// Bon weghalen. De database haalt ook de aankopen weg die alleen van deze bon kwamen; een aankoop
+// die al via de lijst als gekocht was gemarkeerd blijft staan en raakt alleen de bongegevens kwijt.
+async function verwijderBon(bon) {
+  if (!confirm(`Bon van ${bon.store} van ${datum(bon.receipt_date)} verwijderen? De aankopen van deze bon verdwijnen ook. Wat je al op de lijst als gekocht had gemarkeerd blijft staan, zonder prijs.`)) return;
+  say("bonnen-msg", "");
+  const { error } = await db.rpc("delete_receipt", { p_receipt: bon.id });
+  if (!currentList || currentList.id !== bon.list_id) return;
+  if (error) { say("bonnen-msg", error.message); return loadBonnen(); }
+  bonnen = (bonnen || []).filter((b) => b.id !== bon.id);
+  if (bonInzien === bon.id) bonInzien = null;
+  renderBonnen();
+}
+
+$("bonnen-knop").addEventListener("click", toonBonnen);
+$("bonnen-terug").addEventListener("click", () => {
+  renderAankopen();
+  show("aankopen");
+  loadAankopen();
 });
 
 // ---------- PWA ----------

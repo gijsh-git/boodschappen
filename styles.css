@@ -35,7 +35,7 @@ small { color: var(--grijs); }
 
 /* ---------- Formulieren en knoppen ---------- */
 form { display: flex; gap: 8px; margin: 12px 0; }
-input[type=text], input[type=email], input[type=password] {
+input[type=text], input[type=email], input[type=password], input[type=date] {
   flex: 1; min-width: 0; padding: 14px; font: inherit;
   border: 1.5px solid var(--rand); border-radius: 14px; background: var(--vlak); color: var(--tekst);
 }
@@ -222,12 +222,64 @@ button.koop {
 .aankoop-kop { display: flex; align-items: baseline; gap: 12px; }
 .aankoop-kop span { flex: 1; min-width: 0; }
 .aankoop-info { margin: 2px 0 0; color: var(--grijs); font-size: 0.9rem; }
+.aankoop-kop .aankoop-prijs { color: var(--tekst); font-weight: 700; }
 
 /* ---------- Foto controleren ---------- */
 .foto-rij { flex-wrap: nowrap; gap: 8px; padding: 8px 8px 8px 0; }
 .foto-rij input[type=checkbox] { flex: none; width: 24px; height: 24px; margin: 0 4px 0 0; accent-color: var(--oranje); }
 .foto-rij input[type=text] { padding: 10px 12px; }
 .foto-rij:has(input[type=checkbox]:not(:checked)) input[type=text] { opacity: 0.5; }
+
+/* ---------- Bon controleren ---------- */
+.bon-kop { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.bon-kop label { color: var(--grijs); font-weight: 700; font-size: 0.95rem; }
+.bon-kop input { width: 100%; padding: 10px 12px; }
+.waarschuwing {
+  margin: 0 0 12px; padding: 12px 14px; border: 1.5px solid var(--rood); border-radius: 14px;
+  background: var(--vlak); color: var(--tekst); font-size: 0.95rem;
+}
+.bon-rij { gap: 8px; padding: 8px 8px 8px 0; }
+.bon-rij input[type=checkbox] { flex: none; width: 24px; height: 24px; margin: 0 4px 0 0; accent-color: var(--oranje); }
+.bon-rij input[type=text] { padding: 10px 12px; }
+.bon-rij input.bon-aantal { flex: 0 0 56px; }
+.bon-rij input.bon-prijs { flex: 0 0 78px; text-align: right; }
+.bon-rij:has(.bon-aan:not(:checked)) input[type=text] { opacity: 0.5; }
+/* Onder de velden: de naam op de bon, de korting en een eventuele koppeling met een bestaande aankoop */
+.bon-info { flex-basis: 100%; margin: 0; padding-left: 36px; color: var(--grijs); font-size: 0.85rem; overflow-wrap: anywhere; }
+.bon-koppel {
+  flex: 0 0 100%; display: flex; align-items: center; gap: 8px; padding: 0 0 4px 36px;
+  color: var(--oranje-tekst); font-size: 0.9rem; cursor: pointer;
+}
+.bon-rij .bon-koppel input[type=checkbox] { width: 20px; height: 20px; margin: 0; }
+.bon-som { margin-top: 10px; }
+
+/* ---------- Bonnen controleren (stapel) ---------- */
+#stapel-knop { display: block; margin: 0 0 8px; }
+.stapel-rij div.bonnen-open { color: var(--grijs); }
+/* Onder de bon: wat eraan opvalt, of dat er niets bijzonders is */
+.stapel-twijfels { flex-basis: 100%; margin: 0 8px 12px 0; }
+.stapel-twijfels p { margin: 0; }
+.stapel-goed { flex-basis: 100%; margin: -6px 0 12px; color: var(--grijs); font-size: 0.9rem; }
+
+/* ---------- Gescande bonnen ---------- */
+/* Balk boven de aankopen: "Bon scannen" links, "Gescande bonnen" rechts op dezelfde hoogte */
+.bon-balk { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 16px; margin-bottom: 8px; }
+.bon-balk .foto-knop { margin: 0; }
+/* Blijft rechts staan, ook als "Bon scannen" verborgen is */
+.bon-balk #bonnen-knop { margin-left: auto; }
+.bonnen-open {
+  flex: 1; min-width: 0; padding: 12px 0; background: none; color: var(--tekst);
+  font-weight: 400; text-align: left; border-radius: 0;
+}
+.bonnen-kop { display: flex; align-items: baseline; gap: 12px; font-weight: 700; }
+.bonnen-kop span { flex: 1; min-width: 0; }
+.bonnen-open[aria-expanded=true] .bonnen-kop span { color: var(--oranje-tekst); }
+.bonnen-info { margin: 2px 0 0; color: var(--grijs); font-size: 0.9rem; }
+/* De regels van de bon, zichtbaar als je de bon openklapt */
+.bonnen-regels { flex-basis: 100%; padding: 0 8px 12px 0; font-size: 0.95rem; }
+.bonnen-regels p { margin: 0; color: var(--grijs); }
+.bonnen-regel { display: flex; align-items: baseline; gap: 12px; padding: 6px 0; border-top: 1px solid var(--rand); }
+.bonnen-regel span { flex: 1; min-width: 0; }
 
 /* ---------- Overzicht van lijsten ---------- */
 .lijst-rij .lijst-naam {

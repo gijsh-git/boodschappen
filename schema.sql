@@ -243,3 +243,161 @@ begin
 end $$;
 
 alter publication supabase_realtime add table public.purchases;
+
+-- ---------- Kassabonnen ----------
+-- Een gescande kassabon. De regels van de bon staan als aankopen in purchases (receipt_id);
+-- deze tabel is er om dubbele bonnen te herkennen (zelfde supermarkt, datum en totaal).
+-- De foto zelf wordt nergens bewaard.
+create table public.receipts (
+  id uuid primary key default gen_random_uuid(),
+  list_id uuid not null references public.lists(id) on delete cascade,
+  store text not null,
+  receipt_date date not null,
+  total numeric(8,2),
+  added_by uuid default auth.uid(),
+  created_at timestamptz not null default now()
+);
+
+create index receipts_list_idx on public.receipts(list_id, receipt_date);
+
+alter table public.receipts enable row level security;
+
+-- Leden mogen lezen; schrijven kan alleen via save_receipt
+revoke all on public.receipts from anon, authenticated;
+grant select on public.receipts to authenticated;
+create policy "leden zien bonnen" on public.receipts for select using (public.is_member(list_id));
+
+-- Bongegevens bij een aankoop: van welke bon, de naam zoals op de bon, regelprijs en korting
+alter table public.purchases
+  add column receipt_id uuid references public.receipts(id) on delete set null,
+  add column receipt_name text,
+  add column price numeric(8,2),
+  add column discount numeric(8,2);
+
+create index purchases_receipt_idx on public.purchases(receipt_id);
+
+-- Is deze bon al eens toegevoegd? Een bon waarvan alle aankopen weer zijn verwijderd telt niet mee.
+create or replace function public.receipt_exists(p_list uuid, p_store text, p_date date, p_total numeric)
+returns boolean language sql stable security invoker set search_path = public as $$
+  select exists (
+    select 1 from public.receipts r
+    where r.list_id = p_list
+      and lower(r.store) = lower(trim(p_store))
+      and r.receipt_date = p_date
+      and r.total is not distinct from p_total
+      and exists (select 1 from public.purchases a where a.receipt_id = r.id)
+  );
+$$;
+
+-- Per bonregel (volgnummer in p_names, vanaf 1): de aankoop van dezelfde dag die er het meest op lijkt.
+-- Zo telt een product dat al via de lijst als gekocht is gemarkeerd niet dubbel.
+-- has_receipt: die aankoop heeft al bongegevens (van een andere bon op dezelfde dag).
+-- security invoker: de RLS op purchases zorgt dat je alleen je eigen lijsten kunt opvragen.
+create or replace function public.match_receipt_lines(p_list uuid, p_date date, p_names text[])
+returns table (regel integer, purchase_id uuid, name text, has_receipt boolean)
+language sql stable security invoker set search_path = public, extensions as $$
+  with kandidaten as (
+    select n.regel::integer as regel, a.id, a.name, a.receipt_id is not null as has_receipt,
+           -- in beide richtingen: "kaas" op de lijst past in "jong belegen kaas plakken" op de bon, en andersom
+           greatest(strict_word_similarity(a.normalized_name, lower(trim(n.naam))),
+                    strict_word_similarity(lower(trim(n.naam)), a.normalized_name)) as score
+    from unnest(p_names) with ordinality as n(naam, regel)
+    join public.purchases a
+      on a.list_id = p_list
+     and (a.bought_at at time zone 'Europe/Amsterdam')::date = p_date
+  ),
+  -- GEVOELIGHEID: dezelfde drempel als bij de aanbiedingen (deals_for_list)
+  per_regel as (
+    select distinct on (k.regel) k.* from kandidaten k where k.score >= 0.5 order by k.regel, k.score desc
+  )
+  -- een aankoop hoort bij hoogstens één bonregel: de best passende
+  select distinct on (p.id) p.regel, p.id, p.name, p.has_receipt from per_regel p order by p.id, p.score desc;
+$$;
+
+-- Bon opslaan: de regels worden aankopen met de bondatum als aankoopdatum. Alles in één keer.
+-- p_lines: [{ name, receipt_name, quantity, price, discount, purchase_id }]
+-- Een product telt per dag één keer:
+--   - met purchase_id: de bestaande aankoop van die dag krijgt de bongegevens erbij (geen nieuwe rij);
+--     heeft die al bongegevens, dan wordt de regel overgeslagen
+--   - zonder purchase_id: nieuwe aankoop, behalve als er die dag al een met exact dezelfde naam is
+-- Geeft terug hoeveel regels zijn toegevoegd, gekoppeld en overgeslagen.
+create or replace function public.save_receipt(p_list uuid, p_store text, p_date date, p_total numeric, p_lines jsonb)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_bon uuid;
+  r jsonb;
+  v_naam text;
+  v_koppel uuid;
+  v_toegevoegd integer := 0;
+  v_gekoppeld integer := 0;
+  v_overgeslagen integer := 0;
+begin
+  if not public.is_member(p_list) then raise exception 'Geen lid van deze lijst'; end if;
+  if not exists (select 1 from public.lists where id = p_list and counts_for_profile) then
+    raise exception 'Deze lijst telt niet mee voor het aankoopprofiel';
+  end if;
+  if nullif(trim(p_store), '') is null then raise exception 'Vul de supermarkt in'; end if;
+  if p_date is null then raise exception 'Vul de datum van de bon in'; end if;
+  if p_date > (now() at time zone 'Europe/Amsterdam')::date then
+    raise exception 'De datum van de bon ligt in de toekomst';
+  end if;
+  if p_lines is null or jsonb_typeof(p_lines) <> 'array' or jsonb_array_length(p_lines) not between 1 and 200 then
+    raise exception 'Een bon heeft 1 tot 200 regels';
+  end if;
+
+  insert into public.receipts (list_id, store, receipt_date, total, added_by)
+  values (p_list, trim(p_store), p_date, p_total, auth.uid())
+  returning id into v_bon;
+
+  for r in select * from jsonb_array_elements(p_lines) loop
+    v_naam := trim(r->>'name');
+    if v_naam is null or v_naam = '' then continue; end if;
+    v_koppel := nullif(r->>'purchase_id', '')::uuid;
+
+    if v_koppel is not null then
+      update public.purchases
+        set receipt_id = v_bon,
+            receipt_name = nullif(trim(r->>'receipt_name'), ''),
+            price = (r->>'price')::numeric,
+            discount = (r->>'discount')::numeric,
+            quantity = coalesce(quantity, nullif(trim(r->>'quantity'), ''))
+        where id = v_koppel and list_id = p_list and receipt_id is null
+          and (bought_at at time zone 'Europe/Amsterdam')::date = p_date;
+      if found then v_gekoppeld := v_gekoppeld + 1; else v_overgeslagen := v_overgeslagen + 1; end if;
+    elsif exists (
+      select 1 from public.purchases
+      where list_id = p_list and normalized_name = lower(v_naam)
+        and (bought_at at time zone 'Europe/Amsterdam')::date = p_date
+    ) then
+      v_overgeslagen := v_overgeslagen + 1;
+    else
+      -- geen tijd op de bon: midden op de dag, zodat de datum in elke tijdzone klopt
+      insert into public.purchases (list_id, name, quantity, bought_by, bought_at, receipt_id, receipt_name, price, discount)
+      values (p_list, v_naam, nullif(trim(r->>'quantity'), ''), auth.uid(),
+              (p_date + time '12:00') at time zone 'Europe/Amsterdam',
+              v_bon, nullif(trim(r->>'receipt_name'), ''), (r->>'price')::numeric, (r->>'discount')::numeric);
+      v_toegevoegd := v_toegevoegd + 1;
+    end if;
+  end loop;
+
+  -- Niets toegevoegd of gekoppeld: dan ook geen lege bon bewaren
+  if v_toegevoegd + v_gekoppeld = 0 then delete from public.receipts where id = v_bon; end if;
+
+  return jsonb_build_object('toegevoegd', v_toegevoegd, 'gekoppeld', v_gekoppeld, 'overgeslagen', v_overgeslagen);
+end $$;
+
+-- Bon verwijderen (alleen leden van de lijst). Aankopen die alleen van deze bon kwamen (geen item
+-- van de lijst) gaan mee weg; een aankoop die al via de lijst als gekocht was gemarkeerd blijft
+-- staan en raakt alleen de bongegevens kwijt.
+create or replace function public.delete_receipt(p_receipt uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from public.receipts where id = p_receipt and public.is_member(list_id)) then
+    raise exception 'Bon niet gevonden';
+  end if;
+  delete from public.purchases where receipt_id = p_receipt and item_id is null;
+  update public.purchases
+    set receipt_id = null, receipt_name = null, price = null, discount = null
+    where receipt_id = p_receipt;
+  delete from public.receipts where id = p_receipt;
+end $$;

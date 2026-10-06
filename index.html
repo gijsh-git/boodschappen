@@ -307,6 +307,14 @@
       </header>
       <div class="content">
         <p id="aankopen-uitleg" class="uitleg" hidden>Deze lijst telt niet mee voor het aankoopprofiel. Wat je hier als gekocht markeert, wordt niet bewaard.</p>
+        <!-- Links een kassabon fotograferen of als pdf kiezen (alleen bij lijsten die meetellen), rechts de gescande bonnen -->
+        <div class="bon-balk">
+          <button type="button" id="bon-knop" class="link foto-knop"><svg width="20" height="20" aria-hidden="true"><use href="#icon-camera"/></svg>Bon scannen</button>
+          <button type="button" id="bonnen-knop" class="link foto-knop"><svg width="20" height="20" aria-hidden="true"><use href="#icon-lijst"/></svg>Gescande bonnen</button>
+        </div>
+        <input type="file" id="bon-invoer" accept="image/*,application/pdf" multiple hidden>
+        <!-- Zichtbaar zolang er gekozen bonnen klaarstaan die nog niet zijn opgeslagen -->
+        <button type="button" id="stapel-knop" class="link" hidden>Bonnen controleren</button>
         <ul id="aankopen"></ul>
         <p id="aankopen-leeg" class="uitleg" hidden>Nog geen aankopen in deze lijst.</p>
         <p id="aankopen-msg" class="msg" role="status"></p>
@@ -331,6 +339,80 @@
         <div class="actions">
           <button type="button" id="foto-toevoegen" hidden>Toevoegen aan lijst</button>
           <button type="button" id="foto-terug" class="link">Annuleren</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gescande bonnen van de huidige lijst: inzien en verwijderen -->
+    <section id="view-bonnen" hidden>
+      <header class="top">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
+        <h1>Bonnen</h1>
+        <small id="bonnen-lijst"></small>
+      </header>
+      <div class="content">
+        <p id="bonnen-uitleg" class="uitleg" hidden>Tik op een bon om te zien wat ervan is opgeslagen. De foto zelf wordt niet bewaard.</p>
+        <ul id="bonnen"></ul>
+        <p id="bonnen-leeg" class="uitleg" hidden>Nog geen bonnen gescand voor deze lijst.</p>
+        <p id="bonnen-msg" class="msg" role="status"></p>
+        <button type="button" id="bonnen-terug" class="link">Terug naar aankopen</button>
+      </div>
+    </section>
+
+    <!-- Meerdere gekozen kassabonnen: per bon de stand en wat eraan opvalt -->
+    <section id="view-stapel" hidden>
+      <header class="top">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
+        <h1>Bonnen controleren</h1>
+        <small id="stapel-lijst"></small>
+      </header>
+      <div class="content">
+        <p class="uitleg">Tik op een bon om hem na te lopen en op te slaan. Bonnen zonder bijzonderheden kun je in één keer opslaan. De bonnen staan alleen hier klaar: sluit of ververs de app niet voordat je ze hebt opgeslagen.</p>
+        <ul id="stapel"></ul>
+        <p id="stapel-msg" class="msg" role="status"></p>
+        <div class="actions">
+          <button type="button" id="stapel-opslaan" hidden>Alles zonder bijzonderheden opslaan</button>
+          <button type="button" id="stapel-terug" class="link">Terug naar aankopen</button>
+          <button type="button" id="stapel-leeg" class="link">Stapel weggooien</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Regels van een kassabon controleren voordat ze als aankopen worden opgeslagen -->
+    <section id="view-bon" hidden>
+      <header class="top">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
+        <h1>Bon controleren</h1>
+        <small id="bon-lijst"></small>
+      </header>
+      <div class="content">
+        <div id="bon-inhoud" hidden>
+          <div class="bon-kop">
+            <label for="bon-supermarkt">Supermarkt</label>
+            <input id="bon-supermarkt" type="text" placeholder="Bijv. AH" autocomplete="off">
+            <label for="bon-datum">Datum van de bon</label>
+            <input id="bon-datum" type="date">
+            <label for="bon-totaal">Totaal</label>
+            <input id="bon-totaal" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off">
+          </div>
+          <p id="bon-dubbel" class="waarschuwing" role="status" hidden>Deze bon lijkt al te zijn toegevoegd: er is al een bon van dezelfde supermarkt, met dezelfde datum en hetzelfde totaal.</p>
+          <p class="uitleg">Vink uit wat niet bij de aankopen hoort en pas namen, aantallen of prijzen aan. De datum van de bon wordt de aankoopdatum.</p>
+          <ul id="bon-regels"></ul>
+          <p id="bon-som" class="uitleg bon-som"></p>
+        </div>
+        <p id="bon-msg" class="msg" role="status"></p>
+        <div class="actions">
+          <button type="button" id="bon-opslaan" hidden>Opslaan als aankopen</button>
+          <button type="button" id="bon-terug" class="link">Annuleren</button>
         </div>
       </div>
     </section>
