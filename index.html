@@ -56,6 +56,25 @@
     <symbol id="icon-vinkje" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
       <path d="M5 12.5l4.5 4.5L19 7.5"/>
     </symbol>
+    <symbol id="icon-terug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 18l-6-6 6-6"/>
+    </symbol>
+    <symbol id="icon-verder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18l6-6-6-6"/>
+    </symbol>
+    <symbol id="icon-uitloggen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+    </symbol>
+    <symbol id="icon-omlaag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 9l6 6 6-6"/>
+    </symbol>
+    <symbol id="icon-uitnodigen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="10" cy="8" r="4"/>
+      <path d="M3 20.500c1-3.600 3.700-5.500 7-5.500 1.500 0 2.900.400 4 1.100M19 14v6M16 17h6"/>
+    </symbol>
+    <symbol id="icon-herhaal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 1 0 3-6.700L3 8M3 3v5h5"/>
+    </symbol>
   </svg>
 
   <main id="app">
@@ -177,77 +196,92 @@
       </div>
     </section>
 
-    <!-- Profiel: je naam (potloodje om te wijzigen) en uitloggen -->
+    <!-- Profiel: wie je bent, het aankoopprofiel van het huishouden en je account -->
     <section id="view-profiel" hidden>
-      <header class="top">
+      <header class="top profiel-top">
         <div class="brand">
           <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
           <span class="brand-name">BonusBuddy</span>
         </div>
-        <h1>Profiel</h1>
+        <div class="profiel-kaart">
+          <span id="profiel-avatar" class="avatar" aria-hidden="true"></span>
+          <div class="profiel-wie">
+            <h1 id="profiel-naam"></h1>
+            <span id="profiel-email"></span>
+          </div>
+          <button type="button" id="naam-wijzigen" class="top-knop" aria-label="Naam wijzigen"><svg width="18" height="18"><use href="#icon-potlood"/></svg></button>
+        </div>
       </header>
       <div class="content">
-        <h2>Naam</h2>
-        <p class="profiel-waarde">
-          <span id="profiel-naam"></span>
-          <button type="button" id="naam-wijzigen" class="potlood" aria-label="Naam wijzigen"><svg width="20" height="20"><use href="#icon-potlood"/></svg></button>
-        </p>
-        <div class="actions">
-          <button type="button" id="producten-knop" class="link" hidden>Producten beheren</button>
-          <button id="profiel-terug" class="link">Terug naar de lijst</button>
-          <button id="logout" class="link">Uitloggen</button>
-        </div>
 
         <!-- Aankoopprofiel: wat de app over het koopgedrag van het huishouden weet -->
-        <h2>Aankoopprofiel</h2>
-        <p class="uitleg">Dit is het profiel van het huishouden: alle aankopen van alle deelnemers uit de lijsten die meetellen, ook gearchiveerde lijsten en aankopen van vóór je toetreding.</p>
-        <div id="ap-periode" class="ap-keuze" role="group" aria-label="Periode">
-          <button type="button" data-periode="4w">4 weken</button>
-          <button type="button" data-periode="3m">3 maanden</button>
-          <button type="button" data-periode="12m">12 maanden</button>
-          <button type="button" data-periode="alles">Alles</button>
-        </div>
-        <select id="ap-lijst" aria-label="Lijst"></select>
-        <p id="ap-msg" class="msg" role="status"></p>
-        <div id="ap-inhoud" hidden>
-          <p id="ap-bereik" class="uitleg"></p>
-          <div class="ap-cijfers">
-            <div><strong id="ap-aankopen"></strong><span>aankopen</span></div>
-            <div><strong id="ap-producten"></strong><span>producten</span></div>
-            <div><strong id="ap-uitgegeven"></strong><span>uitgegeven</span></div>
-            <div><strong id="ap-bespaard"></strong><span>bespaard</span></div>
+        <section class="profiel-sectie" aria-labelledby="ap-kop">
+          <h2 id="ap-kop" class="sectie-kop">Aankoopprofiel</h2>
+          <p class="uitleg">Wat jullie huishouden koopt, uit alle lijsten die meetellen.</p>
+          <div id="ap-periode" class="ap-keuze" role="group" aria-label="Periode">
+            <button type="button" data-periode="4w">4 weken</button>
+            <button type="button" data-periode="3m">3 maanden</button>
+            <button type="button" data-periode="12m">12 maanden</button>
+            <button type="button" data-periode="alles">Alles</button>
           </div>
-          <p id="ap-prijs" class="uitleg"></p>
-          <p class="uitleg">De bedragen zijn een ondergrens: alleen aankopen van een bon met een prijs, zonder statiegeld. Uitgegeven is de prijs min de korting.</p>
+          <select id="ap-lijst" aria-label="Lijst"></select>
+          <p id="ap-msg" class="msg" role="status"></p>
+          <div id="ap-inhoud" hidden>
+            <p id="ap-bereik" class="ap-bereik"></p>
+            <div class="ap-cijfers">
+              <div><span>Aankopen</span><strong id="ap-aankopen"></strong></div>
+              <div><span>Producten</span><strong id="ap-producten"></strong></div>
+              <div><span>Uitgegeven</span><strong id="ap-uitgegeven"></strong></div>
+              <div class="ap-bespaard"><span>Bespaard</span><strong id="ap-bespaard"></strong></div>
+            </div>
 
-          <details class="ap-blok">
-          <summary>Top 10 producten</summary>
-          <p class="uitleg">Gesorteerd op het aantal dagen waarop je het kocht in deze periode; meerdere keren op één dag telt als één. "Om de … dagen" is de gebruikelijke tijd tussen twee aankopen, berekend over alle data en niet alleen deze periode.</p>
-          <ol id="ap-top"></ol>
-          <p id="ap-top-leeg" class="uitleg" hidden>Geen aankopen in deze periode.</p>
-          </details>
+            <div class="ap-blokken">
+              <details class="ap-blok">
+                <summary>Top 10 producten</summary>
+                <p class="uitleg">Gesorteerd op het aantal dagen waarop je het kocht in deze periode; meerdere keren op één dag telt als één. "Om de … dagen" is de gebruikelijke tijd tussen twee aankopen, berekend over alle data en niet alleen deze periode.</p>
+                <ol id="ap-top"></ol>
+                <p id="ap-top-leeg" class="uitleg" hidden>Geen aankopen in deze periode.</p>
+              </details>
+              <details class="ap-blok">
+                <summary>Per supermarkt</summary>
+                <p class="uitleg">Aantal aankopen in deze periode, met het bedrag erachter. De supermarkt komt van de bon; aankopen zonder bon staan onder "onbekend".</p>
+                <ul id="ap-winkels" class="ap-staven"></ul>
+              </details>
+              <details class="ap-blok">
+                <summary>Uitgaven per maand</summary>
+                <p class="uitleg">Altijd de laatste 12 maanden, los van de gekozen periode. De lopende maand is nog niet compleet.</p>
+                <ul id="ap-maanden" class="ap-staven"></ul>
+              </details>
+              <details class="ap-blok">
+                <summary>Hoe wordt dit berekend?</summary>
+                <p class="uitleg">Dit is het profiel van het huishouden: alle aankopen van alle deelnemers uit de lijsten die meetellen, ook gearchiveerde lijsten en aankopen van vóór je toetreding.</p>
+                <p id="ap-prijs" class="uitleg"></p>
+                <p class="uitleg">De bedragen zijn een ondergrens: alleen aankopen van een bon met een prijs, zonder statiegeld. Uitgegeven is de prijs min de korting.</p>
+              </details>
+            </div>
+          </div>
+        </section>
 
-          <details class="ap-blok">
-          <summary>Per supermarkt</summary>
-          <p class="uitleg">Aantal aankopen in deze periode, met het bedrag erachter. De supermarkt komt van de bon; aankopen zonder bon staan onder "onbekend".</p>
-          <ul id="ap-winkels" class="ap-staven"></ul>
-          </details>
-
-          <details class="ap-blok">
-          <summary>Uitgaven per maand</summary>
-          <p class="uitleg">Altijd de laatste 12 maanden, los van de gekozen periode. De lopende maand is nog niet compleet.</p>
-          <ul id="ap-maanden" class="ap-staven"></ul>
-          </details>
-        </div>
+        <!-- Account: beheer (alleen de beheerder) en uitloggen -->
+        <section class="profiel-sectie" aria-labelledby="account-kop">
+          <h2 id="account-kop" class="sectie-kop">Account</h2>
+          <ul class="menu">
+            <li><button type="button" id="producten-knop" class="menu-rij" hidden><svg width="20" height="20" aria-hidden="true"><use href="#icon-tag"/></svg><span>Producten beheren</span><svg class="menu-pijl" width="18" height="18" aria-hidden="true"><use href="#icon-verder"/></svg></button></li>
+            <li><button type="button" id="logout" class="menu-rij uitloggen"><svg width="20" height="20" aria-hidden="true"><use href="#icon-uitloggen"/></svg><span>Uitloggen</span></button></li>
+          </ul>
+        </section>
       </div>
     </section>
 
     <!-- Producten (alleen de beheerder): namen samenvoegen tot één product, losmaken en hernoemen -->
-    <section id="view-producten" hidden>
+    <section id="view-producten" data-terug="producten-terug" hidden>
       <header class="top">
-        <div class="brand">
-          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
-          <span class="brand-name">BonusBuddy</span>
+        <div class="top-rij terug-rij">
+          <button type="button" id="producten-terug" class="top-knop" aria-label="Terug naar profiel"><svg width="20" height="20"><use href="#icon-terug"/></svg></button>
+          <div class="brand">
+            <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+            <span class="brand-name">BonusBuddy</span>
+          </div>
         </div>
         <h1>Producten</h1>
       </header>
@@ -261,7 +295,39 @@
         <p id="producten-telling" class="uitleg"></p>
         <ul id="producten"></ul>
         <p id="producten-msg" class="msg" role="status"></p>
-        <button type="button" id="producten-terug" class="link">Terug naar profiel</button>
+      </div>
+    </section>
+
+    <!-- Voor jou: de vaste producten van het huishouden, met één tik op de lijst -->
+    <section id="view-voorjou" hidden>
+      <header class="top">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
+        <div class="top-rij">
+          <div>
+            <h1>Voor jou</h1>
+            <p class="top-sub">Op basis van wat jullie kopen</p>
+          </div>
+          <span id="voorjou-week" class="pil"></span>
+        </div>
+      </header>
+      <div class="content">
+        <!-- Het product dat volgens het koopritme het eerst weer nodig is -->
+        <article id="tip-kaart" class="tip-kaart" hidden>
+          <p class="tip-ritme"><svg width="20" height="20" aria-hidden="true"><use href="#icon-herhaal"/></svg><span id="tip-ritme"></span></p>
+          <h2 id="tip-naam"></h2>
+          <p id="tip-info" class="tip-info"></p>
+          <div class="tip-knoppen">
+            <button type="button" id="tip-toevoegen"><svg width="22" height="22" aria-hidden="true"><use href="#icon-plus"/></svg>Zet op lijst</button>
+            <button type="button" id="tip-nietnu" class="wit">Niet nu</button>
+          </div>
+        </article>
+        <h2 id="voorjou-kop" class="kopje" hidden>Koop je ook vaak</h2>
+        <ul id="voorjou-lijst"></ul>
+        <p id="voorjou-leeg" class="uitleg" hidden></p>
+        <p id="voorjou-msg" class="msg" role="status"></p>
       </div>
     </section>
 
@@ -275,7 +341,6 @@
           </div>
           <div class="top-knoppen">
             <button type="button" id="nieuw-knop" class="top-knop" aria-label="Lijst toevoegen"><svg width="20" height="20"><use href="#icon-plus"/></svg></button>
-            <button type="button" id="profiel-knop-setup" class="top-knop" aria-label="Profiel"><svg width="20" height="20"><use href="#icon-persoon"/></svg></button>
           </div>
         </div>
         <h1>Mijn lijsten</h1>
@@ -293,63 +358,73 @@
       </div>
     </section>
 
-    <!-- Lijst toevoegen: zelf aanmaken of aansluiten met een code -->
-    <section id="view-nieuw" hidden>
+    <!-- Lijst toevoegen: zelf aanmaken of aansluiten met een uitnodiging -->
+    <section id="view-nieuw" data-terug="nieuw-terug" hidden>
       <header class="top">
-        <div class="brand">
-          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
-          <span class="brand-name">BonusBuddy</span>
+        <div class="top-rij terug-rij">
+          <button type="button" id="nieuw-terug" class="top-knop" aria-label="Terug naar mijn lijsten"><svg width="20" height="20"><use href="#icon-terug"/></svg></button>
+          <div class="brand">
+            <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+            <span class="brand-name">BonusBuddy</span>
+          </div>
         </div>
         <h1>Lijst toevoegen</h1>
       </header>
       <div class="content">
         <h2>Nieuwe lijst maken</h2>
-        <p class="uitleg">Eén van jullie maakt de lijst aan en deelt daarna de code die bovenaan de lijst staat.</p>
+        <p class="uitleg">Eén van jullie maakt de lijst aan en nodigt de ander daarna uit met de knop "Iemand uitnodigen" bovenaan de lijst.</p>
         <form id="create-form">
           <input id="list-name" type="text" placeholder="Bijv. Thuis" required>
           <button type="submit">Aanmaken</button>
         </form>
-        <h2>Aansluiten met code</h2>
-        <p class="uitleg">Heeft je partner al een lijst gemaakt? Vul dan de code in die je hebt gekregen.</p>
+        <h2>Aansluiten met een uitnodiging</h2>
+        <p class="uitleg">Heb je een uitnodigingslink gekregen? Tik erop, of plak hem hier.</p>
         <form id="join-form">
-          <input id="join-code" type="text" placeholder="Code van je partner" required autocapitalize="none">
+          <input id="join-code" type="text" placeholder="Uitnodigingslink" required autocapitalize="none" autocomplete="off">
           <button type="submit">Aansluiten</button>
         </form>
         <p id="nieuw-msg" class="msg" role="status"></p>
-        <button type="button" id="nieuw-terug" class="link">Terug naar mijn lijsten</button>
       </div>
     </section>
 
     <!-- De lijst zelf -->
     <section id="view-list" hidden>
-      <header class="top">
+      <header class="top lijst-top">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
         <div class="top-rij">
-          <div class="brand">
-            <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
-            <span class="brand-name">BonusBuddy</span>
-          </div>
+          <!-- De naam van de lijst is ook de knop naar "Mijn lijsten" -->
+          <h1><button type="button" id="lijsten-knop" class="titel-knop" title="Mijn lijsten"><span id="list-title"></span><svg width="22" height="22" aria-hidden="true"><use href="#icon-omlaag"/></svg></button></h1>
           <div class="top-knoppen">
-            <button type="button" id="lijsten-knop" class="top-knop" aria-label="Mijn lijsten"><svg width="20" height="20"><use href="#icon-lijst"/></svg></button>
-            <button type="button" id="profiel-knop" class="top-knop" aria-label="Profiel"><svg width="20" height="20"><use href="#icon-persoon"/></svg></button>
+            <button type="button" id="leden-knop" class="avatars" aria-label="Deelnemers" aria-expanded="false" aria-controls="leden-paneel"></button>
+            <button type="button" id="uitnodig-knop" class="top-knop hoekig" aria-label="Iemand uitnodigen" aria-controls="leden-paneel" hidden><svg width="24" height="24"><use href="#icon-uitnodigen"/></svg></button>
           </div>
         </div>
-        <h1 id="list-title"></h1>
-        <small>Code om te delen: <code id="invite-code"></code></small>
+        <!-- Hoeveel producten op de lijst nu in de aanbieding zijn -->
+        <p id="bonus-balk" class="bonus-balk" hidden><span id="bonus-aantal"></span><strong id="bonus-winkels"></strong></p>
       </header>
       <div class="content">
-        <!-- Wie doen er mee aan deze lijst? Standaard ingeklapt -->
-        <div class="lijst-balk">
-          <details class="leden">
-            <summary>Deelnemers <span id="leden-aantal"></span></summary>
-            <ul id="leden"></ul>
-          </details>
-          <button type="button" id="aankopen-knop" class="link">Aankopen</button>
+        <!-- Wie doen er mee aan deze lijst? Opent via de rondjes bovenaan; de uitnodigknop zet er een link bij -->
+        <div id="leden-paneel" class="leden-paneel" hidden>
+          <h2 class="kopje">Deelnemers</h2>
+          <ul id="leden"></ul>
+          <!-- Verschijnt nadat de maker of een beheerder op de uitnodigknop heeft getikt -->
+          <div id="uitnodig-blok" hidden>
+            <p class="uitleg">Stuur deze link naar wie je wilt uitnodigen. Hij werkt voor één persoon en is 7 dagen geldig. De ander heeft een account bij BonusBuddy nodig.</p>
+            <div class="uitnodig-rij">
+              <input type="text" id="uitnodig-link" readonly aria-label="Uitnodigingslink">
+              <button type="button" id="uitnodig-delen">Delen</button>
+            </div>
+          </div>
+          <p id="leden-msg" class="msg" role="status"></p>
         </div>
 
         <form id="add-form">
           <input id="item-name" type="text" placeholder="Wat moet er mee?" required autocomplete="off">
           <input id="item-qty" type="text" placeholder="Aantal" class="qty" autocomplete="off">
-          <button type="submit" aria-label="Toevoegen">+</button>
+          <button type="submit" aria-label="Toevoegen"><svg width="26" height="26" aria-hidden="true"><use href="#icon-plus"/></svg></button>
         </form>
         <!-- Lijst vullen vanuit een foto of screenshot; de telefoon biedt zelf camera of fotobibliotheek aan -->
         <button type="button" id="foto-knop" class="link foto-knop"><svg width="20" height="20" aria-hidden="true"><use href="#icon-camera"/></svg>Foto toevoegen</button>
@@ -360,6 +435,7 @@
           <button type="button" id="veeg-uitleg-weg" class="del" aria-label="Uitleg verbergen">×</button>
         </p>
         <ul id="items"></ul>
+        <button type="button" id="aankopen-knop" class="rij-knop"><span>Aankopen</span><svg width="20" height="20" aria-hidden="true"><use href="#icon-verder"/></svg></button>
 
         <p id="status" class="msg" role="status"></p>
       </div>
@@ -371,11 +447,14 @@
     </section>
 
     <!-- Aankopen van de huidige lijst -->
-    <section id="view-aankopen" hidden>
+    <section id="view-aankopen" data-terug="aankopen-terug" hidden>
       <header class="top">
-        <div class="brand">
-          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
-          <span class="brand-name">BonusBuddy</span>
+        <div class="top-rij terug-rij">
+          <button type="button" id="aankopen-terug" class="top-knop" aria-label="Terug naar de lijst"><svg width="20" height="20"><use href="#icon-terug"/></svg></button>
+          <div class="brand">
+            <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+            <span class="brand-name">BonusBuddy</span>
+          </div>
         </div>
         <h1>Aankopen</h1>
         <small id="aankopen-lijst"></small>
@@ -393,7 +472,6 @@
         <ul id="aankopen"></ul>
         <p id="aankopen-leeg" class="uitleg" hidden>Nog geen aankopen in deze lijst.</p>
         <p id="aankopen-msg" class="msg" role="status"></p>
-        <button type="button" id="aankopen-terug" class="link">Terug naar de lijst</button>
       </div>
     </section>
 
@@ -419,11 +497,14 @@
     </section>
 
     <!-- Gescande bonnen van de huidige lijst: inzien en verwijderen -->
-    <section id="view-bonnen" hidden>
+    <section id="view-bonnen" data-terug="bonnen-terug" hidden>
       <header class="top">
-        <div class="brand">
-          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
-          <span class="brand-name">BonusBuddy</span>
+        <div class="top-rij terug-rij">
+          <button type="button" id="bonnen-terug" class="top-knop" aria-label="Terug naar aankopen"><svg width="20" height="20"><use href="#icon-terug"/></svg></button>
+          <div class="brand">
+            <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+            <span class="brand-name">BonusBuddy</span>
+          </div>
         </div>
         <h1>Bonnen</h1>
         <small id="bonnen-lijst"></small>
@@ -433,16 +514,18 @@
         <ul id="bonnen"></ul>
         <p id="bonnen-leeg" class="uitleg" hidden>Nog geen bonnen gescand voor deze lijst.</p>
         <p id="bonnen-msg" class="msg" role="status"></p>
-        <button type="button" id="bonnen-terug" class="link">Terug naar aankopen</button>
       </div>
     </section>
 
     <!-- Meerdere gekozen kassabonnen: per bon de stand en wat eraan opvalt -->
-    <section id="view-stapel" hidden>
+    <section id="view-stapel" data-terug="stapel-terug" hidden>
       <header class="top">
-        <div class="brand">
-          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
-          <span class="brand-name">BonusBuddy</span>
+        <div class="top-rij terug-rij">
+          <button type="button" id="stapel-terug" class="top-knop" aria-label="Terug naar aankopen"><svg width="20" height="20"><use href="#icon-terug"/></svg></button>
+          <div class="brand">
+            <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+            <span class="brand-name">BonusBuddy</span>
+          </div>
         </div>
         <h1>Bonnen controleren</h1>
         <small id="stapel-lijst"></small>
@@ -453,7 +536,6 @@
         <p id="stapel-msg" class="msg" role="status"></p>
         <div class="actions">
           <button type="button" id="stapel-opslaan" hidden>Alles zonder bijzonderheden opslaan</button>
-          <button type="button" id="stapel-terug" class="link">Terug naar aankopen</button>
           <button type="button" id="stapel-leeg" class="link">Stapel weggooien</button>
         </div>
       </div>
@@ -491,6 +573,13 @@
         </div>
       </div>
     </section>
+
+    <!-- Onderbalk: alleen op de hoofdschermen (lijst, voor jou, profiel) -->
+    <nav id="tabbalk" class="tabbalk" aria-label="Hoofdmenu" hidden>
+      <button type="button" data-tab="lijst"><span class="tab-icoon" aria-hidden="true"><svg width="24" height="24"><use href="#icon-lijst"/></svg></span>Lijst</button>
+      <button type="button" data-tab="voorjou"><span class="tab-icoon" aria-hidden="true"><svg width="24" height="24"><use href="#icon-tag"/></svg></span>Voor jou</button>
+      <button type="button" data-tab="profiel"><span class="tab-icoon" aria-hidden="true"><svg width="24" height="24"><use href="#icon-persoon"/></svg></span>Profiel</button>
+    </nav>
 
   </main>
 

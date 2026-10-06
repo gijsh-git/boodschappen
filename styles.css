@@ -47,6 +47,7 @@ button {
   background: var(--oranje); color: #fff; cursor: pointer;
 }
 button.link { background: none; color: var(--oranje-tekst); padding: 8px 0; }
+button.wit { background: var(--vlak); color: var(--tekst); border: 1.5px solid var(--rand); }
 .msg { color: var(--grijs); min-height: 1.4em; }
 
 /* ---------- Inloggen en wachtwoord kiezen ---------- */
@@ -124,30 +125,66 @@ body:has(.auth:not([hidden])) { background: #fff6ee; }
 .top .brand { gap: 8px; margin-bottom: 18px; }
 .top-rij { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .top-rij .brand { margin-bottom: 0; }
-.top-knoppen { display: flex; gap: 8px; }
+.top-knoppen { display: flex; align-items: center; gap: 10px; }
+/* Terugknop links van het merk, op schermen waar je vandaan terug kunt */
+.terug-rij { justify-content: flex-start; gap: 12px; }
+.top-sub { margin: 6px 0 0; }
+/* Wit pilletje in de kop, bijv. het weeknummer */
+.pil { flex: none; align-self: flex-end; padding: 6px 14px; border-radius: 999px; background: #fff; color: var(--donker); font-weight: 700; font-size: 0.95rem; white-space: nowrap; }
+/* Kopje boven een blok: klein, in hoofdletters */
+.kopje { margin: 20px 4px 10px; color: var(--grijs); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .top-knop {
   display: grid; place-items: center; flex: none; width: 40px; height: 40px; padding: 0;
   border-radius: 50%; background: #fff; color: var(--oranje);
 }
-.profiel-waarde {
-  display: flex; align-items: center; gap: 8px;
-  margin: 0; padding: 4px 4px 4px 14px; background: var(--vlak);
-  border: 1.5px solid var(--rand); border-radius: 16px;
-}
-.profiel-waarde span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-/* Potloodje achter de naam */
-button.potlood { display: grid; place-items: center; flex: none; padding: 10px; background: none; color: var(--oranje-tekst); }
 .top .brand-icon { width: 30px; height: 30px; border-radius: 9px; }
 .top .brand-name { font-size: 1.05rem; }
 .top h1 { font-size: 1.9rem; }
 .top small { display: block; margin-top: 10px; color: #fff; font-size: 0.9rem; }
-.top code {
+code {
   background: var(--donker); color: #fff; padding: 3px 8px; border-radius: 8px;
   font-size: 0.95rem; letter-spacing: 0.04em;
 }
+
+/* ---------- Kop van de lijst ---------- */
+.lijst-top .top-rij { gap: 12px; margin-bottom: 0; }
+.lijst-top h1 { min-width: 0; }
+/* De naam van de lijst is de knop naar "Mijn lijsten" */
+.titel-knop {
+  display: flex; align-items: center; gap: 6px; max-width: 100%; padding: 0; background: none; color: #fff;
+  font: inherit; letter-spacing: inherit; text-align: left;
+}
+.titel-knop span { min-width: 0; overflow-wrap: anywhere; }
+.titel-knop svg { flex: none; }
+/* Rondjes met de eerste letter van elke deelnemer, half over elkaar */
+.avatars { display: flex; padding: 0; background: none; border-radius: 999px; }
+.avatars span {
+  display: grid; place-items: center; width: 42px; height: 42px; margin-left: -12px; border-radius: 50%;
+  border: 2px solid #fff; background: #fff; color: var(--donker); font-weight: 700; font-size: 1rem;
+}
+.avatars span:first-child { margin-left: 0; background: var(--donker); color: #fff; }
+.top-knop.hoekig { width: 52px; height: 52px; border-radius: 16px; }
+/* Zwarte balk: producten op de lijst die in de aanbieding zijn */
+.bonus-balk {
+  display: flex; flex-direction: column; margin: 18px 0 0; padding: 12px 16px; border-radius: 16px;
+  background: var(--donker); color: #fff; font-size: 0.95rem;
+}
+.bonus-balk strong { font-family: var(--kop); font-size: 1.25rem; line-height: 1.2; }
+.bonus-balk em { color: var(--oranje); font-style: normal; }
+/* Deelnemers en de code om te delen; opent via de rondjes of de uitnodigknop */
+.leden-paneel { margin-bottom: 16px; }
+.leden-paneel .kopje { margin-top: 4px; }
+.leden-paneel .uitleg { margin: 10px 4px 8px; }
+.leden-paneel .msg { margin: 6px 4px 0; }
+.leden-paneel .msg:empty { display: none; }
+.uitnodig-rij { display: flex; gap: 8px; }
+.uitnodig-rij input { font-size: 0.9rem; }
+.lid-rij small { margin-left: 0; }
 .content { padding: 16px 20px calc(32px + env(safe-area-inset-bottom)); }
+/* Ruimte voor de onderbalk */
+body:has(.tabbalk:not([hidden])) .content { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
 .uitleg { margin: 0 0 8px; color: var(--grijs); font-size: 0.95rem; }
-#add-form button { flex: none; width: 52px; font-size: 1.5rem; padding: 0; }
+#add-form button { display: grid; place-items: center; flex: none; width: 56px; padding: 0; border-radius: 16px; }
 
 /* Knop "Foto toevoegen" onder het invoerveld */
 .foto-knop { display: flex; align-items: center; gap: 8px; margin: -4px 0 8px; }
@@ -160,39 +197,38 @@ li label { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px;
 li span { overflow-wrap: anywhere; }
 li small { margin-left: auto; padding-right: 4px; white-space: nowrap; }
 button.del { background: none; color: var(--grijs); padding: 8px 12px; font-size: 1.3rem; font-weight: 400; }
-/* Vraagtekentje: toont wie het item heeft toegevoegd en wanneer */
-button.info {
-  flex: none; width: 26px; height: 26px; padding: 0; margin-left: 6px; border-radius: 50%;
-  background: none; border: 1.5px solid var(--grijs); color: var(--grijs); font-size: 0.85rem; line-height: 1;
-}
-button.info[aria-expanded=true] { border-color: var(--oranje-tekst); color: var(--oranje-tekst); }
-.item-deal { flex-basis: 100%; margin: -6px 0 0; padding: 0 8px 12px 40px; color: var(--oranje-tekst); font-size: 0.85rem; font-weight: 700; }
-.item-info { flex-basis: 100%; margin: 0; padding: 0 8px 12px 40px; color: var(--grijs); font-size: 0.9rem; }
-
 /* Uitleg over vegen, met kruisje om hem weg te klikken */
 .veeg-uitleg { display: flex; align-items: center; gap: 4px; }
 .veeg-uitleg span { flex: 1; }
 
 /* ---------- Rij die je opzij kunt vegen ---------- */
-/* De rand van de lijst zit hier zonder binnenruimte, zodat de kleur de hele rij vult */
-#items:not(:empty) { padding: 0; overflow: hidden; }
-.item { display: block; position: relative; overflow: hidden; }
+/* Elk item is een eigen kaart; de lijst zelf heeft geen rand of vlak */
+#items:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
+.item { display: block; position: relative; overflow: hidden; border: 0; border-radius: 16px; }
 .item-voor {
-  position: relative; display: flex; flex-wrap: wrap; align-items: center; padding: 0 6px 0 14px;
+  position: relative; display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 8px 14px 8px 8px;
   background: var(--vlak); touch-action: pan-y; user-select: none; -webkit-user-select: none;
   transition: transform 0.18s ease-out;
 }
-.item-tekst { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 14px 0; }
-/* Rond knopje links: gekocht, ook zonder vegen */
-button.koop {
-  flex: none; width: 30px; height: 30px; padding: 0; margin-right: 10px; border-radius: 50%;
-  background: none; border: 2px solid var(--groen); color: var(--groen); font-size: 1rem; line-height: 1;
-}
-/* Op een aanraakscherm veeg je; de knoppen voor gekocht en verwijderen zijn er alleen voor muis en toetsenbord */
+.item-tekst { flex: 1; min-width: 0; }
+.item-naam { display: block; font-weight: 700; font-size: 1.05rem; line-height: 1.25; overflow-wrap: anywhere; }
+.item-sub { display: block; color: var(--grijs); font-size: 0.9rem; }
+/* Rondje links: tik = gekocht. De knop is groter dan het rondje, zodat je hem makkelijk raakt */
+button.koop { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border-radius: 50%; background: none; }
+button.koop::before { content: ""; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--grijs); opacity: 0.55; }
+button.koop:hover::before, button.koop:focus-visible::before { border-color: var(--groen); opacity: 1; }
+/* Rechts: het bonuslabel met eronder de supermarkt */
+.item-deal { flex: none; max-width: 45%; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; text-align: right; }
+.bonus-label { padding: 3px 10px; border-radius: 10px; background: var(--oranje); color: #fff; font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
+.item-voor .del { margin-right: -8px; }
+/* Op een aanraakscherm veeg je naar links; het kruisje is er alleen voor muis en toetsenbord */
 @media (hover: none) and (pointer: coarse) {
-  .item-voor .koop, .item-voor .del { display: none; }
-  .item-voor .info { margin-right: 8px; }
-  .item-deal, .item-info { padding-left: 0; }
+  .item-voor .del { display: none; }
+}
+/* Onder de lijst: door naar de aankopen */
+.rij-knop {
+  display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 12px; padding: 14px 8px;
+  background: none; color: var(--grijs); text-align: left;
 }
 /* Laag achter de rij: groen bij naar rechts (gekocht), rood bij naar links (verwijderen) */
 .item-achter {
@@ -208,8 +244,8 @@ button.koop {
 
 /* Balkje "Ongedaan maken", vast onderin */
 #ongedaan {
-  position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
-  width: min(520px, calc(100% - 32px)); display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  width: min(520px, calc(100% - 32px)); z-index: 6; display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 4px 6px 4px 16px; border-radius: 14px; background: var(--donker); color: #fff;
   border: 1.5px solid #3a302a; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
 }
@@ -300,16 +336,31 @@ button.koop {
 
 /* ---------- Aankoopprofiel ---------- */
 /* Top 10, supermarkten en maanden: ingeklapt tot je erop tikt */
-.ap-blok { border-top: 1px solid var(--rand); }
-.ap-blok:last-child { border-bottom: 1px solid var(--rand); }
-.ap-blok summary { padding: 14px 0; font-weight: 700; cursor: pointer; }
+.ap-blokken { background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 16px; padding: 0 14px; }
+.ap-blok + .ap-blok { border-top: 1px solid var(--rand); }
+.ap-blok summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 52px; font-weight: 700; cursor: pointer; list-style: none;
+}
+.ap-blok summary::-webkit-details-marker { display: none; }
+/* Pijltje dat meedraait als het blok open gaat */
+.ap-blok summary::after {
+  content: ""; flex: none; width: 8px; height: 8px; margin-right: 4px;
+  border-right: 2.2px solid var(--grijs); border-bottom: 2.2px solid var(--grijs);
+  transform: rotate(45deg) translateY(-2px); transition: transform 0.15s;
+}
+.ap-blok[open] summary::after { transform: rotate(-135deg) translateY(-2px); }
 .ap-blok[open] { padding-bottom: 14px; }
 .ap-blok[open] summary { color: var(--oranje-tekst); }
-/* Periode kiezen: vier knoppen naast elkaar, de gekozen is oranje */
-.ap-keuze { display: flex; gap: 6px; margin: 0 0 8px; }
+.ap-blok #ap-top:not(:empty), .ap-blok ul.ap-staven:not(:empty) { border: 0; padding-left: 0; padding-right: 0; }
+/* Periode kiezen, als gesegmenteerde keuze: één balk, het gekozen deel is oranje */
+.ap-keuze {
+  display: flex; gap: 4px; margin: 0 0 8px; padding: 4px;
+  background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 14px;
+}
 .ap-keuze button {
-  flex: 1; min-width: 0; padding: 10px 2px; font-size: 0.85rem; white-space: nowrap;
-  background: var(--vlak); color: var(--tekst); border: 1.5px solid var(--rand);
+  flex: 1; min-width: 0; min-height: 40px; padding: 8px 2px; border-radius: 10px;
+  font-size: 0.85rem; white-space: nowrap; background: none; color: var(--tekst);
 }
 .ap-keuze button[aria-pressed=true] { background: var(--oranje); border-color: var(--oranje); color: #fff; }
 select {
@@ -317,10 +368,13 @@ select {
   border: 1.5px solid var(--rand); border-radius: 14px; background: var(--vlak); color: var(--tekst);
 }
 /* Vier kerncijfers, twee naast elkaar */
-.ap-cijfers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 8px; }
-.ap-cijfers div { padding: 12px 14px; background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 16px; }
-.ap-cijfers strong { display: block; font-family: var(--kop); font-size: 1.5rem; line-height: 1.1; overflow-wrap: anywhere; }
-.ap-cijfers span { color: var(--grijs); font-size: 0.9rem; }
+.ap-bereik { margin: 4px 0 10px; color: var(--grijs); font-size: 0.9rem; }
+.ap-cijfers { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 12px; }
+.ap-cijfers div { display: flex; flex-direction: column; gap: 4px; padding: 14px; background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 16px; }
+.ap-cijfers strong { font-family: var(--kop); font-size: 1.6rem; line-height: 1.1; overflow-wrap: anywhere; }
+.ap-cijfers span { color: var(--grijs); font-size: 0.85rem; font-weight: 700; }
+.ap-cijfers .ap-bespaard { background: var(--oranje); border-color: var(--oranje); }
+.ap-cijfers .ap-bespaard span, .ap-cijfers .ap-bespaard strong { color: #fff; }
 #ap-top:not(:empty) { margin: 0; background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 16px; padding: 0 14px; list-style: none; }
 #ap-top li { flex-wrap: nowrap; align-items: baseline; gap: 10px; padding: 10px 0; }
 .ap-rang { flex: none; width: 1.4em; color: var(--grijs); font-size: 0.9rem; }
@@ -368,11 +422,8 @@ ul.ap-staven:not(:empty) { padding: 6px 14px; }
 .schakelaar:checked { background: var(--oranje); }
 .schakelaar:checked::after { transform: translateX(18px); }
 
-/* Deelnemers van de lijst (uitklapbaar) */
+/* Uitklapbaar blok, bijv. "Gearchiveerd" */
 .leden { margin-bottom: 12px; }
-/* Knop "Aankopen" op dezelfde hoogte als "Deelnemers" */
-.lijst-balk { position: relative; }
-.lijst-balk #aankopen-knop { position: absolute; top: 0; right: 0; }
 .leden summary { padding: 8px 0; color: var(--grijs); font-weight: 700; cursor: pointer; }
 /* Blok "Gearchiveerd" onder het lijstoverzicht */
 .archief { margin-top: 16px; }
@@ -381,3 +432,61 @@ ul.ap-staven:not(:empty) { padding: 6px 14px; }
 .lid-rij button.link { padding: 8px 8px 8px 4px; font-size: 0.9rem; }
 
 .actions { display: flex; flex-direction: column; align-items: flex-start; margin-top: 24px; gap: 4px; }
+
+/* ---------- Profiel ---------- */
+.profiel-top .brand { margin-bottom: 22px; }
+.profiel-kaart { display: flex; align-items: center; gap: 14px; }
+.avatar {
+  display: grid; place-items: center; flex: none; width: 64px; height: 64px; border-radius: 50%;
+  background: #fff; color: var(--oranje); font-family: var(--kop); font-weight: 800; font-size: 1.8rem;
+}
+.profiel-wie { flex: 1; min-width: 0; }
+.profiel-top .profiel-wie h1 { font-size: 1.7rem; overflow-wrap: anywhere; }
+#profiel-email { display: block; margin-top: 4px; font-size: 0.95rem; overflow-wrap: anywhere; }
+.profiel-sectie { margin-top: 8px; }
+.profiel-sectie + .profiel-sectie { margin-top: 28px; }
+.sectie-kop { margin: 8px 0 4px; color: var(--tekst); font-family: var(--kop); font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; }
+/* Instellingenmenu: rijen in één kaart */
+ul.menu:not(:empty) { padding: 0 6px; }
+.menu li:has(> [hidden]) { display: none; }
+.menu li:has(+ li > [hidden]) { border-bottom: 0; }
+button.menu-rij {
+  display: flex; align-items: center; gap: 14px; width: 100%; min-height: 56px; padding: 0 8px;
+  background: none; color: var(--tekst); font-weight: 700; text-align: left; border-radius: 12px;
+}
+.menu-rij span { flex: 1; }
+.menu-rij > svg:first-child { color: var(--oranje-tekst); }
+.menu-pijl { color: var(--grijs); }
+button.menu-rij.uitloggen, .menu-rij.uitloggen > svg:first-child { color: var(--rood); }
+
+/* ---------- Voor jou ---------- */
+/* Grote kaart met het product dat het eerst weer nodig is */
+.tip-kaart { padding: 20px; background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 24px; }
+.tip-ritme { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; color: var(--oranje-tekst); font-weight: 700; font-size: 0.95rem; }
+.tip-ritme svg { flex: none; }
+.tip-kaart h2 { margin: 0; color: var(--tekst); font-family: var(--kop); font-weight: 800; font-size: 1.9rem; letter-spacing: -0.03em; line-height: 1.1; overflow-wrap: anywhere; }
+.tip-info { margin: 6px 0 16px; color: var(--grijs); }
+.tip-knoppen { display: flex; flex-wrap: wrap; gap: 10px; }
+.tip-knoppen button { display: flex; align-items: center; gap: 8px; }
+#voorjou-lijst:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
+.voorjou-rij { flex-wrap: nowrap; gap: 12px; min-height: 68px; padding: 8px 8px 8px 16px; border: 0; border-radius: 16px; background: var(--vlak); }
+button.plus { display: grid; place-items: center; flex: none; width: 48px; height: 48px; padding: 0; border-radius: 14px; }
+
+/* ---------- Terugvegen ---------- */
+/* Schermen met een terugknop schuiven mee als je naar rechts veegt */
+section[data-terug] { touch-action: pan-y; transition: transform 0.18s ease-out; }
+
+/* ---------- Onderbalk ---------- */
+.tabbalk {
+  position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); z-index: 5;
+  width: min(560px, 100%); display: flex; padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  background: var(--vlak); border-top: 1px solid var(--rand);
+}
+.tabbalk button {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0;
+  background: none; color: var(--grijs); font-size: 0.85rem; font-weight: 500;
+}
+.tab-icoon { display: grid; place-items: center; width: 64px; height: 36px; border-radius: 18px; }
+/* Het scherm waar je bent: oranje pil, vette tekst */
+.tabbalk button[aria-current=page] { color: var(--tekst); font-weight: 700; }
+.tabbalk button[aria-current=page] .tab-icoon { background: var(--oranje); color: #fff; }

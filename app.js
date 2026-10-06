@@ -8,10 +8,18 @@ const linkError = linkParams.get("error_description");
 // Na een uitnodiging of "wachtwoord vergeten" moet er eerst een wachtwoord gekozen worden.
 let mustSetPassword = linkType === "invite" || linkType === "recovery";
 
+// Uitnodigingslink (?uitnodiging=...): de code onthouden tot je bent ingelogd en uit de adresbalk halen
+const UITNODIGING_SLEUTEL = "bonusbuddy-uitnodiging";
+const uitnodiging = new URLSearchParams(location.search).get("uitnodiging");
+if (uitnodiging) {
+  try { localStorage.setItem(UITNODIGING_SLEUTEL, uitnodiging); } catch {}
+  history.replaceState(null, "", location.pathname + location.hash);
+}
+
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const $ = (id) => document.getElementById(id);
-const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list", "aankopen", "foto", "bon", "bonnen", "stapel", "producten"];
+const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list", "aankopen", "foto", "bon", "bonnen", "stapel", "producten", "voorjou"];
 let resetEmail = "";
 let userId = null;
 let mijnNaam = null;   // weergavenaam; null = nog niet opgehaald of nog niet ingevuld
@@ -28,7 +36,6 @@ let productOpen = null; // id van het product dat is opengeklapt
 let productHerkomst = {}; // product-id -> de samenvoegingen die nog in dat product zitten
 let samenvoegBron = null; // product dat je aan het samenvoegen bent; de volgende tik kiest het doel
 let namen = {};        // user_id -> weergavenaam van jezelf en je lijstgenoten
-let infoId = null;     // item waarvan de info ("toegevoegd door") openstaat
 let lijsten = [];      // de actieve lijsten waar je lid van bent
 let archief = [];      // de gearchiveerde lijsten waar je lid van bent
 let lijstenOpen = false;  // het overzicht van lijsten staat open
@@ -66,9 +73,33 @@ let slepen = 0;        // aantal rijen dat nu wordt versleept (of nog uitschuift
 let renderWacht = false;  // er is een render() overgeslagen tijdens het slepen
 let ongedaan = null;   // laatste actie die nog terug te draaien is: { item, aankoopId }
 let ongedaanTimer = null;
+let zicht = null;      // het scherm dat nu in beeld is
+let voorjouOpen = false; // het scherm "Voor jou" staat open
+let voorjou = null;    // vaste producten uit het aankoopprofiel: { naam, dagen, om_de, laatste }; null = nog niet opgehaald
+let voorjouVraag = 0;  // volgnummer, zodat een laat antwoord na uitloggen genegeerd wordt
+let tipProduct = null; // het product dat nu in de grote kaart van "Voor jou" staat
+const nietNu = new Set(); // producten die je met "Niet nu" hebt weggetikt; geldt tot je de app sluit
+const TABS = { list: "lijst", setup: "lijst", voorjou: "voorjou", profiel: "profiel" }; // schermen met de onderbalk, en welke tab dan oranje is
+const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting in deals
 
 function show(view) {
   views.forEach((v) => ($("view-" + v).hidden = v !== view));
+  $("tabbalk").hidden = !TABS[view];
+  for (const knop of $("tabbalk").children) {
+    if (knop.dataset.tab === TABS[view]) knop.setAttribute("aria-current", "page"); else knop.removeAttribute("aria-current");
+  }
+  // Een ander scherm begint bovenaan
+  if (view !== zicht) window.scrollTo(0, 0);
+  zicht = view;
+}
+
+// Eerste letter van een naam, voor het rondje van een deelnemer
+function initiaal(naam) {
+  return (naam || "?").trim().charAt(0).toUpperCase();
+}
+
+function hoofdletter(tekst) {
+  return tekst.charAt(0).toUpperCase() + tekst.slice(1);
 }
 
 function say(id, text) {
@@ -100,16 +131,16 @@ async function init() {
   db.auth.onAuthStateChange((event, s) => {
     if (event === "PASSWORD_RECOVERY") mustSetPassword = true;
     userId = s ? s.user.id : null;
-    if (s) route(); else { mijnNaam = null; naamOpen = false; profielOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; leegStapel(); show("login"); }
+    if (s) route(); else { mijnNaam = null; naamOpen = false; profielOpen = false; voorjouOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; leegStapel(); show("login"); }
   });
   if (session) route(); else show("login");
   if (linkError) say("login-msg", "De link is verlopen of al gebruikt. Vraag een nieuwe aan via 'Wachtwoord vergeten?'.");
 }
 
 async function route() {
-  if (mustSetPassword) { naamOpen = false; profielOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; bonOpen = false; return show("password"); }
-  // Supabase meldt de sessie opnieuw als de app terug in beeld komt; dan niet wegspringen van naam, profiel, overzicht, aankopen, foto of bon
-  if (naamOpen || profielOpen || lijstenOpen || aankopenOpen || fotoOpen || bonOpen) return;
+  if (mustSetPassword) { naamOpen = false; profielOpen = false; voorjouOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; bonOpen = false; return show("password"); }
+  // Supabase meldt de sessie opnieuw als de app terug in beeld komt; dan niet wegspringen van naam, profiel, voor jou, overzicht, aankopen, foto of bon
+  if (naamOpen || profielOpen || voorjouOpen || lijstenOpen || aankopenOpen || fotoOpen || bonOpen) return;
   if (mijnNaam === null) {
     const { data: profiel, error: profielFout } = await db
       .from("profiles")
@@ -132,11 +163,25 @@ async function route() {
     say("setup-msg", "Je lijsten konden niet worden opgehaald: " + fout.message);
     return;
   }
+  // Binnengekomen via een uitnodigingslink: aansluiten en die lijst openen
+  const welkom = await verwerkUitnodiging();
+  if (mustSetPassword) return show("password");
+  if (welkom.lijst) return openList(welkom.lijst);
+  if (welkom.fout) { toonOverzicht(); return say("setup-msg", welkom.fout); }
   if (lijsten.length === 0) return toonOverzicht();
   // De laatst geopende lijst weer openen; anders de eerste
   let laatste = null;
   try { laatste = localStorage.getItem(LIJST_SLEUTEL); } catch {}
   openList(lijsten.find((l) => l.id === laatste) || lijsten[0]);
+}
+
+// Sluit aan bij de lijst van een onthouden uitnodiging; geeft { lijst } of { fout } terug, of niets als er geen was
+async function verwerkUitnodiging() {
+  let code = null;
+  try { code = localStorage.getItem(UITNODIGING_SLEUTEL); localStorage.removeItem(UITNODIGING_SLEUTEL); } catch {}
+  if (!code) return {};
+  const { data, error } = await db.rpc("join_list", { p_code: code });
+  return error ? { fout: error.message } : { lijst: data };
 }
 
 // ---------- Inloggen ----------
@@ -247,9 +292,10 @@ $("naam-wijzigen").addEventListener("click", () => toonNaam(true));
 function toonProfiel() {
   naamOpen = false;
   profielOpen = true;
+  voorjouOpen = false;
   $("profiel-naam").textContent = mijnNaam || "Nog niet ingevuld";
-  // Het profiel is bereikbaar vanuit de lijst en vanuit het overzicht; terug gaat naar waar je vandaan kwam
-  $("profiel-terug").textContent = lijstenOpen ? "Terug naar mijn lijsten" : "Terug naar de lijst";
+  $("profiel-avatar").textContent = initiaal(mijnNaam);
+  db.auth.getSession().then(({ data }) => { $("profiel-email").textContent = data.session ? data.session.user.email : ""; });
   $("producten-knop").hidden = !beheerder;
   show("profiel");
   loadBeheerder();
@@ -264,13 +310,153 @@ async function loadBeheerder() {
   $("producten-knop").hidden = !beheerder;
 }
 
-$("profiel-knop").addEventListener("click", toonProfiel);
-$("profiel-knop-setup").addEventListener("click", toonProfiel);
-$("profiel-terug").addEventListener("click", () => {
+// ---------- Onderbalk ----------
+// Lijst, Voor jou en Profiel. "Lijst" gaat naar het overzicht van je lijsten; heb je er maar één, dan meteen naar die lijst.
+function naarLijst() {
   profielOpen = false;
-  if (lijstenOpen) return toonLijsten();
+  voorjouOpen = false;
+  naamOpen = false;
+  if (!currentList || lijsten.length !== 1) return toonLijsten();
+  lijstenOpen = false;
   render();
   show("list");
+}
+
+$("tabbalk").addEventListener("click", (e) => {
+  const knop = e.target.closest("button[data-tab]");
+  if (!knop) return;
+  if (knop.dataset.tab === "profiel") return toonProfiel();
+  if (knop.dataset.tab === "voorjou") return toonVoorJou();
+  naarLijst();
+});
+
+// ---------- Voor jou ----------
+// De vaste producten van het huishouden: de top 10 van de laatste 3 maanden uit het aankoopprofiel.
+// Het product dat volgens het koopritme het eerst weer nodig is staat in de grote kaart; één tik zet het op de open lijst.
+function toonVoorJou() {
+  voorjouOpen = true;
+  profielOpen = false;
+  naamOpen = false;
+  $("voorjou-week").textContent = "Week " + weekNr();
+  say("voorjou-msg", voorjou ? "" : "Bezig...");
+  renderVoorJou();
+  show("voorjou");
+  loadVoorJou();
+}
+
+async function loadVoorJou() {
+  const vraag = ++voorjouVraag;
+  const { data, error } = await db.rpc("purchase_profile", { p_period: "3m", p_list: null });
+  if (vraag !== voorjouVraag || !voorjouOpen) return;
+  if (error) return say("voorjou-msg", error.message);
+  voorjou = data.top;
+  say("voorjou-msg", "");
+  renderVoorJou();
+}
+
+// Weeknummer zoals op de kalender (ISO: de week van de eerste donderdag is week 1)
+function weekNr() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  return 1 + Math.round(((d - week1) / 864e5 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+}
+
+function dagenGeleden(dag) {
+  return Math.floor((Date.now() - new Date(dag).getTime()) / 864e5);
+}
+
+// Het koopritme in gewone taal, bijv. "Koop je elke week"
+function ritmeTekst(product) {
+  const n = Number(product.om_de);
+  if (product.om_de == null) return "Koop je vaak";
+  if (n === 1) return "Koop je elke dag";
+  if (n === 7) return "Koop je elke week";
+  if (n % 7 === 0) return `Koop je elke ${n / 7} weken`;
+  return `Koop je om de ${getal(n)} dagen`;
+}
+
+// Het gebruikelijke aantal dagen sinds de laatste aankoop is voorbij
+function bijnaOp(product) {
+  return product.om_de != null && dagenGeleden(product.laatste) >= Number(product.om_de);
+}
+
+function voorjouRij(product) {
+  const li = document.createElement("li");
+  li.className = "voorjou-rij";
+  const tekst = document.createElement("div");
+  tekst.className = "item-tekst";
+  const naam = document.createElement("span");
+  naam.className = "item-naam";
+  naam.textContent = hoofdletter(product.naam);
+  const sub = document.createElement("span");
+  sub.className = "item-sub";
+  sub.textContent = bijnaOp(product) ? "Is bijna op, volgens je koopritme" : ritmeTekst(product);
+  tekst.append(naam, sub);
+  li.append(tekst);
+  if (currentList) {
+    const plus = document.createElement("button");
+    plus.type = "button";
+    plus.className = "plus";
+    plus.setAttribute("aria-label", `${hoofdletter(product.naam)} op de lijst zetten`);
+    plus.innerHTML = '<svg width="24" height="24" aria-hidden="true"><use href="#icon-plus"/></svg>';
+    plus.addEventListener("click", () => zetOpLijst(product));
+    li.append(plus);
+  }
+  return li;
+}
+
+function renderVoorJou() {
+  const opLijst = new Set(items.map((i) => i.name.trim().toLowerCase()));
+  // Hoe ver het product over zijn gebruikelijke tussenpoos heen is; het verst eroverheen staat bovenaan
+  const druk = (p) => (p.om_de == null ? 0 : dagenGeleden(p.laatste) / Number(p.om_de));
+  const over = (voorjou || [])
+    .filter((p) => !nietNu.has(p.naam) && !opLijst.has(p.naam.trim().toLowerCase()))
+    .sort((a, b) => druk(b) - druk(a));
+  const [eerste, ...rest] = over;
+  tipProduct = eerste || null;
+  $("tip-kaart").hidden = !eerste;
+  if (eerste) {
+    $("tip-ritme").textContent = ritmeTekst(eerste);
+    $("tip-naam").textContent = hoofdletter(eerste.naam);
+    $("tip-info").textContent = `Laatst gekocht op ${datum(eerste.laatste)}` + (bijnaOp(eerste) ? " · is bijna op, volgens je koopritme" : "");
+    $("tip-toevoegen").hidden = !currentList;
+  }
+  $("voorjou-kop").hidden = rest.length === 0;
+  $("voorjou-lijst").replaceChildren(...rest.map(voorjouRij));
+  $("voorjou-leeg").hidden = !voorjou || over.length > 0;
+  $("voorjou-leeg").textContent = voorjou && voorjou.length === 0
+    ? "Nog te weinig aankopen om iets voor te stellen. Veeg producten naar rechts als je ze gekocht hebt, of scan een bon."
+    : "Niets meer voor te stellen: je vaste producten staan op de lijst of je hebt ze overgeslagen.";
+}
+
+// Een voorgesteld product op de open lijst zetten
+async function zetOpLijst(product) {
+  if (!currentList) return;
+  const lijst = currentList;
+  const { data, error } = await db
+    .from("items")
+    .insert({ list_id: lijst.id, name: hoofdletter(product.naam) })
+    .select()
+    .single();
+  if (error) return say("voorjou-msg", error.message);
+  if (currentList && currentList.id === lijst.id) {
+    if (!items.some((i) => i.id === data.id)) items.push(data);
+    render();
+    loadDeals();
+  }
+  if (!voorjouOpen) return;
+  renderVoorJou();
+  say("voorjou-msg", `"${data.name}" staat op ${lijst.name}.`);
+}
+
+$("tip-toevoegen").addEventListener("click", () => { if (tipProduct) zetOpLijst(tipProduct); });
+$("tip-nietnu").addEventListener("click", () => {
+  if (!tipProduct) return;
+  nietNu.add(tipProduct.naam);
+  say("voorjou-msg", "");
+  renderVoorJou();
 });
 
 // ---------- Aankoopprofiel ----------
@@ -412,6 +598,10 @@ async function logout() {
   mijnNaam = null;
   naamOpen = false;
   profielOpen = false;
+  voorjouOpen = false;
+  voorjou = null;
+  voorjouVraag++;
+  nietNu.clear();
   lijstenOpen = false;
   aankopenOpen = false;
   fotoOpen = false;
@@ -437,7 +627,7 @@ $("logout").addEventListener("click", logout);
 async function loadLijsten() {
   const { data, error } = await db
     .from("list_members")
-    .select("list_id, lists(id, name, invite_code, counts_for_profile, created_by, archived_at)")
+    .select("list_id, lists(id, name, counts_for_profile, created_by, archived_at)")
     // Alleen je eigen lidmaatschappen: je mag ook die van lijstgenoten zien, en dan staat een lijst er dubbel
     .eq("user_id", userId)
     .order("joined_at", { ascending: true });
@@ -581,6 +771,7 @@ async function verlaatLijst(melding) {
   lijsten = lijsten.filter((l) => l.id !== id);
   naamOpen = false;
   profielOpen = false;
+  voorjouOpen = false;
   await toonLijsten();
   say("setup-msg", melding || "Je bent uit een lijst verwijderd, of de lijst bestaat niet meer.");
 }
@@ -625,7 +816,10 @@ $("create-form").addEventListener("submit", async (e) => {
 
 $("join-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const { data, error } = await db.rpc("join_list", { p_code: $("join-code").value });
+  // Je mag de hele link plakken of alleen de code erin
+  const invoer = $("join-code").value.trim();
+  const code = (invoer.match(/uitnodiging=([0-9a-z]+)/i) || [null, invoer])[1];
+  const { data, error } = await db.rpc("join_list", { p_code: code });
   if (error) return say("nieuw-msg", error.message);
   $("join-code").value = "";
   openList(data);
@@ -642,9 +836,8 @@ async function openList(list) {
   if (!lijsten.some((l) => l.id === list.id)) lijsten.push(list);
   try { localStorage.setItem(LIJST_SLEUTEL, list.id); } catch {}
   // Bij wisselen niet kort de items van de vorige lijst laten zien
-  if (gewisseld) { leegStapel(); items = []; leden = []; deals = {}; aankopen = null; infoId = null; verbergOngedaan(); say("status", ""); render(); }
+  if (gewisseld) { leegStapel(); items = []; leden = []; deals = {}; aankopen = null; toonLedenPaneel(false); $("uitnodig-blok").hidden = true; say("leden-msg", ""); verbergOngedaan(); say("status", ""); render(); }
   $("list-title").textContent = list.name;
-  $("invite-code").textContent = list.invite_code;
   show("list");
   await loadItems();
   subscribe();
@@ -663,7 +856,7 @@ async function loadLeden() {
   const lijstId = currentList.id;
   const { data, error } = await db
     .from("list_members")
-    .select("user_id, joined_at")
+    .select("user_id, joined_at, is_manager")
     .eq("list_id", lijstId)
     .order("joined_at", { ascending: true });
   if (!currentList || currentList.id !== lijstId) return;
@@ -682,40 +875,110 @@ function lidRij(lid) {
   naam.textContent = (namen[lid.user_id] || "iemand zonder naam") + (lid.user_id === userId ? " (jij)" : "");
   li.append(naam);
 
-  if (lid.user_id === currentList.created_by) {
-    const maker = document.createElement("small");
-    maker.textContent = "maker";
-    li.append(maker);
+  const rol = lid.user_id === currentList.created_by ? "maker" : lid.is_manager ? "beheerder" : "";
+  if (rol) {
+    const klein = document.createElement("small");
+    klein.textContent = rol;
+    li.append(klein);
   }
-  // Verwijderen kan alleen de maker; de database controleert dat ook
+  // Beheerder maken en verwijderen kan alleen de maker; de database controleert dat ook
   if (currentList.created_by === userId && lid.user_id !== userId) {
+    const beheer = document.createElement("button");
+    beheer.type = "button";
+    beheer.className = "link";
+    beheer.textContent = lid.is_manager ? "Geen beheerder meer" : "Beheerder maken";
+    beheer.addEventListener("click", () => zetBeheerder(lid, !lid.is_manager));
     const weg = document.createElement("button");
     weg.type = "button";
     weg.className = "link";
     weg.textContent = "Verwijderen";
     weg.addEventListener("click", () => verwijderLid(lid));
-    li.append(weg);
+    li.append(beheer, weg);
   }
   return li;
 }
 
+// Uitnodigen mag de maker, en wie de maker beheerder heeft gemaakt
+function magUitnodigen() {
+  return !!currentList && (currentList.created_by === userId || leden.some((l) => l.user_id === userId && l.is_manager));
+}
+
 function renderLeden() {
   if (!currentList) return;
-  $("leden-aantal").textContent = leden.length ? `(${leden.length})` : "";
+  // Bovenaan de lijst: een rondje met de eerste letter per deelnemer (hooguit drie, daarna "+2")
+  const rondjes = leden.slice(0, 3).map((lid) => {
+    const rondje = document.createElement("span");
+    rondje.textContent = initiaal(namen[lid.user_id]);
+    return rondje;
+  });
+  if (leden.length > 3) {
+    const meer = document.createElement("span");
+    meer.textContent = "+" + (leden.length - 3);
+    rondjes.push(meer);
+  }
+  $("leden-knop").replaceChildren(...rondjes);
+  $("uitnodig-knop").hidden = !magUitnodigen();
   $("leden").replaceChildren(...leden.map(lidRij));
+}
+
+// Paneel met de deelnemers en de code om te delen, onder de kop van de lijst
+function toonLedenPaneel(open) {
+  $("leden-paneel").hidden = !open;
+  $("leden-knop").setAttribute("aria-expanded", open);
+}
+$("leden-knop").addEventListener("click", () => toonLedenPaneel($("leden-paneel").hidden));
+
+// ---------- Uitnodigen ----------
+// De knop met het plusje maakt een link voor één persoon (7 dagen geldig) en zet hem in het paneel;
+// "Delen" opent het deelmenu van de telefoon, of kopieert de link als dat er niet is.
+$("uitnodig-delen").textContent = navigator.share ? "Delen" : "Kopiëren";
+$("uitnodig-knop").addEventListener("click", async () => {
+  const lijstId = currentList.id;
+  toonLedenPaneel(true);
+  $("uitnodig-blok").hidden = true;
+  say("leden-msg", "Link maken...");
+  const { data, error } = await db.rpc("create_invite", { p_list: lijstId });
+  if (!currentList || currentList.id !== lijstId) return;
+  if (error) return say("leden-msg", error.message);
+  say("leden-msg", "");
+  $("uitnodig-link").value = `${location.origin}${location.pathname}?uitnodiging=${data}`;
+  $("uitnodig-blok").hidden = false;
+});
+$("uitnodig-delen").addEventListener("click", async () => {
+  const url = $("uitnodig-link").value;
+  if (navigator.share) {
+    // Afbreken van het deelmenu is geen fout
+    try { await navigator.share({ title: "BonusBuddy", text: `Doe mee met de lijst "${currentList.name}" in BonusBuddy`, url }); } catch {}
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    say("leden-msg", "Link gekopieerd.");
+  } catch {
+    $("uitnodig-link").select();
+    say("leden-msg", "Kopiëren lukte niet. Selecteer de link en kopieer hem zelf.");
+  }
+});
+
+async function zetBeheerder(lid, aan) {
+  const lijstId = currentList.id;
+  lid.is_manager = aan; // direct tonen, daarna opslaan
+  say("leden-msg", "");
+  renderLeden();
+  const { error } = await db.rpc("set_member_manager", { p_list: lijstId, p_user: lid.user_id, p_manager: aan });
+  if (!currentList || currentList.id !== lijstId) return;
+  if (error) { say("leden-msg", error.message); loadLeden(); }
 }
 
 async function verwijderLid(lid) {
   const naam = namen[lid.user_id] || "Deze deelnemer";
-  if (!confirm(`${naam} uit de lijst verwijderen? De code om te delen wordt daarna vernieuwd.`)) return;
+  if (!confirm(`${naam} uit de lijst verwijderen?`)) return;
   const lijstId = currentList.id;
-  say("status", "");
-  const { data, error } = await db.rpc("remove_member", { p_list: lijstId, p_user: lid.user_id });
+  say("leden-msg", "");
+  const { error } = await db.rpc("remove_member", { p_list: lijstId, p_user: lid.user_id });
   if (!currentList || currentList.id !== lijstId) return;
-  if (error) { say("status", error.message); return loadLeden(); }
+  if (error) { say("leden-msg", error.message); return loadLeden(); }
   leden = leden.filter((m) => m.user_id !== lid.user_id);
-  currentList.invite_code = data.invite_code;
-  $("invite-code").textContent = data.invite_code;
   renderLeden();
 }
 
@@ -760,12 +1023,20 @@ async function loadDeals() {
   render();
 }
 
-// Tekst van het label, bijv. "Bonus: AH 2, PLUS 1"
-function dealTekst(lijst) {
-  return "Bonus: " + [...lijst]
-    .sort((a, b) => a.supermarkt.localeCompare(b.supermarkt))
-    .map((d) => `${d.supermarkt} ${d.aantal}`)
-    .join(", ");
+// De supermarkten met een aanbieding voluit, bijv. ["Albert Heijn", "PLUS"]
+function dealWinkels(lijst) {
+  return [...new Set(lijst.map((d) => WINKELS[d.supermarkt] || d.supermarkt))].sort((a, b) => a.localeCompare(b));
+}
+
+// Zwarte balk in de kop: hoeveel producten op de lijst in de aanbieding zijn, en waar
+function renderBonus() {
+  const metDeal = items.filter((i) => deals[i.id]);
+  $("bonus-balk").hidden = metDeal.length === 0;
+  if (metDeal.length === 0) return;
+  $("bonus-aantal").textContent = metDeal.length === 1 ? "1 product in de bonus" : `${metDeal.length} producten in de bonus`;
+  const winkels = document.createElement("em");
+  winkels.textContent = dealWinkels(metDeal.flatMap((i) => deals[i.id])).join(" en ");
+  $("bonus-winkels").replaceChildren("Bij ", winkels);
 }
 
 function subscribe() {
@@ -793,6 +1064,9 @@ function subscribe() {
           // Iemand sluit aan: leden en de naam van de nieuwkomer ophalen
           loadLeden();
           loadNamen();
+        } else if (p.eventType === "UPDATE") {
+          // De maker heeft iemand beheerder gemaakt, of juist niet meer
+          loadLeden();
         } else if (p.eventType === "DELETE") {
           // Bij verwijderen zelf controleren om welke lijst het gaat
           if (p.old.list_id !== currentList.id) return;
@@ -855,56 +1129,51 @@ function itemRow(item) {
   const voor = document.createElement("div");
   voor.className = "item-voor";
 
-  // Knoppen doen hetzelfde als swipen, voor muis en toetsenbord
+  // Het rondje doet hetzelfde als naar rechts vegen
   const koopKnop = document.createElement("button");
   koopKnop.className = "koop";
-  koopKnop.textContent = "✓";
   koopKnop.setAttribute("aria-label", "Gekocht");
   koopKnop.addEventListener("click", () => koop(item));
 
+  // Naam, met eronder het aantal en wie het heeft toegevoegd
   const tekst = document.createElement("div");
   tekst.className = "item-tekst";
   const naam = document.createElement("span");
+  naam.className = "item-naam";
   naam.textContent = item.name;
   tekst.append(naam);
-  if (item.quantity) {
-    const q = document.createElement("small");
-    q.textContent = item.quantity;
-    tekst.append(q);
+  const wie = namen[item.added_by];
+  const onder = [item.quantity, wie && "door " + wie].filter(Boolean).join(" · ");
+  if (onder) {
+    const sub = document.createElement("span");
+    sub.className = "item-sub";
+    sub.textContent = onder;
+    sub.title = "Toegevoegd op " + datumTijd(item.created_at);
+    tekst.append(sub);
+  }
+  voor.append(koopKnop, tekst);
+
+  if (deals[item.id]) {
+    const bonus = document.createElement("div");
+    bonus.className = "item-deal";
+    const label = document.createElement("span");
+    label.className = "bonus-label";
+    label.textContent = "Bonus";
+    const winkels = document.createElement("span");
+    winkels.className = "item-sub";
+    winkels.textContent = dealWinkels(deals[item.id]).join(", ");
+    bonus.append(label, winkels);
+    voor.append(bonus);
   }
 
+  // Verwijderen zonder vegen, voor muis en toetsenbord
   const del = document.createElement("button");
   del.className = "del";
   del.textContent = "×";
   del.setAttribute("aria-label", "Verwijderen");
   del.addEventListener("click", () => remove(item));
+  voor.append(del);
 
-  const open = infoId === item.id;
-  const info = document.createElement("button");
-  info.className = "info";
-  info.textContent = "?";
-  info.setAttribute("aria-label", "Wie heeft dit toegevoegd?");
-  info.setAttribute("aria-expanded", open);
-  info.addEventListener("click", () => {
-    infoId = open ? null : item.id;
-    render();
-    // Naam nog onbekend (bijv. net ingevuld door de ander)? Dan opnieuw ophalen.
-    if (!open && item.added_by && !namen[item.added_by]) loadNamen();
-  });
-
-  voor.append(koopKnop, tekst, info, del);
-  if (deals[item.id]) {
-    const bonus = document.createElement("p");
-    bonus.className = "item-deal";
-    bonus.textContent = dealTekst(deals[item.id]);
-    voor.append(bonus);
-  }
-  if (open) {
-    const p = document.createElement("p");
-    p.className = "item-info";
-    p.textContent = itemInfo(item);
-    voor.append(p);
-  }
   li.append(achter, voor);
   maakSwipebaar(li, voor, item);
   return li;
@@ -997,17 +1266,12 @@ function leesBedrag(tekst) {
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
 }
 
-// Tekst onder een item: door wie en wanneer het is toegevoegd
-function itemInfo(item) {
-  const wie = namen[item.added_by] || "iemand zonder naam";
-  return `Toegevoegd door ${wie} op ${datumTijd(item.created_at)}`;
-}
-
 function render() {
   // Niet opnieuw opbouwen terwijl er een rij wordt versleept: die zou onder je vinger verdwijnen
   if (slepen > 0) { renderWacht = true; return; }
   renderWacht = false;
   $("items").replaceChildren(...items.map(itemRow));
+  renderBonus();
   renderLeden();
 }
 
@@ -2204,6 +2468,60 @@ $("samenvoeg-annuleren").addEventListener("click", () => {
   renderProducten();
 });
 $("producten-terug").addEventListener("click", toonProfiel);
+
+// ---------- Terugvegen ----------
+// Op schermen met een terugknop bovenaan (data-terug) brengt naar rechts vegen je ook terug.
+// Het scherm schuift mee met je vinger; ver genoeg en loslaten is hetzelfde als op de terugknop tikken.
+function maakTerugveegbaar(sectie) {
+  const knop = $(sectie.dataset.terug);
+  let startX = 0, startY = 0, dx = 0;
+  let pointer = null;
+  let bezig = false; // vinger is neer
+  let vast = false;  // de beweging is herkend als naar rechts vegen
+
+  sectie.addEventListener("pointerdown", (e) => {
+    // Alleen aanraken: met de muis wil je tekst kunnen selecteren
+    if (bezig || e.pointerType === "mouse" || e.target.closest("input, select, textarea")) return;
+    pointer = e.pointerId;
+    startX = e.clientX;
+    startY = e.clientY;
+    dx = 0;
+    bezig = true;
+  });
+
+  sectie.addEventListener("pointermove", (e) => {
+    if (!bezig || e.pointerId !== pointer) return;
+    const x = e.clientX - startX;
+    const y = e.clientY - startY;
+    if (!vast) {
+      // Omhoog, omlaag of naar links: geen terugveeg
+      if ((Math.abs(y) > 10 && Math.abs(y) > Math.abs(x)) || x < -10) { bezig = false; return; }
+      if (x < 10) return;
+      vast = true;
+      try { sectie.setPointerCapture(pointer); } catch {}
+      sectie.style.transition = "none";
+    }
+    dx = Math.max(0, x);
+    sectie.style.transform = `translateX(${dx}px)`;
+  });
+
+  function einde(e, afgebroken) {
+    if (!bezig || e.pointerId !== pointer) return;
+    bezig = false;
+    if (!vast) return;
+    vast = false;
+    sectie.style.transition = "";
+    sectie.style.transform = "";
+    if (!afgebroken && dx > Math.min(120, sectie.offsetWidth * 0.3)) knop.click();
+    // De tik die de browser na het loslaten nog stuurt mag niets aanklikken
+    const slik = (klik) => { klik.stopPropagation(); klik.preventDefault(); };
+    sectie.addEventListener("click", slik, true);
+    setTimeout(() => sectie.removeEventListener("click", slik, true), 300);
+  }
+  sectie.addEventListener("pointerup", (e) => einde(e, false));
+  sectie.addEventListener("pointercancel", (e) => einde(e, true));
+}
+document.querySelectorAll("section[data-terug]").forEach(maakTerugveegbaar);
 
 // ---------- PWA ----------
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
