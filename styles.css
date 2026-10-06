@@ -283,6 +283,8 @@ button.koop {
 
 /* ---------- Producten ---------- */
 #producten-zoek { display: block; width: 100%; margin: 0 0 8px; }
+/* Er staat geen knop naast de naam: zonder volle breedte past het uitgeklapte blok ernaast in plaats van eronder */
+#producten .bonnen-open { flex-basis: 100%; }
 /* Bezig met samenvoegen: de volgende tik op een product kiest het doel */
 .samenvoeg-balk {
   display: flex; align-items: center; gap: 12px; margin: 0 0 8px; padding: 4px 14px;
