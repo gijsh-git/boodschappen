@@ -23,6 +23,7 @@ let infoId = null;     // item waarvan de info ("toegevoegd door") openstaat
 let lijsten = [];      // alle lijsten waar je lid van bent
 let lijstenOpen = false;  // het overzicht van lijsten staat open
 const LIJST_SLEUTEL = "bonusbuddy-lijst"; // localStorage: id van de laatst geopende lijst
+const UITLEG_SLEUTEL = "bonusbuddy-veeguitleg"; // localStorage: "weg" als de uitleg over vegen is weggeklikt
 let currentList = null;
 let channel = null;
 let items = [];
@@ -35,7 +36,6 @@ let slepen = 0;        // aantal rijen dat nu wordt versleept (of nog uitschuift
 let renderWacht = false;  // er is een render() overgeslagen tijdens het slepen
 let ongedaan = null;   // laatste actie die nog terug te draaien is: { item, aankoopId }
 let ongedaanTimer = null;
-let audio = null;      // AudioContext voor de geluidjes; pas aangemaakt na de eerste aanraking
 
 function show(view) {
   views.forEach((v) => ($("view-" + v).hidden = v !== view));
@@ -755,7 +755,6 @@ $("add-form").addEventListener("submit", async (e) => {
 async function koop(item) {
   items = items.filter((i) => i.id !== item.id); // direct tonen, daarna opslaan
   render();
-  geluidKassa();
   const { data, error } = await db.rpc("buy_item", { p_item: item.id });
   if (!currentList || currentList.id !== item.list_id) return;
   if (error) { say("status", error.message); return loadItems(); }
@@ -767,12 +766,18 @@ async function koop(item) {
 async function remove(item) {
   items = items.filter((i) => i.id !== item.id);
   render();
-  geluidWeg();
   const { error } = await db.from("items").delete().eq("id", item.id);
   if (!currentList || currentList.id !== item.list_id) return;
   if (error) { say("status", error.message); return loadItems(); }
   toonOngedaan(`"${item.name}" verwijderd`, item, null);
 }
+
+// Uitleg over vegen boven de lijst: wegklikken onthouden we op dit toestel
+try { $("veeg-uitleg").hidden = localStorage.getItem(UITLEG_SLEUTEL) === "weg"; } catch {}
+$("veeg-uitleg-weg").addEventListener("click", () => {
+  $("veeg-uitleg").hidden = true;
+  try { localStorage.setItem(UITLEG_SLEUTEL, "weg"); } catch {}
+});
 
 // ---------- Ongedaan maken ----------
 // Balkje onderin dat een paar seconden blijft staan na gekocht of verwijderd
@@ -806,50 +811,6 @@ $("ongedaan-knop").addEventListener("click", async () => {
   if (error) say("status", error.message);
   loadItems();
 });
-
-// ---------- Geluid ----------
-// Browsers laten pas geluid toe na een aanraking of toets, dus dan maken we de AudioContext klaar
-function wekGeluid() {
-  try {
-    audio ||= new (window.AudioContext || window.webkitAudioContext)();
-    if (audio.state === "suspended") audio.resume();
-  } catch {}
-}
-["pointerdown", "touchend", "click", "keydown"].forEach((soort) => document.addEventListener(soort, wekGeluid));
-
-// Eén toon die uitsterft; met eindFreq glijdt de toonhoogte daarheen
-function toon(freq, start, duur, volume, type = "sine", eindFreq = null) {
-  const t = audio.currentTime + start;
-  const osc = audio.createOscillator();
-  const gain = audio.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, t);
-  if (eindFreq) osc.frequency.exponentialRampToValueAtTime(eindFreq, t + duur);
-  gain.gain.setValueAtTime(volume, t);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + duur);
-  osc.connect(gain);
-  gain.connect(audio.destination);
-  osc.start(t);
-  osc.stop(t + duur);
-}
-
-// Kassa: een droge tik van de la, daarna een rinkelend belletje
-function geluidKassa() {
-  if (!audio) return;
-  try {
-    toon(190, 0, 0.07, 0.25, "square", 80);
-    toon(2093, 0.08, 0.9, 0.2);
-    toon(2120, 0.08, 0.9, 0.12); // net ernaast: geeft het rinkelen
-    toon(2637, 0.08, 0.7, 0.12);
-    toon(3136, 0.08, 0.5, 0.06);
-  } catch {}
-}
-
-// Verwijderen: een korte toon die omlaag zakt
-function geluidWeg() {
-  if (!audio) return;
-  try { toon(420, 0, 0.2, 0.2, "triangle", 130); } catch {}
-}
 
 // ---------- Aankopen ----------
 function toonAankopen() {

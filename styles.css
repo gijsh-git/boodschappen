@@ -162,6 +162,10 @@ button.info[aria-expanded=true] { border-color: var(--oranje-tekst); color: var(
 .item-deal { flex-basis: 100%; margin: -6px 0 0; padding: 0 8px 12px 40px; color: var(--oranje-tekst); font-size: 0.85rem; font-weight: 700; }
 .item-info { flex-basis: 100%; margin: 0; padding: 0 8px 12px 40px; color: var(--grijs); font-size: 0.9rem; }
 
+/* Uitleg over vegen, met kruisje om hem weg te klikken */
+.veeg-uitleg { display: flex; align-items: center; gap: 4px; }
+.veeg-uitleg span { flex: 1; }
+
 /* ---------- Rij die je opzij kunt vegen ---------- */
 /* De rand van de lijst zit hier zonder binnenruimte, zodat de kleur de hele rij vult */
 #items:not(:empty) { padding: 0; overflow: hidden; }
