@@ -129,11 +129,17 @@ Eieren en scharreleieren.
 
 Twee producten. Onder "kipfilet": biologische kipfilet, blokjes en haasjes. Onder "kipdijfilet": kipdijreepjes.
 
-## Nog open
+### belegd broodje
 
-- Belegde broodjes: carpaccio, caprese en kip pesto samen als "belegd broodje"?
-- Hartige broodjes: frikandel-, kaas-, kaas-ui-, pizza-, saucijzen- en worstenbroodje samen of apart?
-- Zoet brood: krenten-rozijnenbrood en rozijnenbol samen?
+Kant-en-klare belegde broodjes, ongeacht beleg: carpaccio, caprese, kip pesto.
+
+### hartig broodje
+
+Warme hartige broodjes uit de bakkerij: frikandel-, kaas-, kaas-ui-, pizza-, saucijzen- en worstenbroodje.
+
+### zoet brood
+
+Krenten-rozijnenbrood, rozijnenbol en rozijnen-krentenbol.
 
 ## Werkwijze
 
