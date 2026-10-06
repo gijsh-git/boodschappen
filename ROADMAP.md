@@ -34,7 +34,7 @@ Een stap is pas klaar als alle punten onder "Klaar als" kloppen.
 
 ## Fase 1 – Lijsten archiveren in plaats van verwijderen
 
-### [ ] 1 – Archiveren
+### [x] 1 – Archiveren
 
 ```
 /plan
