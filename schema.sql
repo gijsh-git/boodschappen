@@ -27,8 +27,6 @@ create table public.items (
   -- genormaliseerde naam (kleine letters, getrimd): basis voor later koppelen aan kortingen
   normalized_name text generated always as (lower(trim(name))) stored,
   quantity text,
-  checked boolean not null default false,
-  checked_at timestamptz,
   added_by uuid default auth.uid(),
   created_at timestamptz not null default now()
 );
@@ -137,3 +135,110 @@ create policy "eigen profiel en lijstgenoten zien" on public.profiles for select
 create policy "eigen profiel aanmaken" on public.profiles for insert with check (user_id = auth.uid());
 create policy "eigen profiel wijzigen" on public.profiles for update
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- ---------- Aanbiedingen ----------
+-- pg_trgm: tekst vergelijken op gelijkenis (voor het zoeken van aanbiedingen bij een item)
+create extension if not exists pg_trgm with schema extensions;
+
+-- Aanbiedingen van supermarkten. Voor nu handmatige testgegevens (zie seed_deals.sql).
+create table public.deals (
+  id uuid primary key default gen_random_uuid(),
+  supermarkt text not null check (supermarkt in ('AH', 'PLUS')),
+  productnaam text not null,
+  -- omschrijving van de korting, bijv. "2e halve prijs"
+  omschrijving text not null,
+  -- prijs in euro's, indien bekend
+  prijs numeric(6,2),
+  geldig_van date not null,
+  geldig_tot date not null,
+  created_at timestamptz not null default now(),
+  check (geldig_tot >= geldig_van)
+);
+
+alter table public.deals enable row level security;
+
+-- Iedereen die is ingelogd mag lezen. Er zijn bewust geen policies om te schrijven:
+-- dat kan alleen met de service role (die slaat RLS over), niet vanuit de app.
+revoke all on public.deals from anon, authenticated;
+grant select on public.deals to authenticated;
+create policy "ingelogden lezen deals" on public.deals for select to authenticated using (true);
+
+-- Per item van een lijst: bij welke supermarkt is er nu een aanbieding, en hoeveel?
+-- Het zoeken gebeurt hier, zodat de app nooit alle deals hoeft op te halen.
+-- security invoker: de RLS op items zorgt dat je alleen je eigen lijsten kunt opvragen.
+create or replace function public.deals_for_list(p_list uuid)
+returns table (item_id uuid, supermarkt text, aantal integer)
+language sql stable security invoker set search_path = public, extensions as $$
+  select i.id, d.supermarkt, count(*)::integer
+  from public.items i
+  join public.deals d
+    -- GEVOELIGHEID: de itemnaam moet voor minstens 0.5 (schaal 0-1) lijken op een of meer
+    -- hele woorden uit de productnaam. Lager = meer (lossere) matches, hoger = strenger.
+    on strict_word_similarity(i.normalized_name, lower(d.productnaam)) >= 0.5
+  where i.list_id = p_list
+    and (now() at time zone 'Europe/Amsterdam')::date between d.geldig_van and d.geldig_tot
+  group by i.id, d.supermarkt;
+$$;
+
+-- ---------- Aankopen ----------
+-- Wat er echt gekocht is: basis voor het aankoopprofiel. Een item dat als gekocht wordt
+-- gemarkeerd verdwijnt uit items en komt hier terecht (alleen bij lijsten die meetellen).
+create table public.purchases (
+  id uuid primary key default gen_random_uuid(),
+  list_id uuid not null references public.lists(id) on delete cascade,
+  -- gegevens van het oorspronkelijke item, zodat "ongedaan maken" het exact kan terugzetten
+  item_id uuid,
+  name text not null,
+  normalized_name text generated always as (lower(trim(name))) stored,
+  quantity text,
+  added_by uuid,
+  item_created_at timestamptz,
+  -- wie het kocht; leeg bij aankopen die zijn omgezet uit oude afgestreepte items
+  bought_by uuid default auth.uid(),
+  bought_at timestamptz not null default now()
+);
+
+create index purchases_list_idx on public.purchases(list_id, bought_at desc);
+
+alter table public.purchases enable row level security;
+
+-- Leden mogen lezen. Er zijn bewust geen policies om te schrijven:
+-- dat gaat alleen via buy_item en undo_purchase.
+revoke all on public.purchases from anon, authenticated;
+grant select on public.purchases to authenticated;
+create policy "leden zien aankopen" on public.purchases for select using (public.is_member(list_id));
+
+-- Item als gekocht markeren: het item verdwijnt van de lijst en wordt, als de lijst meetelt
+-- voor het aankoopprofiel, bewaard als aankoop. Alles in één keer, zodat het niet half kan lukken.
+-- Geeft de id van de aankoop terug (null als er geen aankoop is gemaakt).
+create or replace function public.buy_item(p_item uuid)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare
+  i public.items;
+  v_id uuid;
+begin
+  delete from public.items where id = p_item and public.is_member(list_id) returning * into i;
+  -- Al weg (bijv. de ander was net eerder) of geen lid: niets te doen
+  if not found then return null; end if;
+  if exists (select 1 from public.lists where id = i.list_id and counts_for_profile) then
+    insert into public.purchases (list_id, item_id, name, quantity, added_by, item_created_at, bought_by)
+    values (i.list_id, i.id, i.name, i.quantity, i.added_by, i.created_at, auth.uid())
+    returning id into v_id;
+  end if;
+  return v_id;
+end $$;
+
+-- Aankoop ongedaan maken: de aankoop verdwijnt en het item staat weer op de lijst
+create or replace function public.undo_purchase(p_purchase uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare a public.purchases;
+begin
+  delete from public.purchases where id = p_purchase and public.is_member(list_id) returning * into a;
+  if not found then return; end if;
+  insert into public.items (id, list_id, name, quantity, added_by, created_at)
+  values (coalesce(a.item_id, gen_random_uuid()), a.list_id, a.name, a.quantity, a.added_by,
+          coalesce(a.item_created_at, now()))
+  on conflict (id) do nothing;
+end $$;
+
+alter publication supabase_realtime add table public.purchases;

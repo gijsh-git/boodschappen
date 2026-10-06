@@ -250,10 +250,13 @@
       </header>
       <div class="content">
         <!-- Wie doen er mee aan deze lijst? Standaard ingeklapt -->
-        <details class="leden">
-          <summary>Deelnemers <span id="leden-aantal"></span></summary>
-          <ul id="leden"></ul>
-        </details>
+        <div class="lijst-balk">
+          <details class="leden">
+            <summary>Deelnemers <span id="leden-aantal"></span></summary>
+            <ul id="leden"></ul>
+          </details>
+          <button type="button" id="aankopen-knop" class="link">Aankopen</button>
+        </div>
 
         <form id="add-form">
           <input id="item-name" type="text" placeholder="Wat moet er mee?" required autocomplete="off">
@@ -261,16 +264,37 @@
           <button type="submit" aria-label="Toevoegen">+</button>
         </form>
 
+        <p class="uitleg">Veeg naar rechts als je het gekocht hebt, naar links om het te verwijderen.</p>
         <ul id="items"></ul>
 
-        <h2 id="done-title" hidden>Afgestreept</h2>
-        <ul id="done-items"></ul>
-
         <div class="actions">
-          <button id="clear-done" class="link" hidden>Afgestreepte items verwijderen</button>
           <button id="logout" class="link">Uitloggen</button>
         </div>
         <p id="status" class="msg" role="status"></p>
+      </div>
+      <!-- Verschijnt kort na gekocht of verwijderd -->
+      <div id="ongedaan" role="status" hidden>
+        <span id="ongedaan-tekst"></span>
+        <button type="button" id="ongedaan-knop">Ongedaan maken</button>
+      </div>
+    </section>
+
+    <!-- Aankopen van de huidige lijst -->
+    <section id="view-aankopen" hidden>
+      <header class="top">
+        <div class="brand">
+          <span class="brand-icon" aria-hidden="true"><svg width="18" height="18"><use href="#icon-tag"/></svg></span>
+          <span class="brand-name">BonusBuddy</span>
+        </div>
+        <h1>Aankopen</h1>
+        <small id="aankopen-lijst"></small>
+      </header>
+      <div class="content">
+        <p id="aankopen-uitleg" class="uitleg" hidden>Deze lijst telt niet mee voor het aankoopprofiel. Wat je hier als gekocht markeert, wordt niet bewaard.</p>
+        <ul id="aankopen"></ul>
+        <p id="aankopen-leeg" class="uitleg" hidden>Nog geen aankopen in deze lijst.</p>
+        <p id="aankopen-msg" class="msg" role="status"></p>
+        <button type="button" id="aankopen-terug" class="link">Terug naar de lijst</button>
       </div>
     </section>
 

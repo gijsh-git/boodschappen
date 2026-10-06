@@ -7,6 +7,8 @@
   --rand: #eadfd2;
   --bg: #fff6ee;
   --vlak: #fff;
+  --groen: #1f9d55; /* gekocht */
+  --rood: #d6453d;  /* verwijderen */
   --kop: "Bricolage Grotesque", "DM Sans", system-ui, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
@@ -148,9 +150,7 @@ ul:not(:empty) { background: var(--vlak); border: 1.5px solid var(--rand); borde
 li { display: flex; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--rand); }
 li:last-child { border-bottom: 0; }
 li label { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 14px 0; cursor: pointer; }
-li input[type=checkbox] { flex: none; width: 22px; height: 22px; accent-color: var(--oranje); }
 li span { overflow-wrap: anywhere; }
-li.checked span { text-decoration: line-through; color: var(--grijs); }
 li small { margin-left: auto; padding-right: 4px; white-space: nowrap; }
 button.del { background: none; color: var(--grijs); padding: 8px 12px; font-size: 1.3rem; font-weight: 400; }
 /* Vraagtekentje: toont wie het item heeft toegevoegd en wanneer */
@@ -159,7 +159,49 @@ button.info {
   background: none; border: 1.5px solid var(--grijs); color: var(--grijs); font-size: 0.85rem; line-height: 1;
 }
 button.info[aria-expanded=true] { border-color: var(--oranje-tekst); color: var(--oranje-tekst); }
-.item-info { flex-basis: 100%; margin: 0; padding: 0 8px 12px 34px; color: var(--grijs); font-size: 0.9rem; }
+.item-deal { flex-basis: 100%; margin: -6px 0 0; padding: 0 8px 12px 40px; color: var(--oranje-tekst); font-size: 0.85rem; font-weight: 700; }
+.item-info { flex-basis: 100%; margin: 0; padding: 0 8px 12px 40px; color: var(--grijs); font-size: 0.9rem; }
+
+/* ---------- Rij die je opzij kunt vegen ---------- */
+/* De rand van de lijst zit hier zonder binnenruimte, zodat de kleur de hele rij vult */
+#items:not(:empty) { padding: 0; overflow: hidden; }
+.item { display: block; position: relative; overflow: hidden; }
+.item-voor {
+  position: relative; display: flex; flex-wrap: wrap; align-items: center; padding: 0 6px 0 14px;
+  background: var(--vlak); touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  transition: transform 0.18s ease-out;
+}
+.item-tekst { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 14px 0; }
+/* Rond knopje links: gekocht, ook zonder vegen */
+button.koop {
+  flex: none; width: 30px; height: 30px; padding: 0; margin-right: 10px; border-radius: 50%;
+  background: none; border: 2px solid var(--groen); color: var(--groen); font-size: 1rem; line-height: 1;
+}
+/* Laag achter de rij: groen bij naar rechts (gekocht), rood bij naar links (verwijderen) */
+.item-achter {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 18px; color: #fff; font-weight: 700; opacity: 0.55; transition: opacity 0.1s;
+}
+.item-achter span { visibility: hidden; }
+.item.naar-rechts .item-achter { background: var(--groen); }
+.item.naar-links .item-achter { background: var(--rood); }
+.item.naar-rechts .achter-gekocht, .item.naar-links .achter-weg { visibility: visible; }
+/* Ver genoeg geveegd: loslaten voert de actie uit */
+.item.voorbij .item-achter { opacity: 1; }
+
+/* Balkje "Ongedaan maken", vast onderin */
+#ongedaan {
+  position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  width: min(520px, calc(100% - 32px)); display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 4px 6px 4px 16px; border-radius: 14px; background: var(--donker); color: #fff;
+  border: 1.5px solid #3a302a; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+}
+#ongedaan span { min-width: 0; overflow-wrap: anywhere; }
+#ongedaan button { flex: none; background: none; color: var(--oranje); padding: 12px 10px; }
+
+/* ---------- Aankopen ---------- */
+.aankoop-rij span { flex: 1; min-width: 0; padding: 14px 0 4px; }
+.aankoop-info { flex-basis: 100%; margin: 0; padding: 0 8px 12px 0; color: var(--grijs); font-size: 0.9rem; }
 
 /* ---------- Overzicht van lijsten ---------- */
 .lijst-rij .lijst-naam {
@@ -187,6 +229,9 @@ button.info[aria-expanded=true] { border-color: var(--oranje-tekst); color: var(
 
 /* Deelnemers van de lijst (uitklapbaar) */
 .leden { margin-bottom: 12px; }
+/* Knop "Aankopen" op dezelfde hoogte als "Deelnemers" */
+.lijst-balk { position: relative; }
+.lijst-balk #aankopen-knop { position: absolute; top: 0; right: 0; }
 .leden summary { padding: 8px 0; color: var(--grijs); font-weight: 700; cursor: pointer; }
 .lid-rij span { flex: 1; min-width: 0; padding: 14px 0; }
 .lid-rij small { padding-right: 10px; }
