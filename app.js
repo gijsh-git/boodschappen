@@ -11,7 +11,7 @@ let mustSetPassword = linkType === "invite" || linkType === "recovery";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const $ = (id) => document.getElementById(id);
-const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list", "aankopen"];
+const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list", "aankopen", "foto"];
 let resetEmail = "";
 let userId = null;
 let mijnNaam = null;   // weergavenaam; null = nog niet opgehaald of nog niet ingevuld
@@ -32,6 +32,10 @@ let deals = {};        // item-id -> [{ supermarkt, aantal }]: actuele aanbiedin
 let dealsVraag = 0;    // volgnummer, zodat een laat antwoord een nieuwer antwoord niet overschrijft
 let aankopen = null;   // aankopen van de huidige lijst, nieuwste eerst; null = nog niet opgehaald
 let aankopenOpen = false; // het scherm met aankopen staat open
+let fotoOpen = false;  // het scherm "Foto controleren" staat open
+let fotoProducten = []; // producten uit de foto: { naam, hoeveelheid, aan }
+let fotoVraag = 0;     // volgnummer, zodat een antwoord na annuleren genegeerd wordt
+const FOTO_MAX = 2000; // langste zijde in pixels waarmee de foto wordt verstuurd
 let slepen = 0;        // aantal rijen dat nu wordt versleept (of nog uitschuift)
 let renderWacht = false;  // er is een render() overgeslagen tijdens het slepen
 let ongedaan = null;   // laatste actie die nog terug te draaien is: { item, aankoopId }
@@ -70,16 +74,16 @@ async function init() {
   db.auth.onAuthStateChange((event, s) => {
     if (event === "PASSWORD_RECOVERY") mustSetPassword = true;
     userId = s ? s.user.id : null;
-    if (s) route(); else { mijnNaam = null; naamOpen = false; profielOpen = false; lijstenOpen = false; aankopenOpen = false; show("login"); }
+    if (s) route(); else { mijnNaam = null; naamOpen = false; profielOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; show("login"); }
   });
   if (session) route(); else show("login");
   if (linkError) say("login-msg", "De link is verlopen of al gebruikt. Vraag een nieuwe aan via 'Wachtwoord vergeten?'.");
 }
 
 async function route() {
-  if (mustSetPassword) { naamOpen = false; profielOpen = false; lijstenOpen = false; aankopenOpen = false; return show("password"); }
-  // Supabase meldt de sessie opnieuw als de app terug in beeld komt; dan niet wegspringen van naam, profiel, overzicht of aankopen
-  if (naamOpen || profielOpen || lijstenOpen || aankopenOpen) return;
+  if (mustSetPassword) { naamOpen = false; profielOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; return show("password"); }
+  // Supabase meldt de sessie opnieuw als de app terug in beeld komt; dan niet wegspringen van naam, profiel, overzicht, aankopen of foto
+  if (naamOpen || profielOpen || lijstenOpen || aankopenOpen || fotoOpen) return;
   if (mijnNaam === null) {
     const { data: profiel, error: profielFout } = await db
       .from("profiles")
@@ -93,6 +97,8 @@ async function route() {
   }
   const fout = await loadLijsten();
   if (mustSetPassword) return show("password");
+  // Terug van de camera komt de sessiemelding vaak net vóór de gekozen foto; dan staat het fotoscherm inmiddels open
+  if (fotoOpen) return;
   if (fout) {
     renderLijsten();
     $("lijsten-leeg").hidden = true; // onbekend of je lijsten hebt, dus niet "nog geen lijsten" tonen
@@ -236,6 +242,7 @@ async function logout() {
   profielOpen = false;
   lijstenOpen = false;
   aankopenOpen = false;
+  fotoOpen = false;
   lijsten = [];
   leden = [];
   deals = {};
@@ -333,6 +340,7 @@ function sluitLijst() {
   deals = {};
   aankopen = null;
   aankopenOpen = false;
+  fotoOpen = false;
   verbergOngedaan();
   try { localStorage.removeItem(LIJST_SLEUTEL); } catch {}
 }
@@ -397,6 +405,7 @@ async function openList(list) {
   currentList = list;
   lijstenOpen = false;
   aankopenOpen = false;
+  fotoOpen = false;
   if (!lijsten.some((l) => l.id === list.id)) lijsten.push(list);
   try { localStorage.setItem(LIJST_SLEUTEL, list.id); } catch {}
   // Bij wisselen niet kort de items van de vorige lijst laten zien
@@ -895,6 +904,141 @@ $("aankopen-terug").addEventListener("click", () => {
   aankopenOpen = false;
   render();
   show("list");
+});
+
+// ---------- Foto ----------
+// Foto verkleinen en als JPEG (base64) teruggeven: kleiner verzoek, lagere kosten, en elk fotoformaat wordt leesbaar
+function verkleinFoto(bestand) {
+  return new Promise((klaar, mislukt) => {
+    const url = URL.createObjectURL(bestand);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const schaal = Math.min(1, FOTO_MAX / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * schaal));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * schaal));
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff"; // doorzichtige delen worden anders zwart
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      klaar(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      mislukt(new Error("Deze afbeelding kan niet worden geopend."));
+    };
+    img.src = url;
+  });
+}
+
+// Foutmelding van de Edge Function; die stuurt zelf een Nederlandse tekst mee in { fout }
+async function fotoFout(error) {
+  try {
+    const inhoud = await error.context.json();
+    if (inhoud && inhoud.fout) return inhoud.fout;
+  } catch {}
+  return "De foto kon niet worden gelezen. Controleer je verbinding en probeer het opnieuw.";
+}
+
+// Foto laten lezen en de gevonden producten ter controle tonen
+async function leesFoto(bestand) {
+  const lijstId = currentList.id;
+  const vraag = ++fotoVraag;
+  fotoOpen = true;
+  fotoProducten = [];
+  $("foto-toevoegen").disabled = false;
+  $("foto-lijst").textContent = currentList.name;
+  renderFoto();
+  say("foto-msg", "Foto wordt gelezen...");
+  show("foto");
+
+  let producten = null, melding = "";
+  try {
+    const afbeelding = await verkleinFoto(bestand);
+    const { data, error } = await db.functions.invoke("foto-naar-items", { body: { afbeelding, type: "image/jpeg" } });
+    if (error) melding = await fotoFout(error);
+    else producten = (data && data.producten) || [];
+  } catch (e) {
+    melding = e.message;
+  }
+  // Intussen geannuleerd of van lijst gewisseld? Dan dit antwoord negeren.
+  if (vraag !== fotoVraag || !fotoOpen || !currentList || currentList.id !== lijstId) return;
+  if (!producten) return say("foto-msg", melding);
+  fotoProducten = producten.map((p) => ({ naam: p.naam, hoeveelheid: p.hoeveelheid || "", aan: true }));
+  renderFoto();
+  say("foto-msg", fotoProducten.length ? "" : "Er zijn geen producten gevonden op deze foto.");
+}
+
+function fotoRij(product) {
+  const li = document.createElement("li");
+  li.className = "foto-rij";
+
+  const box = document.createElement("input");
+  box.type = "checkbox";
+  box.checked = product.aan;
+  box.setAttribute("aria-label", "Toevoegen aan lijst");
+  box.addEventListener("change", () => { product.aan = box.checked; });
+
+  const naam = document.createElement("input");
+  naam.type = "text";
+  naam.value = product.naam;
+  naam.autocomplete = "off";
+  naam.setAttribute("aria-label", "Product");
+  naam.addEventListener("input", () => { product.naam = naam.value; });
+
+  const aantal = document.createElement("input");
+  aantal.type = "text";
+  aantal.className = "qty";
+  aantal.value = product.hoeveelheid;
+  aantal.placeholder = "Aantal";
+  aantal.autocomplete = "off";
+  aantal.setAttribute("aria-label", "Aantal");
+  aantal.addEventListener("input", () => { product.hoeveelheid = aantal.value; });
+
+  li.append(box, naam, aantal);
+  return li;
+}
+
+function renderFoto() {
+  $("foto-producten").replaceChildren(...fotoProducten.map(fotoRij));
+  $("foto-uitleg").hidden = fotoProducten.length === 0;
+  $("foto-toevoegen").hidden = fotoProducten.length === 0;
+}
+
+function sluitFoto() {
+  fotoOpen = false;
+  fotoVraag++;
+  fotoProducten = [];
+  $("foto-toevoegen").disabled = false;
+  render();
+  show("list");
+}
+
+$("foto-knop").addEventListener("click", () => $("foto-invoer").click());
+$("foto-invoer").addEventListener("change", () => {
+  const bestand = $("foto-invoer").files[0];
+  $("foto-invoer").value = ""; // zodat dezelfde foto daarna opnieuw gekozen kan worden
+  if (bestand && currentList) leesFoto(bestand);
+});
+$("foto-terug").addEventListener("click", sluitFoto);
+
+// De aangevinkte producten in één keer op de lijst zetten
+$("foto-toevoegen").addEventListener("click", async () => {
+  const lijstId = currentList.id;
+  const rijen = fotoProducten
+    .filter((p) => p.aan && p.naam.trim())
+    .map((p) => ({ list_id: lijstId, name: p.naam.trim(), quantity: p.hoeveelheid.trim() || null }));
+  if (rijen.length === 0) return say("foto-msg", "Vink minstens één product aan.");
+  say("foto-msg", "Bezig...");
+  $("foto-toevoegen").disabled = true;
+  const { data, error } = await db.from("items").insert(rijen).select();
+  if (!fotoOpen || !currentList || currentList.id !== lijstId) return;
+  $("foto-toevoegen").disabled = false;
+  if (error) return say("foto-msg", error.message);
+  data.forEach((nieuw) => { if (!items.some((i) => i.id === nieuw.id)) items.push(nieuw); });
+  sluitFoto();
+  loadDeals();
 });
 
 // ---------- PWA ----------

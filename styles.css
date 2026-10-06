@@ -145,6 +145,9 @@ body:has(.auth:not([hidden])) { background: #fff6ee; }
 .uitleg { margin: 0 0 8px; color: var(--grijs); font-size: 0.95rem; }
 #add-form button { flex: none; width: 52px; font-size: 1.5rem; padding: 0; }
 
+/* Knop "Foto toevoegen" onder het invoerveld */
+.foto-knop { display: flex; align-items: center; gap: 8px; margin: -4px 0 8px; }
+
 ul { list-style: none; margin: 0; padding: 0; }
 ul:not(:empty) { background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 16px; padding: 0 6px 0 14px; }
 li { display: flex; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--rand); }
@@ -215,6 +218,12 @@ button.koop {
 .aankoop-kop { display: flex; align-items: baseline; gap: 12px; }
 .aankoop-kop span { flex: 1; min-width: 0; }
 .aankoop-info { margin: 2px 0 0; color: var(--grijs); font-size: 0.9rem; }
+
+/* ---------- Foto controleren ---------- */
+.foto-rij { flex-wrap: nowrap; gap: 8px; padding: 8px 8px 8px 0; }
+.foto-rij input[type=checkbox] { flex: none; width: 24px; height: 24px; margin: 0 4px 0 0; accent-color: var(--oranje); }
+.foto-rij input[type=text] { padding: 10px 12px; }
+.foto-rij:has(input[type=checkbox]:not(:checked)) input[type=text] { opacity: 0.5; }
 
 /* ---------- Overzicht van lijsten ---------- */
 .lijst-rij .lijst-naam {
