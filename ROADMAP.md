@@ -101,7 +101,9 @@ Hoe het moet werken:
 - Sectie "Aankoopprofiel" op Mijn profiel.
 - Periode: laatste 4 weken, 3 maanden, 12 maanden, alles. Rollend vanaf vandaag (4 weken = vandaag min 28 dagen), niet per kalendermaand.
 - Filter: alle lijsten, of één specifieke lijst.
-- Kerncijfers over de gekozen periode: aantal aankopen (rijen in purchases), aantal verschillende producten (uit 3a), uitgegeven en bespaard.
+- Een product is een product uit 3a: de naam van een aankoop wordt via product_aliases naar het product herleid. "heinz ketchup" en "ketchup" tellen dus als één.
+- Een vlag "telt niet mee in profiel" per product, voor dingen als draagtas en plastic zak (zie docs/productregels.md). Alleen de beheerder zet hem, op het scherm Producten, via een databasefunctie met rolcontrole. Zulke producten tellen niet mee in het aantal aankopen, het aantal producten en de top 10, wel in uitgegeven en bespaard.
+- Kerncijfers over de gekozen periode: aantal aankopen (rijen in purchases), aantal verschillende producten, uitgegeven en bespaard.
 - Geld: de prijs van een aankoop is het bedrag van de hele regel vóór korting. Uitgegeven = prijs min korting, bespaard = korting, alleen over aankopen met een prijs. Toon erbij bij hoeveel procent van de aankopen de prijs bekend is.
 - Top 10 producten over de gekozen periode, gesorteerd op aantal aankoopdagen (meerdere keren op één dag telt als één keer; stuks tellen kan niet, want de hoeveelheid is vrije tekst).
 - Per product in de top 10: om de hoeveel dagen (de mediaan van de tussenpozen tussen aankoopdagen) en de datum van de laatste aankoop. Het interval wordt altijd over alle data berekend, los van de gekozen periode, en pas getoond vanaf 3 aankoopdagen; daaronder "te weinig data".
@@ -109,7 +111,7 @@ Hoe het moet werken:
 - Uitgaven per maand als staafjes: altijd de laatste 12 maanden, los van de gekozen periode. De lopende maand is gemarkeerd als onvolledig en een maand zonder prijsgegevens toont "geen prijsdata" in plaats van € 0.
 - Alle dagen en maanden in Nederlandse tijd (Europe/Amsterdam).
 - Kort uitlegtekstje per onderdeel. Daarin staat in elk geval: dit is het profiel van het huishouden (alle deelnemers, ook aankopen van vóór je toetreding), het interval kijkt naar alle data, en de bedragen zijn een ondergrens (alleen bonregels met een prijs, zonder statiegeld).
-Klaar als: de cijfers kloppen met Supabase en filters en periodes werken. Geef per kerncijfer een losse controlequery die ik in de SQL Editor naast de uitkomst kan leggen.
+Klaar als: de cijfers kloppen met Supabase, filters en periodes werken, brood als één product in de top 10 staat en draagtas er met de vlag uit verdwijnt. Geef per kerncijfer een losse controlequery die ik in de SQL Editor naast de uitkomst kan leggen.
 Grenzen: alleen aankopen uit lijsten waarvan ik deelnemer ben en die meetellen voor het profiel (ook gearchiveerde). Reken in de database: één functie die alles in één keer teruggeeft, de frontend toont alleen. Geen grafiekbibliotheek. Goed leesbaar op een telefoon. Geen seizoenspatronen, geen "samen gekocht" en geen voorspellingen.
 ```
 
