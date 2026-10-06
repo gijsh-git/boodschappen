@@ -53,7 +53,7 @@ Grenzen: geef de SQL apart. Verander swipen, aankopen en bonnen verder niet.
 
 ## Fase 2 – Historische gegevens
 
-### [ ] 2a – AH-bonnen ophalen via ah-mcp
+### [x] 2a – AH-bonnen ophalen via ah-mcp
 
 ```
 /plan
