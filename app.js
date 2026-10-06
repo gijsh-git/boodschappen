@@ -1028,7 +1028,7 @@ function dealWinkels(lijst) {
   return [...new Set(lijst.map((d) => WINKELS[d.supermarkt] || d.supermarkt))].sort((a, b) => a.localeCompare(b));
 }
 
-// Zwarte balk in de kop: hoeveel producten op de lijst in de aanbieding zijn, en waar
+// Lichte balk in de kop: hoeveel producten op de lijst in de aanbieding zijn, en waar
 function renderBonus() {
   const metDeal = items.filter((i) => deals[i.id]);
   $("bonus-balk").hidden = metDeal.length === 0;

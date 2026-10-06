@@ -164,13 +164,13 @@ code {
 }
 .avatars span:first-child { margin-left: 0; background: var(--donker); color: #fff; }
 .top-knop.hoekig { width: 52px; height: 52px; border-radius: 16px; }
-/* Zwarte balk: producten op de lijst die in de aanbieding zijn */
+/* Lichte balk in de oranje kop: producten op de lijst die in de aanbieding zijn */
 .bonus-balk {
   display: flex; flex-direction: column; margin: 18px 0 0; padding: 12px 16px; border-radius: 16px;
-  background: var(--donker); color: #fff; font-size: 0.95rem;
+  background: #fde3cb; color: #8a4a14; font-size: 0.95rem;
 }
-.bonus-balk strong { font-family: var(--kop); font-size: 1.25rem; line-height: 1.2; }
-.bonus-balk em { color: var(--oranje); font-style: normal; }
+.bonus-balk strong { font-family: var(--kop); font-size: 1.25rem; line-height: 1.2; color: var(--donker); }
+.bonus-balk em { color: #b45309; font-style: normal; }
 /* Deelnemers en de code om te delen; opent via de rondjes of de uitnodigknop */
 .leden-paneel { margin-bottom: 16px; }
 .leden-paneel .kopje { margin-top: 4px; }
