@@ -331,14 +331,21 @@ function lijstRij(lijst) {
   label.append(tekst, box);
 
   li.append(naam, label);
-  // Archiveren kan alleen de maker; de database controleert dat ook
+  // Archiveren en verwijderen kan alleen de maker; de database controleert dat ook
   if (lijst.created_by === userId) {
     const weg = document.createElement("button");
     weg.type = "button";
     weg.className = "link lijst-weg";
     weg.textContent = "Lijst archiveren";
     weg.addEventListener("click", () => archiveerLijst(lijst));
-    li.append(weg);
+    // Prullenbakje rechts op dezelfde regel: de lijst definitief verwijderen
+    const prul = document.createElement("button");
+    prul.type = "button";
+    prul.className = "lijst-prul";
+    prul.setAttribute("aria-label", `Lijst ${lijst.name} verwijderen`);
+    prul.innerHTML = '<svg width="20" height="20" aria-hidden="true"><use href="#icon-prullenbak"/></svg>';
+    prul.addEventListener("click", () => verwijderLijst(lijst));
+    li.append(weg, prul);
   }
   return li;
 }
@@ -371,6 +378,18 @@ async function archiveerLijst(lijst) {
   if (error) return say("setup-msg", error.message);
   lijsten = lijsten.filter((l) => l.id !== lijst.id);
   archief = archief.filter((l) => l.id !== lijst.id).concat(data);
+  renderLijsten();
+}
+
+// Definitief verwijderen: ook de aankopen en bonnen van de lijst zijn dan weg
+async function verwijderLijst(lijst) {
+  if (!confirm(`Lijst "${lijst.name}" definitief verwijderen? Alle items, aankopen en bonnen van deze lijst verdwijnen, ook voor de andere leden en uit het aankoopprofiel. Dit kan niet ongedaan worden gemaakt.\n\nWil je de aankopen bewaren? Kies dan "Lijst archiveren".`)) return;
+  say("setup-msg", "");
+  // Vooraf loslaten: anders meldt realtime ons eigen verdwenen lidmaatschap als "je bent verwijderd"
+  if (currentList && currentList.id === lijst.id) sluitLijst();
+  const { error } = await db.rpc("delete_list", { p_list: lijst.id });
+  if (error) return say("setup-msg", error.message);
+  lijsten = lijsten.filter((l) => l.id !== lijst.id);
   renderLijsten();
 }
 

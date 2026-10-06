@@ -291,7 +291,9 @@ button.koop {
   flex-basis: 100%; justify-content: space-between; padding: 6px 8px 14px 0;
   color: var(--grijs); font-size: 0.9rem;
 }
-.lijst-rij .lijst-weg { flex-basis: 100%; padding: 0 8px 14px 0; text-align: left; font-size: 0.9rem; }
+.lijst-rij .lijst-weg { flex: 1; min-width: 0; padding: 0 8px 14px 0; text-align: left; font-size: 0.9rem; }
+/* Prullenbakje rechts naast "Lijst archiveren" */
+.lijst-rij .lijst-prul { flex: none; display: flex; padding: 0 8px 14px 12px; background: none; color: var(--grijs); }
 /* Schuifje: een checkbox die eruitziet als schakelaar */
 .lijst-rij .schakelaar {
   -webkit-appearance: none; appearance: none; position: relative; flex: none;

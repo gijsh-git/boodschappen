@@ -92,8 +92,8 @@ begin
   return l;
 end $$;
 
--- Lijst archiveren of terugzetten (alleen de maker). Verwijderen kan bewust niet vanuit de app:
--- dan zouden via on delete cascade ook de aankopen en bonnen verdwijnen, de basis van het aankoopprofiel.
+-- Lijst archiveren of terugzetten (alleen de maker). Dit is de gewone weg: de aankopen en bonnen,
+-- de basis van het aankoopprofiel, blijven dan bestaan.
 create or replace function public.archive_list(p_list uuid, p_archived boolean)
 returns public.lists language plpgsql security definer set search_path = public as $$
 declare l public.lists;
@@ -103,6 +103,15 @@ begin
     where id = p_list and created_by = auth.uid() returning * into l;
   if not found then raise exception 'Alleen de maker kan deze lijst archiveren of terugzetten'; end if;
   return l;
+end $$;
+
+-- Lijst definitief verwijderen (alleen de maker); items, leden, aankopen en bonnen gaan mee
+-- via on delete cascade. De app waarschuwt daarvoor en wijst op archiveren.
+create or replace function public.delete_list(p_list uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  delete from public.lists where id = p_list and created_by = auth.uid();
+  if not found then raise exception 'Alleen de maker kan deze lijst verwijderen'; end if;
 end $$;
 
 -- Deelnemer verwijderen (alleen de maker). Daarna krijgt de lijst een nieuwe code,
