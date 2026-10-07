@@ -6,8 +6,25 @@ const Data = (() => {
   let kanaal = null; // het live kanaal van de open lijst
 
   return {
-    // Krijgt de Supabase-client van app.js, die hem pas maakt nadat de # van de mail-link is uitgelezen
-    init(client) { db = client; },
+    // Maakt de Supabase-client. app.js roept dit pas aan nadat de # van de mail-link is uitgelezen,
+    // want de client ruimt die # op.
+    init(url, sleutel) { db = supabase.createClient(url, sleutel); },
+
+    // ---------- Inloggen ----------
+    sessie() { return db.auth.getSession(); },
+    // Roept `bij(event, sessie)` aan bij elke wijziging van de sessie (ook als de app terug in beeld komt)
+    bijSessieWijziging(bij) { return db.auth.onAuthStateChange(bij); },
+    logIn(email, wachtwoord) { return db.auth.signInWithPassword({ email, password: wachtwoord }); },
+    logUit() { return db.auth.signOut(); },
+    // Stuurt een mail met een link die terugkomt op `terugNaar`
+    stuurHerstelMail(email, terugNaar) { return db.auth.resetPasswordForEmail(email, { redirectTo: terugNaar }); },
+    zetWachtwoord(wachtwoord) { return db.auth.updateUser({ password: wachtwoord }); },
+
+    // ---------- Edge Functions ----------
+    // Leest de producten van een foto; schrijft zelf niets
+    fotoNaarItems(inhoud) { return db.functions.invoke("foto-naar-items", { body: inhoud }); },
+    // Leest een kassabon (foto of pdf); schrijft zelf niets
+    leesBon(inhoud) { return db.functions.invoke("bon-uploaden", { body: inhoud }); },
 
     // ---------- Lijsten ----------
     // Je eigen lidmaatschappen met de lijst erbij, oudste eerst

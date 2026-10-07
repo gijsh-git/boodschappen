@@ -4,7 +4,7 @@ Dit document zegt hoe de code **hoort** te zijn opgebouwd. Hoe het systeem nu we
 
 ## Huidig
 
-Alle clientcode zit in één bestand, `app.js` (ruim 2500 regels). Supabase-calls (`db.rpc`, `db.from`, `db.auth`, `db.functions`) staan daar tussen de rendercode. Rekenwerk en beveiliging zitten al in de database (RPC's, RLS), en dat blijft zo.
+Alle Supabase-calls staan in `data.js`; `app.js` (ruim 2500 regels) bevat geen `db.` meer. State, logica en rendering lopen in `app.js` nog door elkaar, en `logica.js` bestaat nog niet. Rekenwerk en beveiliging zitten in de database (RPC's, RLS), en dat blijft zo.
 
 ## Gewenst: drie lagen
 
@@ -31,7 +31,7 @@ Klassieke scripts, geen modules en geen build. Laadvolgorde in `index.html`: sup
 
 Er zijn geen tests, dus de stappen zijn klein.
 
-1. Verhuis de Supabase-calls per domein naar `data.js`, in deze volgorde: lijsten en leden; items en aankopen; bonnen; producten, profiel en aanbiedingen; auth en edge functions.
+1. Verhuis de Supabase-calls per domein naar `data.js`, in deze volgorde: lijsten en leden; items en aankopen; bonnen; producten, profiel en aanbiedingen; auth en edge functions. (Gedaan.)
 2. Na elk domein: `CACHE` in `sw.js` bumpen (bij elk domein, niet alleen het eerste, zodat telefoons de gewijzigde scripts niet uit de oude cache laden), de app handmatig testen (realtime en optimistische updates met twee browsers), één commit, **stoppen**. Het volgende domein begint pas na een expliciete "ga door" van de gebruiker.
 3. De logica wordt niet in één keer uit `app.js` gehaald: zonder tests is dat veel risico voor weinig winst. Ze verhuist per onderdeel, op het moment dat dat onderdeel toch wordt aangepast (regel 7 en 8). `logica.js` bestaat nog niet en ontstaat bij de eerste gelegenheid.
 4. "Favorieten" wordt eerst gedefinieerd en op de roadmap gezet.

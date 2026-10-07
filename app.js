@@ -16,8 +16,7 @@ if (uitnodiging) {
   history.replaceState(null, "", location.pathname + location.hash);
 }
 
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-Data.init(db);
+Data.init(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const $ = (id) => document.getElementById(id);
 const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list", "aankopen", "foto", "bon", "bonnen", "stapel", "producten", "voorjou"];
@@ -127,9 +126,9 @@ async function init() {
     say("login-msg", "Vul eerst config.js in met je Supabase-gegevens.");
     return;
   }
-  const { data: { session } } = await db.auth.getSession();
+  const { data: { session } } = await Data.sessie();
   userId = session ? session.user.id : null;
-  db.auth.onAuthStateChange((event, s) => {
+  Data.bijSessieWijziging((event, s) => {
     if (event === "PASSWORD_RECOVERY") mustSetPassword = true;
     userId = s ? s.user.id : null;
     if (s) route(); else { mijnNaam = null; naamOpen = false; profielOpen = false; voorjouOpen = false; lijstenOpen = false; aankopenOpen = false; fotoOpen = false; leegStapel(); show("login"); }
@@ -185,10 +184,7 @@ async function verwerkUitnodiging() {
 $("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   say("login-msg", "Bezig...");
-  const { error } = await db.auth.signInWithPassword({
-    email: $("email").value.trim(),
-    password: $("password").value
-  });
+  const { error } = await Data.logIn($("email").value.trim(), $("password").value);
   if (error) return say("login-msg", nl(error));
   $("password").value = "";
   say("login-msg", "");
@@ -203,7 +199,7 @@ $("forgot").addEventListener("click", () => {
 
 // Stuurt een mail met een link naar het scherm "Kies je wachtwoord"
 function sendReset(email) {
-  return db.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+  return Data.stuurHerstelMail(email, location.origin + location.pathname);
 }
 
 $("forgot-form").addEventListener("submit", async (e) => {
@@ -236,7 +232,7 @@ if (/iPhone|iPad|iPod/.test(navigator.userAgent)) $("open-mail").href = "message
 $("password-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   say("password-msg", "Bezig...");
-  const { error } = await db.auth.updateUser({ password: $("new-password").value });
+  const { error } = await Data.zetWachtwoord($("new-password").value);
   if (error) return say("password-msg", nl(error));
   mustSetPassword = false;
   $("new-password").value = "";
@@ -292,7 +288,7 @@ function toonProfiel() {
   voorjouOpen = false;
   $("profiel-naam").textContent = mijnNaam || "Nog niet ingevuld";
   $("profiel-avatar").textContent = initiaal(mijnNaam);
-  db.auth.getSession().then(({ data }) => { $("profiel-email").textContent = data.session ? data.session.user.email : ""; });
+  Data.sessie().then(({ data }) => { $("profiel-email").textContent = data.session ? data.session.user.email : ""; });
   $("producten-knop").hidden = !beheerder;
   show("profiel");
   loadBeheerder();
@@ -584,7 +580,7 @@ $("ap-lijst").addEventListener("change", () => {
 });
 
 async function logout() {
-  await db.auth.signOut();
+  await Data.logUit();
   Data.stopVolgen();
   currentList = null;
   mustSetPassword = false;
@@ -1497,7 +1493,7 @@ async function leesFoto(bestand) {
   let producten = null, melding = "";
   try {
     const afbeelding = await verkleinFoto(bestand);
-    const { data, error } = await db.functions.invoke("foto-naar-items", { body: { afbeelding, type: "image/jpeg" } });
+    const { data, error } = await Data.fotoNaarItems({ afbeelding, type: "image/jpeg" });
     if (error) melding = await fotoFout(error);
     else producten = (data && data.producten) || [];
   } catch (e) {
@@ -1636,7 +1632,7 @@ async function leesBon(bon) {
   let gelezen = null, melding = "";
   try {
     // De foto wordt pas hier verkleind, zodat niet alle bonnen tegelijk in het geheugen staan
-    const { data, error } = await db.functions.invoke("bon-uploaden", { body: await leesBonBestand(bon.bestand) });
+    const { data, error } = await Data.leesBon(await leesBonBestand(bon.bestand));
     if (error) melding = await fotoFout(error);
     else gelezen = (data && data.bon) || { regels: [] };
   } catch (e) {
