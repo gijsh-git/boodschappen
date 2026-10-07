@@ -244,6 +244,7 @@ Alleen voor de testfase. Niet uitbreiden naar andere gebruikers.
 
 ### [ ] Stap 7 – Persoonlijke laag
 
+- Het `hq_id` op aankopen is de basis: hetzelfde artikel steeds opnieuw kopen (bijvoorbeeld altijd hetzelfde volkoren brood) laat een voorkeur zien binnen een product, naast wat `name` en `receipt_name` zeggen.
 - [ ] Voorkeur per variant afleiden uit `name` en `receipt_name` (bijvoorbeeld altijd volkoren)
 - [ ] "Niet voor mij" bij een aanbieding, en daarvan leren
 
