@@ -27,14 +27,10 @@ let naamOpen = false;  // het naam-scherm staat open
 let naamBewerken = false; // naam-scherm is geopend vanuit het profiel (niet de eerste keer)
 let profielOpen = false;  // het profiel-scherm (of het naam- of productenscherm daarbinnen) staat open
 let beheerder = false; // je bent beheerder: je mag producten samenvoegen, losmaken en hernoemen
-let producten = null;  // alle producten: { id, name, namen, aankopen, telt_mee }; null = nog niet opgehaald
 let aankoopprofiel = null; // het antwoord van purchase_profile; null = nog niet opgehaald
 let profielPeriode = "3m"; // gekozen periode van het aankoopprofiel: 4w, 3m, 12m of alles
 let profielLijst = "";  // id van de lijst waarop het aankoopprofiel is gefilterd; leeg = alle lijsten
 let profielVraag = 0;   // volgnummer, zodat een laat antwoord een nieuwere keuze niet overschrijft
-let productOpen = null; // id van het product dat is opengeklapt
-let productHerkomst = {}; // product-id -> de samenvoegingen die nog in dat product zitten
-let samenvoegBron = null; // product dat je aan het samenvoegen bent; de volgende tik kiest het doel
 let namen = {};        // user_id -> weergavenaam van jezelf en je lijstgenoten
 let lijsten = [];      // de actieve lijsten waar je lid van bent
 let archief = [];      // de gearchiveerde lijsten waar je lid van bent
@@ -790,7 +786,7 @@ async function logout() {
   aankopen = null;
   namen = {};
   beheerder = false;
-  producten = null;
+  Logica.vergeetProducten();
   aankoopprofiel = null;
   profielLijst = "";
   profielVraag++;
@@ -2506,14 +2502,10 @@ $("bonnen-terug").addEventListener("click", () => {
 });
 
 // ---------- Producten ----------
-// Alleen voor de beheerder. Een product is een verzameling namen (aliassen); samenvoegen verhuist
-// de namen van het ene product naar het andere. Het scherm hoort bij het profiel:
+// Alleen voor de beheerder; state en acties staan in logica.js. Het scherm hoort bij het profiel:
 // profielOpen blijft aan, zodat route() er niet van wegspringt.
 function toonProducten() {
-  producten = null;
-  productOpen = null;
-  productHerkomst = {};
-  samenvoegBron = null;
+  Logica.vergeetProducten();
   $("producten-zoek").value = "";
   say("producten-msg", "Bezig...");
   renderProducten();
@@ -2522,26 +2514,25 @@ function toonProducten() {
 }
 
 async function loadProducten() {
-  const { data, error } = await Data.productOverzicht();
+  const uit = await Logica.laadProducten();
   if (!profielOpen) return;
-  if (error) return say("producten-msg", error.message);
-  producten = data;
+  if (uit.fout) return say("producten-msg", uit.fout);
   say("producten-msg", "");
   renderProducten();
 }
 
 // De samenvoegingen die nog in een product zitten; pas ophalen als je het product openklapt
 async function loadHerkomst(productId) {
-  const { data, error } = await Data.productHerkomst(productId);
+  const uit = await Logica.laadHerkomst(productId);
   if (!profielOpen) return;
-  if (error) return say("producten-msg", error.message);
-  productHerkomst[productId] = data;
+  if (uit.fout) return say("producten-msg", uit.fout);
   renderProducten();
 }
 
 function productRij(product) {
   const li = document.createElement("li");
-  const open = !samenvoegBron && productOpen === product.id;
+  const samenvoegBron = Logica.samenvoegBron();
+  const open = !samenvoegBron && Logica.productOpen() === product.id;
 
   const knop = document.createElement("button");
   knop.type = "button";
@@ -2570,7 +2561,7 @@ function productRij(product) {
   }
   knop.addEventListener("click", () => {
     if (samenvoegBron) return voegSamen(samenvoegBron, product);
-    productOpen = open ? null : product.id;
+    Logica.openProduct(open ? null : product.id);
     renderProducten();
     if (!open) loadHerkomst(product.id);
   });
@@ -2612,7 +2603,7 @@ function productRij(product) {
   blok.append(label);
 
   // Per samenvoeging de namen die erbij kwamen; losmaken zet het oude product precies terug
-  const herkomst = productHerkomst[product.id];
+  const herkomst = Logica.herkomstVan(product.id);
   if (!herkomst) {
     const p = document.createElement("p");
     p.textContent = "Bezig...";
@@ -2638,7 +2629,7 @@ function productRij(product) {
   samen.className = "link";
   samen.textContent = "Samenvoegen met…";
   samen.addEventListener("click", () => {
-    samenvoegBron = product;
+    Logica.kiesSamenvoegBron(product);
     say("producten-msg", "");
     renderProducten();
   });
@@ -2649,11 +2640,11 @@ function productRij(product) {
 }
 
 function renderProducten() {
-  const zoek = $("producten-zoek").value.trim().toLowerCase();
+  const zoek = $("producten-zoek").value.trim();
+  const producten = Logica.producten();
   const alle = producten || [];
-  const lijst = alle.filter((p) =>
-    (!samenvoegBron || p.id !== samenvoegBron.id) &&
-    (!zoek || p.name.toLowerCase().includes(zoek) || p.namen.some((n) => n.includes(zoek))));
+  const samenvoegBron = Logica.samenvoegBron();
+  const lijst = Logica.gefilterdeProducten(zoek);
   $("producten").replaceChildren(...lijst.map(productRij));
   $("samenvoeg-balk").hidden = !samenvoegBron;
   if (samenvoegBron) $("samenvoeg-tekst").textContent = `Kies het product waar "${samenvoegBron.name}" bij hoort.`;
@@ -2664,8 +2655,8 @@ function renderProducten() {
 
 // Na een wijziging alles opnieuw ophalen: samenvoegen en losmaken raken meerdere producten tegelijk
 async function herlaadProducten(openId) {
-  productOpen = openId;
-  productHerkomst = {};
+  Logica.openProduct(openId);
+  Logica.wisHerkomst();
   await loadProducten();
   if (openId) loadHerkomst(openId);
 }
@@ -2673,10 +2664,9 @@ async function herlaadProducten(openId) {
 async function voegSamen(bron, doel) {
   if (!confirm(`"${bron.name}" samenvoegen met "${doel.name}"? Alles wat als "${bron.name}" is gekocht telt daarna als "${doel.name}". Je kunt dit weer losmaken.`)) return;
   say("producten-msg", "Bezig...");
-  const { error } = await Data.voegProductenSamen(bron.id, doel.id);
+  const uit = await Logica.voegSamen(bron, doel);
   if (!profielOpen) return;
-  if (error) return say("producten-msg", error.message);
-  samenvoegBron = null;
+  if (uit.fout) return say("producten-msg", uit.fout);
   $("producten-zoek").value = "";
   herlaadProducten(doel.id);
 }
@@ -2684,9 +2674,9 @@ async function voegSamen(bron, doel) {
 async function maakLos(product, samenvoeging) {
   if (!confirm(`"${samenvoeging.source_name}" weer losmaken van "${product.name}"?`)) return;
   say("producten-msg", "Bezig...");
-  const { error } = await Data.maakSamenvoegenOngedaan(samenvoeging.id);
+  const uit = await Logica.maakLos(samenvoeging);
   if (!profielOpen) return;
-  if (error) return say("producten-msg", error.message);
+  if (uit.fout) return say("producten-msg", uit.fout);
   herlaadProducten(product.id);
 }
 
@@ -2694,27 +2684,25 @@ async function hernoemProduct(product, naam) {
   if (!naam) return say("producten-msg", "Vul een naam in.");
   if (naam === product.name) return;
   say("producten-msg", "Bezig...");
-  const { data, error } = await Data.hernoemProduct(product.id, naam);
+  const uit = await Logica.hernoemProduct(product, naam);
   if (!profielOpen) return;
-  if (error) return say("producten-msg", error.message);
-  product.name = data.name;
+  if (uit.fout) return say("producten-msg", uit.fout);
   say("producten-msg", "");
   renderProducten();
 }
 
 async function setProductTelt(product, aan) {
   say("producten-msg", "Bezig...");
-  const { data, error } = await Data.zetProductProfiel(product.id, aan);
+  const uit = await Logica.zetProductTelt(product, aan);
   if (!profielOpen) return;
-  if (!error) product.telt_mee = data.counts_in_profile;
-  say("producten-msg", error ? error.message : "");
+  say("producten-msg", uit.fout || "");
   renderProducten();
 }
 
 $("producten-knop").addEventListener("click", toonProducten);
 $("producten-zoek").addEventListener("input", renderProducten);
 $("samenvoeg-annuleren").addEventListener("click", () => {
-  samenvoegBron = null;
+  Logica.kiesSamenvoegBron(null);
   renderProducten();
 });
 $("producten-terug").addEventListener("click", toonProfiel);

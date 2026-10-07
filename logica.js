@@ -1,6 +1,6 @@
 // Logica: state en regels zonder DOM. Zie ARCHITECTURE.md.
-// Roept alleen `Data` aan; app.js toont wat hier uitkomt. Nu de favorieten, de aanbiedingen bij de lijst en
-// Voor jou: de rest van de logica staat nog in app.js en verhuist per onderdeel.
+// Roept alleen `Data` aan; app.js toont wat hier uitkomt. Nu de favorieten, de aanbiedingen bij de lijst,
+// Voor jou en de producten: de rest van de logica staat nog in app.js en verhuist per onderdeel.
 const Logica = (() => {
   // ---------- Favorieten ----------
   let favorieten = null; // eigen favorieten: { id, term, brand, category }; null = nog niet opgehaald
@@ -33,6 +33,12 @@ const Logica = (() => {
   // { id, supermarkt, titel, korting, geldig_tot, favorieten: [{ term, brand, artikel }], producten: [{ naam, dagen }] }
   let aanbiedingen = null; // null = nog niet opgehaald
   let aanbiedingenVraag = 0;
+
+  // ---------- Producten ----------
+  let producten = null;  // alle producten: { id, name, namen, aankopen, telt_mee }; null = nog niet opgehaald
+  let productOpen = null; // id van het product dat is opengeklapt
+  let productHerkomst = {}; // product-id -> de samenvoegingen die nog in dat product zitten
+  let samenvoegBron = null; // product dat je aan het samenvoegen bent; de volgende tik kiest het doel
 
   function dagenGeleden(dag) {
     return Math.floor((Date.now() - new Date(dag).getTime()) / 864e5);
@@ -206,6 +212,81 @@ const Logica = (() => {
     },
 
     // Een late suggestie na het kiezen of opslaan moet niet alsnog openklappen
-    stopSuggesties(soort) { suggestieVraag[soort]++; }
+    stopSuggesties(soort) { suggestieVraag[soort]++; },
+
+    // ---------- Producten ----------
+    // Alleen voor de beheerder. Een product is een verzameling namen (aliassen); samenvoegen verhuist
+    // de namen van het ene product naar het andere.
+    producten() { return producten; },
+    productOpen() { return productOpen; },
+    samenvoegBron() { return samenvoegBron; },
+    // De samenvoegingen die nog in een product zitten, of undefined als ze nog niet zijn opgehaald
+    herkomstVan(productId) { return productHerkomst[productId]; },
+
+    // Bij het openen van het scherm en bij uitloggen: alles opnieuw
+    vergeetProducten() {
+      producten = null;
+      productOpen = null;
+      productHerkomst = {};
+      samenvoegBron = null;
+    },
+
+    async laadProducten() {
+      const { data, error } = await Data.productOverzicht();
+      if (error) return { fout: error.message };
+      producten = data;
+      return {};
+    },
+
+    // Pas ophalen als je het product openklapt
+    async laadHerkomst(productId) {
+      const { data, error } = await Data.productHerkomst(productId);
+      if (error) return { fout: error.message };
+      productHerkomst[productId] = data;
+      return {};
+    },
+
+    // Welk product openstaat (null = geen). De herkomst wordt daarna opnieuw opgehaald.
+    openProduct(productId) { productOpen = productId; },
+    // Na een wijziging: samenvoegen en losmaken raken meerdere producten tegelijk
+    wisHerkomst() { productHerkomst = {}; },
+
+    // Het product dat je gaat samenvoegen (de volgende tik kiest het doel), of null om te stoppen
+    kiesSamenvoegBron(product) { samenvoegBron = product; },
+
+    // Wat het scherm toont: zonder het product dat je aan het samenvoegen bent, gefilterd op naam of alias
+    gefilterdeProducten(zoekTekst) {
+      const zoek = zoekTekst.trim().toLowerCase();
+      return (producten || []).filter((p) =>
+        (!samenvoegBron || p.id !== samenvoegBron.id) &&
+        (!zoek || p.name.toLowerCase().includes(zoek) || p.namen.some((n) => n.includes(zoek))));
+    },
+
+    async voegSamen(bron, doel) {
+      const { error } = await Data.voegProductenSamen(bron.id, doel.id);
+      if (error) return { fout: error.message };
+      samenvoegBron = null;
+      return {};
+    },
+
+    async maakLos(samenvoeging) {
+      const { error } = await Data.maakSamenvoegenOngedaan(samenvoeging.id);
+      return error ? { fout: error.message } : {};
+    },
+
+    async hernoemProduct(product, naam) {
+      const { data, error } = await Data.hernoemProduct(product.id, naam);
+      if (error) return { fout: error.message };
+      product.name = data.name;
+      return {};
+    },
+
+    // Voor dingen die geen boodschappen zijn (draagtas, plastic zak): buiten het aankoopprofiel houden
+    async zetProductTelt(product, aan) {
+      const { data, error } = await Data.zetProductProfiel(product.id, aan);
+      if (error) return { fout: error.message };
+      product.telt_mee = data.counts_in_profile;
+      return {};
+    }
   };
 })();
