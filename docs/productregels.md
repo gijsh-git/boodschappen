@@ -32,6 +32,7 @@ Bij twijfel: samenvoegen. Te ruim samenvoegen kost hooguit een irrelevante aanbi
 
 - Varianten waar je niet tussen wisselt: halfvolle, volle en gewone melk; cola en cola zero; chocolademelk en chocomel 0%.
 - Alcoholvrij en gemengd tegenover gewoon: amstel 0.0, desperados en radler apart van "bier"; rosé apart van "witte wijn".
+- Pils tegenover speciaalbier: bokbier, tripel, IPA en witbier zijn "speciaalbier", apart van "bier".
 - Producten voor een ander moment of gebruik: gesneden brood (ontbijt), stokbrood (maaltijd), afbakbroodjes, naanbrood; risottorijst apart van "rijst".
 - Producten die alleen in je eigen apparaat werken: koffiebonen, koffiecapsules en koffiepads.
 - Andere vorm van hetzelfde doel: eiwitpoeder apart van "eiwitdrank".
@@ -75,7 +76,11 @@ Alle kant-en-klare eiwitdranken en -shakes, ongeacht merk of smaak: hipro, xxl n
 
 ### bier
 
-Gewoon bier, ongeacht merk. Niet: alcoholvrij, radler, desperados.
+Pils, ongeacht merk of verpakking (blik, fles, krat, fust). Niet: speciaalbier, alcoholvrij, radler, desperados.
+
+### speciaalbier
+
+Bier dat geen pils is, ongeacht merk: blond, bokbier, dubbel, tripel, quadrupel, IPA, witbier, weizen en zwaar bier. Wie pils koopt wisselt daar bij een aanbieding niet naar. Als lijstnaam is de eerste naam "speciaalbier", daarna de soort ("bokbier", "tripel"); niet "bier". Alcoholvrij speciaalbier valt onder alcoholvrij, niet hieronder.
 
 ### witte wijn
 
