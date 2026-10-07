@@ -278,9 +278,9 @@ Gebouwd op 7 oktober 2026:
 - Suggesties voor de term komen uit de subcategorie (gesplitst op komma's) en uit de woorden in de titel, zonder de woorden van het merk. Ze laten per hoofdcategorie een eigen regel zien ("honing · Koffie, thee" naast "honing · Koek, snoep, chocolade").
 - Nog niet: een favoriet doet nog niets. De aanbieding erbij tonen is stap 5.
 
-### [ ] Stap 5 – Matchen en kortingskansen
+### [x] Stap 5 – Matchen en kortingskansen
 
-- [ ] Koppeling artikel → product is gedeeld en gebeurt één keer per artikel, in drie niveaus:
+- [x] Koppeling artikel → product is gedeeld en gebeurt één keer per artikel, in drie niveaus:
   1. Zeker: het artikel-ID staat op een eigen bon. Het product is dan bekend; automatisch koppelen. Dit is geen samenvoegen van producten en valt dus niet onder de goedkeuring uit `docs/productregels.md`.
   2. Kandidaat: categorie en naam wijzen op een product dat iemand koopt. AI-voorstel volgens `docs/productregels.md`, met de categorie van het artikel erbij; de beheerder keurt goed.
   3. De rest: geen product. Komt het artikel later terug in de bonus, dan is het al bekend.
@@ -358,7 +358,8 @@ Gebouwd op 7 oktober 2026 (migratie `artikel_koppelingen`):
 - "Bijgekomen sinds het oordeel" gaat op de aanmaakdatum van het product. Een oud product dat pas later weer een item of aankoop krijgt telt dus niet als nieuw.
 - Bijgesteld na de eerste proefronde (migratie `artikel_lijstnamen`): een product dat nog niet bestaat kreeg geen label, ook niet als het in de bonus was ("andijvie" voor het eerst op de lijst). Het script legt daarom bij elk artikel hooguit drie lijstnamen vast, de namen die iemand op een lijst zou typen. Een item krijgt het Bonus-label als zijn naam na Nederlandse stamming gelijk is aan zo'n naam, zonder goedkeuring en zonder dat er een product voor wordt aangemaakt. Dit is een bewuste uitzondering op "geen naammatching in de database": alleen gelijkheid van de hele naam, en alleen voor het label op de lijst. Voor jou blijft werken via de bon en de goedgekeurde koppelingen.
 - De opdracht aan de AI is aangescherpt: zekerheid laag is alleen voor echte twijfel over een variant. Wat alleen in de buurt komt krijgt geen product. In de eerste proef waren 248 van de 989 voorstellen "laag".
-- Nog te doen: de punten onder "Klaar als" nalopen met een echte ronde.
+- Eerste echte ronde op 7 oktober 2026: 2422 artikelen kregen lijstnamen, ongeveer 800 voorstellen (96 via de vaste regel), de rest "geen product". De AI koos het product eerst als nummer uit de lijst en pakte dan geregeld het product ernaast ("spekreepjes" werd "sperziebonen"); nu kiest hij de naam uit een vaste lijst in het uitvoerschema. Getest in de app: goedkeuren, afwijzen, losmaken en het label via de lijstnaam werken.
+- Nog open: het script draait met de hand. Automatisch draaien na elke bonusronde komt later.
 
 ### [ ] Stap 6 – Automatische aankoopimport (alleen eigen accounts)
 
