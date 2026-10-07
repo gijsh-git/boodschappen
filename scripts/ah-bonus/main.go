@@ -75,6 +75,8 @@ type aanbieding struct {
 	Artikelen    []artikel `json:"artikelen"`
 	// Wat AH zelf als aantal artikelen opgeeft; kan afwijken van wat er is teruggekomen
 	AantalVolgensAH int `json:"aantal_volgens_ah,omitempty"`
+	// true: de artikelen van deze groep ophalen is mislukt, de lijst hierboven is dus niet compleet
+	Mislukt bool `json:"mislukt,omitempty"`
 }
 
 type week struct {
@@ -102,6 +104,18 @@ func labels(in []apiLabel) []label {
 	return uit
 }
 
+// Een verzoek aan AH mislukt af en toe zonder reden; een paar keer proberen voorkomt een halve week
+func probeer(vraag func() error) error {
+	var err error
+	for poging := 1; poging <= 3; poging++ {
+		if err = vraag(); err == nil {
+			return nil
+		}
+		time.Sleep(time.Duration(poging) * 2 * time.Second)
+	}
+	return err
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		stop("gebruik: go run . <pad naar ah-bonus.json>")
@@ -126,7 +140,9 @@ func main() {
 			} `json:"tabs"`
 		} `json:"periods"`
 	}
-	if err := c.DoRequest(ctx, http.MethodGet, "/mobile-services/bonuspage/v3/metadata", nil, &meta); err != nil {
+	if err := probeer(func() error {
+		return c.DoRequest(ctx, http.MethodGet, "/mobile-services/bonuspage/v3/metadata", nil, &meta)
+	}); err != nil {
 		stop("bonusweek ophalen mislukt: %v", err)
 	}
 	if len(meta.Periods) == 0 {
@@ -184,7 +200,9 @@ func main() {
 		params.Set("date", w.Van)
 		params.Set("promotionType", "NATIONAL")
 		params.Set("category", cat)
-		if err := c.DoRequest(ctx, http.MethodGet, "/mobile-services/bonuspage/v2/section?"+params.Encode(), nil, &sectie); err != nil {
+		if err := probeer(func() error {
+			return c.DoRequest(ctx, http.MethodGet, "/mobile-services/bonuspage/v2/section?"+params.Encode(), nil, &sectie)
+		}); err != nil {
 			stop("categorie %s ophalen mislukt: %v", cat, err)
 		}
 		for _, x := range sectie.BonusGroupOrProducts {
@@ -251,8 +269,9 @@ func main() {
 			} `json:"bonusPromotions"`
 		}
 		vars := map[string]any{"id": a.ID, "van": w.Van, "tot": w.Tot}
-		if err := c.DoGraphQL(ctx, groepVraag, vars, &antwoord); err != nil {
+		if err := probeer(func() error { return c.DoGraphQL(ctx, groepVraag, vars, &antwoord) }); err != nil {
 			mislukt++
+			a.Mislukt = true
 			fmt.Fprintf(os.Stderr, "groep %s (%s) mislukt: %v\n", a.ID, a.Titel, err)
 		} else if len(antwoord.BonusPromotions) > 0 {
 			g := antwoord.BonusPromotions[0]

@@ -1,0 +1,38 @@
+# Haalt de AH-bonus van de lopende week op en zet die in de database (roadmap stap 3).
+# De bonusweek loopt van maandag tot en met zondag. Donderdag draait het nog eens: dat vangt een mislukte
+# maandag op en neemt wijzigingen van AH mee. Opnieuw draaien voegt niets dubbel toe.
+# Nodig: de secret AANBIEDINGEN_SLEUTEL (Settings > Secrets and variables > Actions), met dezelfde waarde als
+# de secret met die naam in Supabase. Daarmee kan alleen de Edge Function aanbiedingen-opslaan worden aangeroepen.
+name: AH-bonus ophalen
+
+on:
+  schedule:
+    # In UTC: 06:30 Nederlandse tijd in de zomer, 05:30 in de winter
+    - cron: "30 4 * * 1"
+    - cron: "30 4 * * 4"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency: ah-bonus
+
+jobs:
+  ophalen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: scripts/ah-bonus/go.mod
+          cache-dependency-path: scripts/ah-bonus/go.sum
+      - name: Bonus ophalen bij AH
+        run: |
+          mkdir -p data
+          cd scripts/ah-bonus
+          go run . ../../data/ah-bonus.json
+      - name: Opslaan in de database
+        env:
+          AANBIEDINGEN_SLEUTEL: ${{ secrets.AANBIEDINGEN_SLEUTEL }}
+        run: python3 scripts/ah-bonus-opslaan.py --echt

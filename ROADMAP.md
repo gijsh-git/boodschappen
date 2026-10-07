@@ -195,6 +195,25 @@ Volgorde: na stap 1. Het kan er los van, maar stap 1 laat zien hoe de AH-data er
 
 Klaar als: de bonus van deze week elke week vanzelf in de database staat.
 
+Gebouwd (7 oktober 2026), nog door te voeren en te testen:
+
+- Tabellen `articles`, `offers` en `offer_articles`, gevuld door de functie `save_offers` (migratie `aanbiedingen`). De oude tabel `deals` met testdata blijft staan tot stap 5.
+- Ophalen draait in GitHub Actions (`.github/workflows/ah-bonus.yml`), maandag- en donderdagochtend: het bestaande `scripts/ah-bonus` en daarna `scripts/ah-bonus-opslaan.py`.
+- De service role key staat niet in GitHub: de repo is openbaar en die sleutel geeft toegang tot alles. Het script stuurt de week naar de Edge Function `aanbiedingen-opslaan`, die een eigen sleutel (`AANBIEDINGEN_SLEUTEL`) controleert en alleen `save_offers` aanroept. Wie die sleutel heeft kan alleen aanbiedingen opslaan.
+- Een aanbieding blijft tot 28 dagen na de laatste geldige dag staan; artikelen blijven altijd.
+- Een artikel zonder `hq_id` (1 van de 2423) wordt overgeslagen.
+- Bij een losse aanbieding geeft AH alleen de subcategorie ("Courgette"), bij een groep "hoofdcategorie/subcategorie". Voor het voorstel in stap 5 is dat bij losse artikelen dus mager.
+
+Doorvoeren:
+
+1. `supabase db push --dry-run` en `supabase db push`
+2. Een sleutel maken: `openssl rand -hex 32`
+3. In Supabase zetten: `supabase secrets set AANBIEDINGEN_SLEUTEL=<sleutel>`
+4. De functie deployen: `supabase functions deploy aanbiedingen-opslaan --no-verify-jwt`
+5. Dezelfde sleutel in `.env` zetten (`AANBIEDINGEN_SLEUTEL=`) en lokaal testen: `set -a; source .env; set +a` en `python3 scripts/ah-bonus-opslaan.py --echt`. Een tweede keer draaien meldt 0 nieuwe artikelen.
+6. Dezelfde sleutel als secret `AANBIEDINGEN_SLEUTEL` in GitHub zetten (Settings > Secrets and variables > Actions)
+7. Committen en pushen, en de taak één keer met de hand starten (Actions > "AH-bonus ophalen" > Run workflow)
+
 ### [ ] Stap 4 – Favorieten
 
 Algemeen of merkspecifiek, per gebruiker. In deze stap alleen het vastleggen en beheren; de aanbieding bij een favoriet tonen hoort bij stap 5.
