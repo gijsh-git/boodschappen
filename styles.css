@@ -168,7 +168,12 @@ code {
 .bonus-balk {
   display: flex; align-items: center; gap: 14px; margin: 18px 0 0; padding: 10px 16px 10px 10px; border-radius: 16px;
   background: #176837; color: #fff; font-size: 0.95rem;
+  width: 100%; border: 0; font-weight: 400; text-align: left; cursor: pointer;
 }
+/* Wat er in de aanbieding is; opent via de groene balk */
+.bonus-paneel { margin-bottom: 16px; }
+.bonus-paneel .kopje { margin-top: 4px; }
+.bonus-paneel .msg { margin: 6px 4px 0; }
 .bonus-icoon { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: 14px; background: #bdf5cf; color: #176837; }
 .bonus-tekst { display: flex; flex-direction: column; min-width: 0; }
 .bonus-balk strong { font-family: var(--kop); font-size: 1.25rem; line-height: 1.2; color: #fff; }
@@ -482,7 +487,7 @@ button.fav-kies {
 .tip-info { margin: 6px 0 16px; color: var(--grijs); }
 .tip-knoppen { display: flex; flex-wrap: wrap; gap: 10px; }
 .tip-knoppen button { display: flex; align-items: center; gap: 8px; }
-#voorjou-lijst:not(:empty), #aanbod-lijst:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
+#voorjou-lijst:not(:empty), #aanbod-lijst:not(:empty), #bonus-details:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
 .voorjou-rij { flex-wrap: nowrap; gap: 12px; min-height: 68px; padding: 8px 8px 8px 16px; border: 0; border-radius: 16px; background: var(--vlak); }
 #aanbod-lijst:not(:empty) { margin-bottom: 20px; }
 .aanbod-rij { padding-top: 12px; padding-bottom: 12px; }

@@ -65,6 +65,8 @@ const Data = (() => {
     // ---------- Aanbiedingen ----------
     // Per item bij welke supermarkt er hoeveel geldige aanbiedingen zijn
     aanbiedingenVoorLijst(lijstId) { return db.rpc("offers_for_list", { p_list: lijstId }); },
+    // Per item en aanbieding wat er precies in de aanbieding is: titel, korting, geldig tot en de artikelen
+    aanbiedingenBijLijst(lijstId) { return db.rpc("offer_details_for_list", { p_list: lijstId }); },
     // De geldige aanbiedingen die voor jou tellen (favorieten en vaste producten), als JSON in de volgorde van tonen
     aanbiedingenVoorMij() { return db.rpc("offers_for_me"); },
 

@@ -19,6 +19,10 @@ const Logica = (() => {
   // ---------- Aanbiedingen bij de lijst ----------
   let deals = {};      // item-id -> [{ supermarkt, aantal }]: actuele aanbiedingen per item
   let dealsVraag = 0;  // volgnummer, zodat een laat antwoord een nieuwer antwoord niet overschrijft
+  // Wat er precies in de aanbieding is, per item en aanbieding; null = nog niet opgehaald:
+  // { item_id, id, supermarkt, titel, korting, geldig_tot, artikelen: [titel], artikelen_totaal }
+  let dealDetails = null;
+  let dealDetailsVraag = 0;
   const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting van de supermarkt
 
   // ---------- Voor jou ----------
@@ -58,6 +62,21 @@ const Logica = (() => {
     vergeetDeals() {
       deals = {};
       dealsVraag++;
+      dealDetails = null;
+      dealDetailsVraag++;
+    },
+
+    // De aanbiedingen bij de items van de lijst, voor het paneel onder de groene balk
+    dealDetails() { return dealDetails; },
+
+    // Geeft null als er intussen een nieuwere vraag is gesteld of de lijst is losgelaten
+    async laadDealDetails(lijstId) {
+      const vraag = ++dealDetailsVraag;
+      const { data, error } = await Data.aanbiedingenBijLijst(lijstId);
+      if (vraag !== dealDetailsVraag) return null;
+      if (error) return { fout: error.message };
+      dealDetails = data;
+      return {};
     },
 
     winkelNaam(supermarkt) { return WINKELS[supermarkt] || supermarkt; },
@@ -104,12 +123,11 @@ const Logica = (() => {
       return {};
     },
 
-    // Wat er op de lijst komt bij "zet op lijst". Via een favoriet: de term, met het merk ervoor als dat is
-    // ingesteld; bij alleen een merk de titel van een artikel uit de aanbieding. Anders het vaste product.
+    // Wat er op de lijst komt bij "zet op lijst". Via een favoriet: de aanbieding zelf, want de term zegt niet
+    // wat er in de bonus is ("banaan" bij een aanbieding op verse sappen). Via het profiel: het vaste product.
     aanbiedingNaam(aanbieding) {
-      const favoriet = aanbieding.favorieten[0];
-      if (!favoriet) return aanbieding.producten[0].naam;
-      return favoriet.term ? [favoriet.brand, favoriet.term].filter(Boolean).join(" ") : favoriet.artikel;
+      if (aanbieding.favorieten.length === 0) return aanbieding.producten[0].naam;
+      return aanbieding.titel.replace(/\s*\*+$/, ""); // "Alle Perla*": het sterretje verwijst naar de kleine lettertjes
     },
 
     // "Niet nu": het product komt niet meer terug tot je de app sluit

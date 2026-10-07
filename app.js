@@ -425,7 +425,7 @@ function aanbodRij(aanbieding, opLijst) {
   const reden = document.createElement("span");
   reden.className = "item-sub";
   const opDeLijst = Logica.aanbiedingNaam(aanbieding);
-  const staatErAl = opLijst.has(opDeLijst.trim().toLowerCase());
+  const staatErAl = opLijst.has(opDeLijst.trim().toLowerCase()) || items.some((i) => i.offer_id === aanbieding.id);
   reden.textContent = aanbodReden(aanbieding) + (staatErAl ? " · staat op de lijst" : "");
   tekst.append(korting, naam, sub, reden);
   li.append(tekst);
@@ -1028,7 +1028,7 @@ async function openList(list) {
   if (!lijsten.some((l) => l.id === list.id)) lijsten.push(list);
   try { localStorage.setItem(LIJST_SLEUTEL, list.id); } catch {}
   // Bij wisselen niet kort de items van de vorige lijst laten zien
-  if (gewisseld) { leegStapel(); items = []; leden = []; Logica.vergeetDeals(); aankopen = null; toonLedenPaneel(false); $("uitnodig-blok").hidden = true; say("leden-msg", ""); verbergOngedaan(); say("status", ""); render(); }
+  if (gewisseld) { leegStapel(); items = []; leden = []; Logica.vergeetDeals(); aankopen = null; toonBonusPaneel(false); toonLedenPaneel(false); $("uitnodig-blok").hidden = true; say("leden-msg", ""); verbergOngedaan(); say("status", ""); render(); }
   $("list-title").textContent = list.name;
   show("list");
   await loadItems();
@@ -1199,13 +1199,76 @@ async function loadDeals() {
   const gelukt = await Logica.laadDeals(lijstId);
   if (!gelukt || !currentList || currentList.id !== lijstId) return;
   render();
+  if (!$("bonus-paneel").hidden) loadBonusDetails();
 }
 
-// Lichte balk in de kop: hoeveel producten op de lijst in de aanbieding zijn, en waar
+// Het paneel onder de groene balk: wat er precies in de aanbieding is bij de items op de lijst
+function toonBonusPaneel(open) {
+  $("bonus-paneel").hidden = !open;
+  $("bonus-balk").setAttribute("aria-expanded", open);
+  if (!open) return;
+  say("bonus-msg", Logica.dealDetails() ? "" : "Bezig...");
+  renderBonusDetails();
+  loadBonusDetails();
+}
+$("bonus-balk").addEventListener("click", () => toonBonusPaneel($("bonus-paneel").hidden));
+
+async function loadBonusDetails() {
+  if (!currentList) return;
+  const antwoord = await Logica.laadDealDetails(currentList.id);
+  if (!antwoord) return;
+  say("bonus-msg", antwoord.fout || "");
+  renderBonusDetails();
+}
+
+// De artikelen in een aanbieding als tekst; bij een grote groep de eerste paar en hoeveel er nog meer zijn
+function artikelenTekst(detail) {
+  const meer = detail.artikelen_totaal - detail.artikelen.length;
+  if (detail.artikelen.length === 0) return "";
+  return detail.artikelen.join(", ") + (meer > 0 ? ` en nog ${meer} ${meer === 1 ? "ander artikel" : "andere artikelen"}` : "");
+}
+
+// Eén aanbieding bij één item: de korting, de aanbieding, voor welk item, waar en tot wanneer, en de artikelen
+function bonusDetailRij(detail) {
+  const item = items.find((i) => i.id === detail.item_id);
+  const li = document.createElement("li");
+  li.className = "voorjou-rij aanbod-rij";
+  const tekst = document.createElement("div");
+  tekst.className = "item-tekst";
+  const korting = document.createElement("span");
+  korting.className = "bonus-label";
+  korting.textContent = detail.korting || "Bonus";
+  const naam = document.createElement("span");
+  naam.className = "item-naam";
+  naam.textContent = detail.titel;
+  const sub = document.createElement("span");
+  sub.className = "item-sub";
+  sub.textContent = [item && "Voor " + item.name, Logica.winkelNaam(detail.supermarkt), "t/m " + totDatum(detail.geldig_tot)].filter(Boolean).join(" · ");
+  tekst.append(korting, naam, sub);
+  const artikelen = artikelenTekst(detail);
+  if (artikelen) {
+    const welke = document.createElement("span");
+    welke.className = "item-sub";
+    welke.textContent = artikelen;
+    tekst.append(welke);
+  }
+  li.append(tekst);
+  return li;
+}
+
+function renderBonusDetails() {
+  if ($("bonus-paneel").hidden) return;
+  // Alleen bij items die nog op de lijst staan: een gekocht of verwijderd item valt meteen weg
+  const details = (Logica.dealDetails() || []).filter((d) => items.some((i) => i.id === d.item_id));
+  $("bonus-details").replaceChildren(...details.map(bonusDetailRij));
+}
+
+// Groene balk in de kop: hoeveel producten op de lijst in de aanbieding zijn, en waar. Tikken klapt de aanbiedingen uit.
 function renderBonus() {
   const metDeal = items.filter((i) => Logica.dealsVan(i.id));
   $("bonus-balk").hidden = metDeal.length === 0;
-  if (metDeal.length === 0) return;
+  if (metDeal.length === 0) return toonBonusPaneel(false);
+  renderBonusDetails();
   $("bonus-aantal").textContent = metDeal.length === 1 ? "1 product in de bonus" : `${metDeal.length} producten in de bonus`;
   const winkels = document.createElement("em");
   winkels.textContent = Logica.dealWinkels(metDeal.flatMap((i) => Logica.dealsVan(i.id))).join(" en ");

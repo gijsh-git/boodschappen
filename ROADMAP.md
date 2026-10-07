@@ -300,6 +300,8 @@ Deel 1 gebouwd op 7 oktober 2026 (migraties `aanbiedingen_matchen` en `aanbiedin
 - De grens voor "koopt" staat in de tabel `settings`: minstens 3 aankoopdagen (`regular_min_days`), de laatste binnen 365 dagen (`regular_max_age_days`).
 - `offers_for_me()` geeft de aanbiedingen voor "Voor jou": favorieten bovenaan, daarna het profiel op aantal aankoopdagen. In de testweek 2 via favorieten en 18 via het profiel, van de 143.
 - Het Bonus-label op de lijst komt uit `offers_for_list()`: via het product van het item, of via de aanbieding waarmee het item vanuit "Voor jou" op de lijst is gezet (`items.offer_id`). Dat laatste geeft ook een favoriet op de lijst zijn label.
+- Bijgesteld na de eerste test: "zet op lijst" bij een favoriet zet de aanbieding zelf op de lijst (de titel), niet de term. De term zegt niet wat er in de bonus is: de favoriet "banaan" raakte "AH Verse sappen en smoothies" en zette "Banaan" op de lijst. Bij een aanbieding via het profiel blijft het de productnaam.
+- De groene balk in de kop van de lijst klapt uit en toont per item wat er precies in de aanbieding is (`offer_details_for_list()`, migratie `aanbiedingen_bij_lijst_tonen`).
 - Nog open: niveau 2 (het voorstel voor artikelen van een ander merk of formaat, door een script buiten de app, goedkeuren in het scherm Producten) en het laten vervallen van de oude tabel `deals`, in een eigen commit nadat het nieuwe label getest is.
 
 ### [ ] Stap 6 – Automatische aankoopimport (alleen eigen accounts)
