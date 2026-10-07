@@ -45,8 +45,6 @@ const UITLEG_SLEUTEL = "bonusbuddy-veeguitleg"; // localStorage: "weg" als de ui
 let currentList = null;
 let items = [];
 let leden = [];        // deelnemers van de huidige lijst: { user_id, joined_at }
-let deals = {};        // item-id -> [{ supermarkt, aantal }]: actuele aanbiedingen per item
-let dealsVraag = 0;    // volgnummer, zodat een laat antwoord een nieuwer antwoord niet overschrijft
 let aankopen = null;   // aankopen van de huidige lijst, nieuwste eerst; null = nog niet opgehaald
 let aankopenOpen = false; // het scherm met aankopen staat open
 let fotoOpen = false;  // het scherm "Foto controleren" staat open
@@ -75,12 +73,8 @@ let ongedaan = null;   // laatste actie die nog terug te draaien is: { item, aan
 let ongedaanTimer = null;
 let zicht = null;      // het scherm dat nu in beeld is
 let voorjouOpen = false; // het scherm "Voor jou" staat open
-let voorjou = null;    // vaste producten uit het aankoopprofiel: { naam, dagen, om_de, laatste }; null = nog niet opgehaald
-let voorjouVraag = 0;  // volgnummer, zodat een laat antwoord na uitloggen genegeerd wordt
 let tipProduct = null; // het product dat nu in de grote kaart van "Voor jou" staat
-const nietNu = new Set(); // producten die je met "Niet nu" hebt weggetikt; geldt tot je de app sluit
 const TABS = { list: "lijst", setup: "lijst", voorjou: "voorjou", profiel: "profiel" }; // schermen met de onderbalk, en welke tab dan oranje is
-const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting in deals
 
 function show(view) {
   views.forEach((v) => ($("view-" + v).hidden = v !== view));
@@ -334,18 +328,16 @@ function toonVoorJou() {
   profielOpen = false;
   naamOpen = false;
   $("voorjou-week").textContent = "Week " + weekNr();
-  say("voorjou-msg", voorjou ? "" : "Bezig...");
+  say("voorjou-msg", Logica.voorJou() ? "" : "Bezig...");
   renderVoorJou();
   show("voorjou");
   loadVoorJou();
 }
 
 async function loadVoorJou() {
-  const vraag = ++voorjouVraag;
-  const { data, error } = await Data.aankoopprofiel("3m", null);
-  if (vraag !== voorjouVraag || !voorjouOpen) return;
-  if (error) return say("voorjou-msg", error.message);
-  voorjou = data.top;
+  const antwoord = await Logica.laadVoorJou(() => voorjouOpen);
+  if (!antwoord) return;
+  if (antwoord.fout) return say("voorjou-msg", antwoord.fout);
   say("voorjou-msg", "");
   renderVoorJou();
 }
@@ -359,10 +351,6 @@ function weekNr() {
   return 1 + Math.round(((d - week1) / 864e5 - 3 + ((week1.getDay() + 6) % 7)) / 7);
 }
 
-function dagenGeleden(dag) {
-  return Math.floor((Date.now() - new Date(dag).getTime()) / 864e5);
-}
-
 // Het koopritme in gewone taal, bijv. "Koop je elke week"
 function ritmeTekst(product) {
   const n = Number(product.om_de);
@@ -371,11 +359,6 @@ function ritmeTekst(product) {
   if (n === 7) return "Koop je elke week";
   if (n % 7 === 0) return `Koop je elke ${n / 7} weken`;
   return `Koop je om de ${getal(n)} dagen`;
-}
-
-// Het gebruikelijke aantal dagen sinds de laatste aankoop is voorbij
-function bijnaOp(product) {
-  return product.om_de != null && dagenGeleden(product.laatste) >= Number(product.om_de);
 }
 
 function voorjouRij(product) {
@@ -388,7 +371,7 @@ function voorjouRij(product) {
   naam.textContent = hoofdletter(product.naam);
   const sub = document.createElement("span");
   sub.className = "item-sub";
-  sub.textContent = bijnaOp(product) ? "Is bijna op, volgens je koopritme" : ritmeTekst(product);
+  sub.textContent = Logica.bijnaOp(product) ? "Is bijna op, volgens je koopritme" : ritmeTekst(product);
   tekst.append(naam, sub);
   li.append(tekst);
   if (currentList) {
@@ -404,19 +387,15 @@ function voorjouRij(product) {
 }
 
 function renderVoorJou() {
-  const opLijst = new Set(items.map((i) => i.name.trim().toLowerCase()));
-  // Hoe ver het product over zijn gebruikelijke tussenpoos heen is; het verst eroverheen staat bovenaan
-  const druk = (p) => (p.om_de == null ? 0 : dagenGeleden(p.laatste) / Number(p.om_de));
-  const over = (voorjou || [])
-    .filter((p) => !nietNu.has(p.naam) && !opLijst.has(p.naam.trim().toLowerCase()))
-    .sort((a, b) => druk(b) - druk(a));
+  const voorjou = Logica.voorJou();
+  const over = Logica.voorJouOver(items.map((i) => i.name));
   const [eerste, ...rest] = over;
   tipProduct = eerste || null;
   $("tip-kaart").hidden = !eerste;
   if (eerste) {
     $("tip-ritme").textContent = ritmeTekst(eerste);
     $("tip-naam").textContent = hoofdletter(eerste.naam);
-    $("tip-info").textContent = `Laatst gekocht op ${datum(eerste.laatste)}` + (bijnaOp(eerste) ? " · is bijna op, volgens je koopritme" : "");
+    $("tip-info").textContent = `Laatst gekocht op ${datum(eerste.laatste)}` + (Logica.bijnaOp(eerste) ? " · is bijna op, volgens je koopritme" : "");
     $("tip-toevoegen").hidden = !currentList;
   }
   $("voorjou-kop").hidden = rest.length === 0;
@@ -446,7 +425,7 @@ async function zetOpLijst(product) {
 $("tip-toevoegen").addEventListener("click", () => { if (tipProduct) zetOpLijst(tipProduct); });
 $("tip-nietnu").addEventListener("click", () => {
   if (!tipProduct) return;
-  nietNu.add(tipProduct.naam);
+  Logica.slaOver(tipProduct.naam);
   say("voorjou-msg", "");
   renderVoorJou();
 });
@@ -737,9 +716,7 @@ async function logout() {
   naamOpen = false;
   profielOpen = false;
   voorjouOpen = false;
-  voorjou = null;
-  voorjouVraag++;
-  nietNu.clear();
+  Logica.vergeetVoorJou();
   lijstenOpen = false;
   aankopenOpen = false;
   fotoOpen = false;
@@ -747,7 +724,7 @@ async function logout() {
   lijsten = [];
   archief = [];
   leden = [];
-  deals = {};
+  Logica.vergeetDeals();
   aankopen = null;
   namen = {};
   beheerder = false;
@@ -908,7 +885,7 @@ function sluitLijst() {
   currentList = null;
   items = [];
   leden = [];
-  deals = {};
+  Logica.vergeetDeals();
   aankopen = null;
   aankopenOpen = false;
   fotoOpen = false;
@@ -989,7 +966,7 @@ async function openList(list) {
   if (!lijsten.some((l) => l.id === list.id)) lijsten.push(list);
   try { localStorage.setItem(LIJST_SLEUTEL, list.id); } catch {}
   // Bij wisselen niet kort de items van de vorige lijst laten zien
-  if (gewisseld) { leegStapel(); items = []; leden = []; deals = {}; aankopen = null; toonLedenPaneel(false); $("uitnodig-blok").hidden = true; say("leden-msg", ""); verbergOngedaan(); say("status", ""); render(); }
+  if (gewisseld) { leegStapel(); items = []; leden = []; Logica.vergeetDeals(); aankopen = null; toonLedenPaneel(false); $("uitnodig-blok").hidden = true; say("leden-msg", ""); verbergOngedaan(); say("status", ""); render(); }
   $("list-title").textContent = list.name;
   show("list");
   await loadItems();
@@ -1153,34 +1130,23 @@ async function loadItems() {
   loadDeals();
 }
 
-// Aanbiedingen bij de items van deze lijst. Het zoeken gebeurt in de database (deals_for_list);
-// we krijgen alleen per item terug bij welke supermarkt er hoeveel aanbiedingen zijn.
+// Aanbiedingen bij de items van deze lijst ophalen en de labels bijwerken
 async function loadDeals() {
   if (!currentList) return;
   const lijstId = currentList.id;
-  const vraag = ++dealsVraag;
-  const { data, error } = await Data.dealsVoorLijst(lijstId);
-  if (vraag !== dealsVraag || !currentList || currentList.id !== lijstId) return;
-  if (error) return; // geen aanbiedingen kunnen ophalen: dan gewoon geen labels
-  const nieuw = {};
-  data.forEach((d) => (nieuw[d.item_id] ||= []).push(d));
-  deals = nieuw;
+  const gelukt = await Logica.laadDeals(lijstId);
+  if (!gelukt || !currentList || currentList.id !== lijstId) return;
   render();
-}
-
-// De supermarkten met een aanbieding voluit, bijv. ["Albert Heijn", "PLUS"]
-function dealWinkels(lijst) {
-  return [...new Set(lijst.map((d) => WINKELS[d.supermarkt] || d.supermarkt))].sort((a, b) => a.localeCompare(b));
 }
 
 // Lichte balk in de kop: hoeveel producten op de lijst in de aanbieding zijn, en waar
 function renderBonus() {
-  const metDeal = items.filter((i) => deals[i.id]);
+  const metDeal = items.filter((i) => Logica.dealsVan(i.id));
   $("bonus-balk").hidden = metDeal.length === 0;
   if (metDeal.length === 0) return;
   $("bonus-aantal").textContent = metDeal.length === 1 ? "1 product in de bonus" : `${metDeal.length} producten in de bonus`;
   const winkels = document.createElement("em");
-  winkels.textContent = dealWinkels(metDeal.flatMap((i) => deals[i.id])).join(" en ");
+  winkels.textContent = Logica.dealWinkels(metDeal.flatMap((i) => Logica.dealsVan(i.id))).join(" en ");
   $("bonus-winkels").replaceChildren("Bij ", winkels);
 }
 
@@ -1288,7 +1254,7 @@ function itemRow(item) {
   tekst.append(sub);
   voor.append(koopKnop, tekst);
 
-  if (deals[item.id]) {
+  if (Logica.dealsVan(item.id)) {
     const bonus = document.createElement("div");
     bonus.className = "item-deal";
     const label = document.createElement("span");
@@ -1296,7 +1262,7 @@ function itemRow(item) {
     label.textContent = "Bonus";
     const winkels = document.createElement("span");
     winkels.className = "item-sub";
-    winkels.textContent = dealWinkels(deals[item.id]).join(", ");
+    winkels.textContent = Logica.dealWinkels(Logica.dealsVan(item.id)).join(", ");
     bonus.append(label, winkels);
     voor.append(bonus);
   }

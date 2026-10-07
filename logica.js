@@ -1,6 +1,6 @@
 // Logica: state en regels zonder DOM. Zie ARCHITECTURE.md.
-// Roept alleen `Data` aan; app.js toont wat hier uitkomt. Nu alleen de favorieten: de rest van de logica
-// staat nog in app.js en verhuist per onderdeel.
+// Roept alleen `Data` aan; app.js toont wat hier uitkomt. Nu de favorieten, de aanbiedingen bij de lijst en
+// Voor jou: de rest van de logica staat nog in app.js en verhuist per onderdeel.
 const Logica = (() => {
   // ---------- Favorieten ----------
   let favorieten = null; // eigen favorieten: { id, term, brand, category }; null = nog niet opgehaald
@@ -16,9 +16,91 @@ const Logica = (() => {
     return (tekst || "").replace(/\s+/g, " ").trim();
   }
 
+  // ---------- Aanbiedingen bij de lijst ----------
+  let deals = {};      // item-id -> [{ supermarkt, aantal }]: actuele aanbiedingen per item
+  let dealsVraag = 0;  // volgnummer, zodat een laat antwoord een nieuwer antwoord niet overschrijft
+  const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting in deals
+
+  // ---------- Voor jou ----------
+  let voorjou = null;  // vaste producten uit het aankoopprofiel: { naam, dagen, om_de, laatste }; null = nog niet opgehaald
+  let voorjouVraag = 0; // volgnummer, zodat een laat antwoord na uitloggen genegeerd wordt
+  const nietNu = new Set(); // producten die je met "Niet nu" hebt weggetikt; geldt tot je de app sluit
+
+  function dagenGeleden(dag) {
+    return Math.floor((Date.now() - new Date(dag).getTime()) / 864e5);
+  }
+
   return {
     zoekvorm,
 
+    // ---------- Aanbiedingen bij de lijst ----------
+    // De aanbiedingen bij één item, of undefined als er geen zijn
+    dealsVan(itemId) { return deals[itemId]; },
+
+    // Het zoeken gebeurt in de database (deals_for_list); we krijgen alleen per item terug bij welke
+    // supermarkt er hoeveel aanbiedingen zijn. Geeft false bij een fout (dan gewoon geen labels) of als
+    // er intussen een nieuwere vraag is gesteld.
+    async laadDeals(lijstId) {
+      const vraag = ++dealsVraag;
+      const { data, error } = await Data.dealsVoorLijst(lijstId);
+      if (vraag !== dealsVraag || error) return false;
+      const nieuw = {};
+      data.forEach((d) => (nieuw[d.item_id] ||= []).push(d));
+      deals = nieuw;
+      return true;
+    },
+
+    // Bij wisselen van lijst en uitloggen; een antwoord dat nog onderweg is hoort bij de vorige lijst
+    vergeetDeals() {
+      deals = {};
+      dealsVraag++;
+    },
+
+    // De supermarkten met een aanbieding voluit, bijv. ["Albert Heijn", "PLUS"]
+    dealWinkels(lijst) {
+      return [...new Set(lijst.map((d) => WINKELS[d.supermarkt] || d.supermarkt))].sort((a, b) => a.localeCompare(b));
+    },
+
+    // ---------- Voor jou ----------
+    // De vaste producten van het huishouden: de top 10 van de laatste 3 maanden uit het aankoopprofiel.
+    voorJou() { return voorjou; },
+
+    // `nogOpen` zegt of het scherm er nog op wacht. Geeft null als het antwoord niet meer nodig is.
+    async laadVoorJou(nogOpen) {
+      const vraag = ++voorjouVraag;
+      const { data, error } = await Data.aankoopprofiel("3m", null);
+      if (vraag !== voorjouVraag || !nogOpen()) return null;
+      if (error) return { fout: error.message };
+      voorjou = data.top;
+      return {};
+    },
+
+    // Bij uitloggen: de volgende gebruiker begint leeg
+    vergeetVoorJou() {
+      voorjou = null;
+      voorjouVraag++;
+      nietNu.clear();
+    },
+
+    // "Niet nu": het product komt niet meer terug tot je de app sluit
+    slaOver(naam) { nietNu.add(naam); },
+
+    // Het gebruikelijke aantal dagen sinds de laatste aankoop is voorbij
+    bijnaOp(product) {
+      return product.om_de != null && dagenGeleden(product.laatste) >= Number(product.om_de);
+    },
+
+    // Wat er nog voor te stellen is: zonder wat al op de lijst staat (`namenOpLijst`) of is weggetikt.
+    // Het product dat het verst over zijn gebruikelijke tussenpoos heen is staat bovenaan.
+    voorJouOver(namenOpLijst) {
+      const opLijst = new Set(namenOpLijst.map((n) => n.trim().toLowerCase()));
+      const druk = (p) => (p.om_de == null ? 0 : dagenGeleden(p.laatste) / Number(p.om_de));
+      return (voorjou || [])
+        .filter((p) => !nietNu.has(p.naam) && !opLijst.has(p.naam.trim().toLowerCase()))
+        .sort((a, b) => druk(b) - druk(a));
+    },
+
+    // ---------- Favorieten ----------
     favorieten() { return favorieten; },
 
     async laadFavorieten() {
