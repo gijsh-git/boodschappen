@@ -21,6 +21,8 @@ const Data = (() => {
     maakLijst(naam) { return db.rpc("create_list", { p_name: naam }); },
     sluitAan(code) { return db.rpc("join_list", { p_code: code }); },
     archiveerLijst(lijstId, gearchiveerd) { return db.rpc("archive_list", { p_list: lijstId, p_archived: gearchiveerd }); },
+    // Jezelf uit een lijst halen (de maker kan dat niet, die archiveert of verwijdert de lijst)
+    verlaatLijst(lijstId) { return db.rpc("leave_list", { p_list: lijstId }); },
     verwijderLijst(lijstId) { return db.rpc("delete_list", { p_list: lijstId }); },
     zetLijstProfiel(lijstId, teltMee) { return db.rpc("set_list_profile", { p_list: lijstId, p_counts: teltMee }); },
     // Is de lijst intussen gearchiveerd? (data is null als je de lijst niet meer ziet)

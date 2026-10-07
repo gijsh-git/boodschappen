@@ -689,6 +689,14 @@ function lijstRij(lijst) {
     prul.innerHTML = '<svg width="20" height="20" aria-hidden="true"><use href="#icon-prullenbak"/></svg>';
     prul.addEventListener("click", () => verwijderLijst(lijst));
     li.append(weg, prul);
+  } else {
+    // Iedereen behalve de maker kan de lijst verlaten; de database controleert dat ook
+    const verlaat = document.createElement("button");
+    verlaat.type = "button";
+    verlaat.className = "link lijst-weg";
+    verlaat.textContent = "Lijst verlaten";
+    verlaat.addEventListener("click", () => lijstVerlaten(lijst));
+    li.append(verlaat);
   }
   return li;
 }
@@ -731,6 +739,18 @@ async function verwijderLijst(lijst) {
   // Vooraf loslaten: anders meldt realtime ons eigen verdwenen lidmaatschap als "je bent verwijderd"
   if (currentList && currentList.id === lijst.id) sluitLijst();
   const { error } = await Data.verwijderLijst(lijst.id);
+  if (error) return say("setup-msg", error.message);
+  lijsten = lijsten.filter((l) => l.id !== lijst.id);
+  renderLijsten();
+}
+
+// Jezelf uit een lijst halen: de items en aankopen blijven bij de anderen, jouw aankoopprofiel telt de lijst niet meer mee
+async function lijstVerlaten(lijst) {
+  if (!confirm(`Lijst "${lijst.name}" verlaten? Je ziet de lijst niet meer en de aankopen op deze lijst tellen niet meer mee in jouw aankoopprofiel. Je kunt alleen terugkomen met een nieuwe uitnodiging.`)) return;
+  say("setup-msg", "");
+  // Vooraf loslaten: anders meldt realtime ons eigen verdwenen lidmaatschap als "je bent verwijderd"
+  if (currentList && currentList.id === lijst.id) sluitLijst();
+  const { error } = await Data.verlaatLijst(lijst.id);
   if (error) return say("setup-msg", error.message);
   lijsten = lijsten.filter((l) => l.id !== lijst.id);
   renderLijsten();
