@@ -1363,8 +1363,6 @@ function toonAankopen() {
   aankopen = null;
   $("aankopen-lijst").textContent = currentList.name;
   $("aankopen-uitleg").hidden = currentList.counts_for_profile !== false;
-  // Een bon scannen heeft alleen zin bij een lijst die meetelt; de database weigert het anders ook
-  $("bon-knop").hidden = currentList.counts_for_profile === false;
   say("aankopen-msg", "");
   renderAankopen();
   show("aankopen");
