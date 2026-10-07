@@ -99,6 +99,6 @@ In bouwvolgorde:
 
 Leg bij elke wijziging kort uit wat je doet en waarom, in het Nederlands.
 
-De opbouw van de clientcode (lagen `data.js`, `logica.js`, `app.js`) en de stappen van het refactoren staan in `ARCHITECTURE.md`; houd je daar bij elke taak aan. Kern: de UI roept nooit `db.` aan, nieuwe Supabase-calls komen in `data.js`, en tijdens het refactoren stop je na elk domein voor een test en een commit.
+De opbouw van de clientcode (lagen `data.js`, `logica.js`, `app.js`) en de stappen van het refactoren staan in `ARCHITECTURE.md`; houd je daar bij elke taak aan. Kern: de UI roept nooit `db.` aan, nieuwe Supabase-calls komen in `data.js`, nieuwe logica komt in `logica.js` en niet in `app.js`, en wie een onderdeel van `app.js` aanpast verhuist eerst de logica van dat onderdeel naar `logica.js` (eigen commit). Tijdens het refactoren stop je na elk domein voor een test en een commit.
 
 Elke databasewijziging is een nieuw migratiebestand in `supabase/migrations/`, nooit meer losse SQL in het dashboard. Hoe de database er nu uitziet lees je uit die map. De commando's staan in `docs/migraties.md`.

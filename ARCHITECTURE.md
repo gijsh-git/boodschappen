@@ -24,6 +24,8 @@ Klassieke scripts, geen modules en geen build. Laadvolgorde in `index.html`: sup
 4. Een nieuw statisch bestand gaat in `ASSETS` in `sw.js`. `CACHE` wordt bij elk gerefactord domein gebumpt (zie Werkwijze).
 5. Wijzig bij een verhuizing het gedrag niet. Verhuizen en veranderen gebeuren nooit in dezelfde commit.
 6. Werk `CLAUDE.md` bij zodra een beschrijving daar niet meer klopt (bijvoorbeeld de laadvolgorde).
+7. Nieuwe logica komt in `logica.js`, nooit in `app.js`. Dat geldt ook voor de glue rond een nieuwe RPC.
+8. Pas je een onderdeel van `app.js` aan, verhuis dan eerst de logica van dat onderdeel naar `logica.js` (state, optimistische updates, controles; alles wat de DOM niet aanraakt). Volgens regel 5 is dat een eigen commit, vóór de wijziging zelf. Een onderdeel is wat bij één scherm of flow hoort, bijvoorbeeld de bonstapel of Voor jou; de rest van `app.js` blijft liggen.
 
 ## Werkwijze bij het refactoren
 
@@ -31,5 +33,6 @@ Er zijn geen tests, dus de stappen zijn klein.
 
 1. Verhuis de Supabase-calls per domein naar `data.js`, in deze volgorde: lijsten en leden; items en aankopen; bonnen; producten, profiel en aanbiedingen; auth en edge functions.
 2. Na elk domein: `CACHE` in `sw.js` bumpen (bij elk domein, niet alleen het eerste, zodat telefoons de gewijzigde scripts niet uit de oude cache laden), de app handmatig testen (realtime en optimistische updates met twee browsers), één commit, **stoppen**. Het volgende domein begint pas na een expliciete "ga door" van de gebruiker.
-3. Pas daarna logica uit de rendercode halen, waar dat winst oplevert, met dezelfde stop per onderdeel.
-4. "Favorieten" wordt eerst gedefinieerd en op de roadmap gezet, daarna volgt de kortingsmatching (roadmap-stap 5), als RPC in Postgres.
+3. De logica wordt niet in één keer uit `app.js` gehaald: zonder tests is dat veel risico voor weinig winst. Ze verhuist per onderdeel, op het moment dat dat onderdeel toch wordt aangepast (regel 7 en 8). `logica.js` bestaat nog niet en ontstaat bij de eerste gelegenheid.
+4. "Favorieten" wordt eerst gedefinieerd en op de roadmap gezet.
+5. Daarna volgt de kortingsmatching (roadmap-stap 5): het zoeken als RPC in Postgres, de call in `data.js`, en de glue vanaf het begin in `logica.js`, niet in `app.js`. Dit is de eerste gelegenheid; hier wordt `logica.js` aangemaakt (ook in `index.html` en `ASSETS`), en de bestaande aanbiedingen-logica (`loadDeals()`, `deals`, `dealWinkels()`) verhuist eerst mee.
