@@ -141,6 +141,35 @@ Warme hartige broodjes uit de bakkerij: frikandel-, kaas-, kaas-ui-, pizza-, sau
 
 Krenten-rozijnenbrood, rozijnenbol en rozijnen-krentenbol.
 
+## Artikelen koppelen
+
+Een artikel van een supermarkt (uit de aanbiedingen) hoort bij hooguit één product. Dat is geen samenvoegen: er verandert niets aan de producten en hun namen.
+
+Besluiten (7 oktober 2026):
+
+1. Staat het artikelnummer op een eigen bon, dan zegt de bon bij welk product het hoort. Dat wint altijd: voor zo'n artikel wordt niets voorgesteld en een eerdere koppeling telt niet meer.
+2. Voor de andere artikelen doet `scripts/artikel-voorstellen.py` een voorstel. Kandidaten zijn alle producten met minstens één aankoop of een item op een lijst, van alle huishoudens.
+3. Vaste regel, vóór de AI: is de subcategorie van het artikel gelijk aan de naam van een product ("Pompoen" en "pompoen"), dan is dat het voorstel, met zekerheid hoog. De subcategorie is het deel na de "/" in de categorie, of de hele categorie als er geen "/" in staat.
+4. De rest beoordeelt de AI met dit bestand: een product of geen product, de zekerheid (hoog, middel, laag) en een korte reden. Dezelfde toets als bij samenvoegen: zou je bij een aanbieding dit artikel kopen in plaats van wat je gewoonlijk koopt?
+5. Een woord uit de productnaam in de titel is geen bewijs. Pompoensoep en desembrood met pompoen horen niet bij "pompoen".
+6. Niets wordt automatisch goedgekeurd, ook niet bij zekerheid hoog. De beheerder keurt goed of wijst af in het scherm Producten. Voorstellen met zekerheid laag staan apart als twijfelgevallen en vallen buiten "alles goedkeuren".
+7. Een afwijzing geldt voor de combinatie van artikel en product. Die wordt nooit opnieuw voorgesteld; hetzelfde artikel mag later wel bij een ander product worden voorgesteld. Een goedgekeurde koppeling losmaken telt als afwijzen.
+8. Een artikel met "geen product" wordt opnieuw beoordeeld als er sindsdien producten zijn bijgekomen, en dan alleen tegen die nieuwe producten.
+9. Bij het samenvoegen van producten verhuizen de koppelingen, voorstellen en afwijzingen van de bron naar het doel. Losmaken zet terug wat van de bron kwam; wat daarna op het doel is goedgekeurd blijft bij het doel.
+
+## Lijstnamen
+
+Naast het voorstel legt het script bij elk artikel hooguit drie lijstnamen vast: de namen die iemand op een boodschappenlijst zou typen. Daarmee krijgt een item het Bonus-label ook als het product nog niet bestaat ("andijvie" voor het eerst op de lijst).
+
+Besluiten (7 oktober 2026):
+
+1. De eerste naam is het product volgens dit bestand, het niveau waarop je wisselt: "pizza" voor elke pizza, "kipfilet" voor kipfiletreepjes. Varianten waar je niet tussen wisselt krijgen hun eigen naam ("cola zero", "halfvolle melk").
+2. Daarna hooguit twee specifiekere namen of een gangbaar synoniem, alleen als mensen dat ook zo opschrijven: "magere kwark", "baguette" naast "stokbrood".
+3. In de vorm die mensen typen: kleine letters, meervoud waar dat gebruikelijk is ("eieren", "tomaten"), zonder merk, huismerk, inhoud of verpakking. Een merk alleen als mensen het product zo noemen ("nutella").
+4. Een item krijgt het label als zijn naam na Nederlandse stamming gelijk is aan een lijstnaam van een artikel in een geldige aanbieding. Het gaat om de hele naam: "melk" raakt "halfvolle melk" niet.
+5. Hiervoor is geen goedkeuring nodig en er worden geen producten voor aangemaakt. Het geldt alleen voor het label op de lijst; Voor jou werkt alleen via de bon en de goedgekeurde koppelingen.
+6. Bij een artikel waar de vaste regel aanslaat (subcategorie gelijk aan de productnaam) is de productnaam de enige lijstnaam.
+
 ## Werkwijze
 
 1. Een onbekende naam wordt eerst een eigen product.

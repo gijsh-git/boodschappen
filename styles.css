@@ -341,6 +341,20 @@ button.koop:hover::before, button.koop:focus-visible::before { border-color: var
 /* Schuifje "Telt mee in aankoopprofiel" in het opengeklapte product */
 .product-telt { justify-content: space-between; padding: 6px 0 10px; color: var(--grijs); font-size: 0.9rem; }
 
+/* Voorstellen artikel → product: per product een groep, per artikel goedkeuren of afwijzen */
+#voorstel-blokken { margin: 0 0 12px; }
+#voorstel-blokken .msg { margin: 6px 0; }
+#voorstel-blokken .msg:empty { display: none; }
+#voorstel-blokken .ap-blok[hidden] + .ap-blok { border-top: 0; }
+.voorstel-groep { padding: 4px 0 8px; }
+.voorstel-groep + .voorstel-groep { border-top: 1px solid var(--rand); }
+.voorstel-kop { display: flex; align-items: baseline; gap: 12px; }
+.voorstel-kop strong { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.voorstel { padding: 6px 0; }
+.voorstel p { margin: 0; overflow-wrap: anywhere; }
+.voorstel-acties { display: flex; gap: 20px; }
+.voorstel-acties button.link, .voorstel-kop button.link { padding: 4px 0; font-size: 0.9rem; white-space: nowrap; }
+
 /* ---------- Aankoopprofiel ---------- */
 /* Top 10, supermarkten en maanden: ingeklapt tot je erop tikt */
 .ap-blokken { background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 16px; padding: 0 14px; }

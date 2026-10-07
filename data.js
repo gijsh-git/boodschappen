@@ -149,6 +149,12 @@ const Data = (() => {
     maakSamenvoegenOngedaan(samenvoegingId) { return db.rpc("undo_merge", { p_merge: samenvoegingId }); },
     hernoemProduct(productId, naam) { return db.rpc("rename_product", { p_product: productId, p_name: naam }); },
     zetProductProfiel(productId, teltMee) { return db.rpc("set_product_profile", { p_product: productId, p_counts: teltMee }); },
+    // Artikel → product, niveau 2: de voorstellen die op de beheerder wachten en de goedgekeurde koppelingen
+    artikelKoppelingen() { return db.rpc("article_link_overview"); },
+    // rijen: [{ supermarket, article_id, product_id }]; geeft het aantal goedgekeurde voorstellen terug
+    keurKoppelingenGoed(rijen) { return db.rpc("approve_article_links", { p_rows: rijen }); },
+    // Een voorstel afwijzen of een goedgekeurde koppeling losmaken; de combinatie komt niet meer terug
+    wijsKoppelingAf(supermarkt, artikelId) { return db.rpc("reject_article_link", { p_supermarket: supermarkt, p_article_id: artikelId }); },
 
     // ---------- Live volgen ----------
     // Eén kanaal per lijst voor items, leden, de lijst zelf en aankopen. `op` heeft per soort een functie

@@ -2508,9 +2508,19 @@ function toonProducten() {
   Logica.vergeetProducten();
   $("producten-zoek").value = "";
   say("producten-msg", "Bezig...");
+  say("voorstellen-msg", "");
   renderProducten();
   show("producten");
   loadProducten();
+  loadKoppelingen();
+}
+
+// De voorstellen artikel → product en de goedgekeurde koppelingen
+async function loadKoppelingen() {
+  const uit = await Logica.laadKoppelingen();
+  if (!profielOpen) return;
+  if (uit.fout) say("voorstellen-msg", uit.fout);
+  renderProducten();
 }
 
 async function loadProducten() {
@@ -2624,6 +2634,25 @@ function productRij(product) {
     }));
   }
 
+  // Artikelen uit de aanbiedingen die na goedkeuren bij dit product horen; losmaken telt als afwijzen
+  blok.append(...Logica.gekoppeldBij(product.id).map((k) => {
+    const rij = document.createElement("div");
+    rij.className = "bonnen-regel";
+    const tekst = document.createElement("span");
+    tekst.textContent = "Artikel: " + [k.titel, k.inhoud].filter(Boolean).join(", ");
+    const los = document.createElement("button");
+    los.type = "button";
+    los.className = "link";
+    los.textContent = "Losmaken";
+    los.addEventListener("click", () => {
+      if (!confirm(`"${k.titel}" losmaken van "${product.name}"? Het wordt daarna niet meer bij dit product voorgesteld.`)) return;
+      los.disabled = true;
+      wijsVoorstelAf(k);
+    });
+    rij.append(tekst, los);
+    return rij;
+  }));
+
   const samen = document.createElement("button");
   samen.type = "button";
   samen.className = "link";
@@ -2639,7 +2668,100 @@ function productRij(product) {
   return li;
 }
 
+// Eén voorstel: het artikel, waarom het bij het product zou horen, en goedkeuren of afwijzen
+function voorstelRij(voorstel) {
+  const rij = document.createElement("div");
+  rij.className = "voorstel";
+  const titel = document.createElement("p");
+  titel.textContent = voorstel.titel;
+  const artikel = document.createElement("p");
+  artikel.className = "bonnen-info";
+  artikel.textContent = [voorstel.merk, voorstel.inhoud, voorstel.categorie].filter(Boolean).join(" · ");
+  const reden = document.createElement("p");
+  reden.className = "bonnen-info";
+  reden.textContent = `Zekerheid ${Logica.zekerheidNaam(voorstel.zekerheid)}` + (voorstel.reden ? ` · ${voorstel.reden}` : "");
+
+  const acties = document.createElement("div");
+  acties.className = "voorstel-acties";
+  const goed = document.createElement("button");
+  goed.type = "button";
+  goed.className = "link";
+  goed.textContent = "Goedkeuren";
+  const af = document.createElement("button");
+  af.type = "button";
+  af.className = "link";
+  af.textContent = "Afwijzen";
+  goed.addEventListener("click", () => {
+    goed.disabled = af.disabled = true;
+    keurVoorstellenGoed([voorstel]);
+  });
+  af.addEventListener("click", () => {
+    goed.disabled = af.disabled = true;
+    wijsVoorstelAf(voorstel);
+  });
+  acties.append(goed, af);
+  rij.append(titel, artikel, reden, acties);
+  return rij;
+}
+
+// De voorstellen bij één product. "Alles goedkeuren" alleen buiten de twijfelgevallen.
+function voorstelGroep(groep, twijfel) {
+  const blok = document.createElement("div");
+  blok.className = "voorstel-groep";
+  const kop = document.createElement("div");
+  kop.className = "voorstel-kop";
+  const naam = document.createElement("strong");
+  naam.textContent = groep.product;
+  kop.append(naam);
+  if (!twijfel) {
+    const alles = document.createElement("button");
+    alles.type = "button";
+    alles.className = "link";
+    alles.textContent = "Alles goedkeuren";
+    alles.addEventListener("click", () => {
+      const n = groep.voorstellen.length;
+      if (n > 1 && !confirm(`Alle ${n} voorstellen bij "${groep.product}" goedkeuren?`)) return;
+      alles.disabled = true;
+      keurVoorstellenGoed(groep.voorstellen);
+    });
+    kop.append(alles);
+  }
+  blok.append(kop, ...groep.voorstellen.map(voorstelRij));
+  return blok;
+}
+
+function renderVoorstellen() {
+  const voorstellen = Logica.voorstelGroepen(false);
+  const twijfels = Logica.voorstelGroepen(true);
+  const tel = (groepen) => groepen.reduce((n, g) => n + g.voorstellen.length, 0);
+  $("voorstellen").replaceChildren(...voorstellen.map((g) => voorstelGroep(g, false)));
+  $("twijfels").replaceChildren(...twijfels.map((g) => voorstelGroep(g, true)));
+  $("voorstellen-kop").textContent = `Voorstellen (${tel(voorstellen)})`;
+  $("twijfel-kop").textContent = `Twijfelgevallen (${tel(twijfels)})`;
+  $("voorstellen-blok").hidden = voorstellen.length === 0;
+  $("twijfel-blok").hidden = twijfels.length === 0;
+  // Tijdens het samenvoegen staat alleen de keuze van het doel in beeld
+  $("voorstel-blokken").hidden = !!Logica.samenvoegBron() || (voorstellen.length === 0 && twijfels.length === 0 && !$("voorstellen-msg").textContent);
+}
+
+async function keurVoorstellenGoed(voorstellen) {
+  say("voorstellen-msg", "Bezig...");
+  const uit = await Logica.keurGoed(voorstellen);
+  if (!profielOpen) return;
+  say("voorstellen-msg", uit.fout || "");
+  renderProducten();
+}
+
+async function wijsVoorstelAf(rij) {
+  say("voorstellen-msg", "Bezig...");
+  const uit = await Logica.wijsAf(rij);
+  if (!profielOpen) return;
+  say("voorstellen-msg", uit.fout || "");
+  renderProducten();
+}
+
 function renderProducten() {
+  renderVoorstellen();
   const zoek = $("producten-zoek").value.trim();
   const producten = Logica.producten();
   const alle = producten || [];
@@ -2657,6 +2779,7 @@ function renderProducten() {
 async function herlaadProducten(openId) {
   Logica.openProduct(openId);
   Logica.wisHerkomst();
+  loadKoppelingen();
   await loadProducten();
   if (openId) loadHerkomst(openId);
 }

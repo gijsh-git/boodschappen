@@ -349,6 +349,17 @@ Klaar als:
 Grenzen: geen AI-aanroep vanuit de app en geen naammatching in de database: de naam is alleen een manier om kandidaten te vinden. Niveau 1 en de favorieten veranderen niet. Geen automatische goedkeuring, ook niet bij zekerheid hoog. Nog niet automatisch draaien. Alleen productnamen en artikelgegevens gaan naar de AI, geen aankopen of gebruikers. Supabase-calls in data.js, logica in logica.js (ARCHITECTURE.md). Elke databasewijziging is een nieuw migratiebestand in supabase/migrations/.
 ```
 
+Gebouwd op 7 oktober 2026 (migratie `artikel_koppelingen`):
+
+- De tabellen `article_links` (status per artikel) en `article_link_rejections` (afgewezen combinaties), alleen bereikbaar via functies met rolcontrole. `article_products()` geeft de goedgekeurde koppelingen mee terug; staat het artikel op een bon, dan telt alleen de bon.
+- `scripts/artikel-voorstellen.py`: eerst de vaste regel op subcategorie, de rest in porties van 40 naar de AI. Ook de proefronde roept de AI aan (anders valt er niets te tellen); `--max N` houdt een eerste proef klein.
+- Het scherm Producten heeft de blokken "Voorstellen" en "Twijfelgevallen"; een goedgekeurd artikel staat in het opengeklapte product met "Losmaken".
+- Afwijzen en losmaken halen de status van het artikel weg en bewaren alleen de afgewezen combinatie, zodat het script het artikel later bij een ander product mag voorstellen.
+- "Bijgekomen sinds het oordeel" gaat op de aanmaakdatum van het product. Een oud product dat pas later weer een item of aankoop krijgt telt dus niet als nieuw.
+- Bijgesteld na de eerste proefronde (migratie `artikel_lijstnamen`): een product dat nog niet bestaat kreeg geen label, ook niet als het in de bonus was ("andijvie" voor het eerst op de lijst). Het script legt daarom bij elk artikel hooguit drie lijstnamen vast, de namen die iemand op een lijst zou typen. Een item krijgt het Bonus-label als zijn naam na Nederlandse stamming gelijk is aan zo'n naam, zonder goedkeuring en zonder dat er een product voor wordt aangemaakt. Dit is een bewuste uitzondering op "geen naammatching in de database": alleen gelijkheid van de hele naam, en alleen voor het label op de lijst. Voor jou blijft werken via de bon en de goedgekeurde koppelingen.
+- De opdracht aan de AI is aangescherpt: zekerheid laag is alleen voor echte twijfel over een variant. Wat alleen in de buurt komt krijgt geen product. In de eerste proef waren 248 van de 989 voorstellen "laag".
+- Nog te doen: de punten onder "Klaar als" nalopen met een echte ronde.
+
 ### [ ] Stap 6 – Automatische aankoopimport (alleen eigen accounts)
 
 - [ ] Kassabonnen van Gijs (en eventueel Els) periodiek ophalen via de AH-API

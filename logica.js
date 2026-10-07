@@ -39,6 +39,10 @@ const Logica = (() => {
   let productOpen = null; // id van het product dat is opengeklapt
   let productHerkomst = {}; // product-id -> de samenvoegingen die nog in dat product zitten
   let samenvoegBron = null; // product dat je aan het samenvoegen bent; de volgende tik kiest het doel
+  // Artikel → product, niveau 2: { voorstellen: [rij], gekoppeld: [rij] }; null = nog niet opgehaald
+  // rij: { supermarkt, artikel_id, titel, merk, inhoud, categorie, product_id, product, zekerheid, reden, bron }
+  let koppelingen = null;
+  const ZEKERHEID = { high: "hoog", medium: "middel", low: "laag" };
 
   function dagenGeleden(dag) {
     return Math.floor((Date.now() - new Date(dag).getTime()) / 864e5);
@@ -229,6 +233,7 @@ const Logica = (() => {
       productOpen = null;
       productHerkomst = {};
       samenvoegBron = null;
+      koppelingen = null;
     },
 
     async laadProducten() {
@@ -287,6 +292,52 @@ const Logica = (() => {
       if (error) return { fout: error.message };
       product.telt_mee = data.counts_in_profile;
       return {};
+    },
+
+    // ---------- Artikelen koppelen (niveau 2) ----------
+    // Een script buiten de app stelt per artikel uit de aanbiedingen een product voor; de beheerder keurt goed.
+    async laadKoppelingen() {
+      const { data, error } = await Data.artikelKoppelingen();
+      if (error) return { fout: error.message };
+      koppelingen = data;
+      return {};
+    },
+
+    // De voorstellen per product: [{ product_id, product, voorstellen: [rij] }], in de volgorde van de database.
+    // twijfel = true geeft de voorstellen met zekerheid laag, anders die met hoog en middel.
+    voorstelGroepen(twijfel) {
+      const groepen = [];
+      const per = {};
+      ((koppelingen && koppelingen.voorstellen) || [])
+        .filter((v) => (v.zekerheid === "low") === twijfel)
+        .forEach((v) => {
+          if (!per[v.product_id]) groepen.push(per[v.product_id] = { product_id: v.product_id, product: v.product, voorstellen: [] });
+          per[v.product_id].voorstellen.push(v);
+        });
+      return groepen;
+    },
+
+    // De goedgekeurde artikelen bij één product
+    gekoppeldBij(productId) {
+      return ((koppelingen && koppelingen.gekoppeld) || []).filter((k) => k.product_id === productId);
+    },
+
+    zekerheidNaam(code) { return ZEKERHEID[code] || code; },
+
+    // Eén voorstel of een hele groep goedkeuren. Het product gaat mee, zodat de database alleen goedkeurt
+    // wat hier te zien was.
+    async keurGoed(voorstellen) {
+      const { error } = await Data.keurKoppelingenGoed(
+        voorstellen.map((v) => ({ supermarket: v.supermarkt, article_id: v.artikel_id, product_id: v.product_id })));
+      const uit = await this.laadKoppelingen();
+      return error ? { fout: error.message } : uit;
+    },
+
+    // Een voorstel afwijzen of een goedgekeurde koppeling losmaken: die combinatie wordt niet meer voorgesteld
+    async wijsAf(rij) {
+      const { error } = await Data.wijsKoppelingAf(rij.supermarkt, rij.artikel_id);
+      const uit = await this.laadKoppelingen();
+      return error ? { fout: error.message } : uit;
     }
   };
 })();

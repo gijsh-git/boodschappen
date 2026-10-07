@@ -310,6 +310,20 @@
           <span id="samenvoeg-tekst"></span>
           <button type="button" id="samenvoeg-annuleren" class="link">Annuleren</button>
         </p>
+        <!-- Artikelen uit de aanbiedingen die volgens het script bij een product horen; pas na goedkeuren tellen ze mee -->
+        <div id="voorstel-blokken" class="ap-blokken" hidden>
+          <details id="voorstellen-blok" class="ap-blok" hidden>
+            <summary id="voorstellen-kop">Voorstellen</summary>
+            <p class="uitleg">Artikelen uit de aanbiedingen die bij een product lijken te horen. Na goedkeuren telt een aanbieding op zo'n artikel mee voor dat product.</p>
+            <div id="voorstellen"></div>
+          </details>
+          <details id="twijfel-blok" class="ap-blok" hidden>
+            <summary id="twijfel-kop">Twijfelgevallen</summary>
+            <p class="uitleg">Voorstellen waar de zekerheid laag is. Beoordeel ze één voor één.</p>
+            <div id="twijfels"></div>
+          </details>
+          <p id="voorstellen-msg" class="msg" role="status"></p>
+        </div>
         <input type="text" id="producten-zoek" placeholder="Zoek een product of naam" autocomplete="off" aria-label="Zoek een product of naam">
         <p id="producten-telling" class="uitleg"></p>
         <ul id="producten"></ul>
