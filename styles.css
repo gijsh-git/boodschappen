@@ -164,13 +164,15 @@ code {
 }
 .avatars span:first-child { margin-left: 0; background: var(--donker); color: #fff; }
 .top-knop.hoekig { width: 52px; height: 52px; border-radius: 16px; }
-/* Lichte balk in de oranje kop: producten op de lijst die in de aanbieding zijn */
+/* Groene balk in de oranje kop: producten op de lijst die in de aanbieding zijn */
 .bonus-balk {
-  display: flex; flex-direction: column; margin: 18px 0 0; padding: 12px 16px; border-radius: 16px;
-  background: #fde3cb; color: #8a4a14; font-size: 0.95rem;
+  display: flex; align-items: center; gap: 14px; margin: 18px 0 0; padding: 10px 16px 10px 10px; border-radius: 16px;
+  background: #176837; color: #fff; font-size: 0.95rem;
 }
-.bonus-balk strong { font-family: var(--kop); font-size: 1.25rem; line-height: 1.2; color: var(--donker); }
-.bonus-balk em { color: #b45309; font-style: normal; }
+.bonus-icoon { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: 14px; background: #bdf5cf; color: #176837; }
+.bonus-tekst { display: flex; flex-direction: column; min-width: 0; }
+.bonus-balk strong { font-family: var(--kop); font-size: 1.25rem; line-height: 1.2; color: #fff; }
+.bonus-balk em { color: #bdf5cf; font-style: normal; }
 /* Deelnemers en de code om te delen; opent via de rondjes of de uitnodigknop */
 .leden-paneel { margin-bottom: 16px; }
 .leden-paneel .kopje { margin-top: 4px; }
