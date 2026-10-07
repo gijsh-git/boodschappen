@@ -25,7 +25,7 @@ De cijfers hieronder zijn zonder `--producten`: een product is daar de leesbare 
 
 Elk artikel heeft twee ID's: `webshop_id` en `hq_id`. Het `product_id` op een kassabon is het `hq_id`. Van de 2423 artikelen heeft er één geen `hq_id`. De bonusdata geeft dus per artikel het paar bon-ID en webshop-ID, plus de volledige titel, het merk, de inhoud en de categorie.
 
-Gevolg voor stap 2: de vertaaltabel hoeft niet leeg te blijven en er is geen aparte vertaalslag nodig. Stap 3 kan hem elke week vullen met de artikelen uit de bonus. Hij dekt dan alleen artikelen die ooit in de bonus zaten, maar voor het matchen van aanbiedingen is dat precies genoeg.
+Gevolg voor stap 2 en 3: er komt geen aparte vertaaltabel. Stap 2 slaat het bon-ID als `hq_id` op bij de aankoop; de artikeltabel van stap 3 wordt elke week gevuld met de artikelen uit de bonus en is daarmee ook de vertaling van bon-ID naar artikel. Hij dekt alleen artikelen die ooit in de bonus zaten, maar voor het matchen van aanbiedingen is dat precies genoeg.
 
 Bijvangst: het ID liet drie fouten in `data/ah-namen.json` zien, die daar verbeterd zijn. "AH SAKS" stond als saucijzenbroodjes en is Saksische smeerleverworst, "AH CLEMONT R" is rouge en geen rosé, "SUR EI SAL" is Surinaamse eiersalade en geen surimi. Aankopen die al met de oude naam zijn opgeslagen zijn niet aangepast.
 

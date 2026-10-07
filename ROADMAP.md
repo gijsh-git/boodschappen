@@ -161,7 +161,7 @@ Klaar als: een kort overzicht met aantallen en voorbeelden van wat goed en fout 
 
 Uitkomst (7 oktober 2026), volledig in `docs/verkenning-ah-bonus.md`:
 
-- Het `product_id` op de bon is het `hq_id` dat bij elk bonusartikel naast het webshop-ID staat. De vertaaltabel uit stap 2 kan dus elke week uit de bonus gevuld worden (stap 3).
+- Het `product_id` op de bon is het `hq_id` dat bij elk bonusartikel naast het webshop-ID staat. De artikeltabel uit stap 3 kan dus elke week uit de bonus gevuld worden en dient ook als vertaling van bon-ID naar artikel.
 - Via ID raken 12 van de 143 aanbiedingen een vast product, zonder fouten. Maar het mist het andere merk of formaat van hetzelfde product (kwark, cola), en dat zijn juist de aanbiedingen waar het om gaat.
 - Via de naam in de titel raken er 56, waarvan het grootste deel ruis is (avocado in douchegel, paprika in chips). De categorie van het artikel is nodig om dat te scheiden.
 - De opzet blijft staan. Aanscherping voor stap 3 en 5: bewaar per artikel titel, merk, inhoud en categorie, en geef de categorie mee bij het voorstel artikel → product.
@@ -170,10 +170,9 @@ Uitkomst (7 oktober 2026), volledig in `docs/verkenning-ah-bonus.md`:
 
 Huidige situatie: een bonregel is geen eigen tabel maar een rij in `purchases` met `receipt_id`, `receipt_name`, `price` en `discount`. De supermarkt staat al op de bon (`receipts.store`). `data/ah-bonnen.json` heeft per regel al een `product_id` van AH, maar `scripts/ah-importeren.py` gooit dat weg.
 
-Besluit: het `product_id` van de bon wordt hoe dan ook opgeslagen, ook als het niet het webshop-ID van de bonusgroepen blijkt te zijn. Het is een vast ID voor hetzelfde artikel en daarmee de basis voor de persoonlijke laag (stap 7). De vertaling naar het webshop-ID komt in een aparte tabel, zodat deze stap niet afhangt van de vraag of het herleidbaar is en er bij aankopen later niets herschreven hoeft te worden.
+Besluit: het `product_id` van de bon wordt als `hq_id` op `purchases` opgeslagen. De vertaling naar webshop-ID en de artikelgegevens komen uit de artikeltabel van stap 3.
 
-- [ ] Migratie: kolom `receipt_article_id` op `purchases`, met een opmerking op de kolom dat dit het ID van de bon is en niet het webshop-ID. Geen kolom voor de supermarkt: die volgt uit de bon via `receipt_id`, en aankopen zonder bon hebben ook geen artikel-ID
-- [ ] Migratie: vertaaltabel van bon-ID naar webshop-ID per supermarkt. Blijft leeg tot bekend is hoe de vertaling werkt (stap 1 en 5)
+- [ ] Migratie: kolom `hq_id` op `purchases`, met een opmerking op de kolom dat dit het ID van de bon is en niet het webshop-ID. Geen kolom voor de supermarkt: die volgt uit de bon via `receipt_id`, en aankopen zonder bon hebben ook geen artikel-ID
 - [ ] `save_receipt` neemt het artikel-ID per regel aan en slaat het op, ook bij een regel die aan een bestaande aankoop of een item van de lijst wordt gekoppeld. `delete_receipt` maakt het weer leeg bij gekoppelde aankopen, net als de andere bonkolommen
 - [ ] `scripts/ah-importeren.py` geeft het `product_id` mee en voegt regels alleen nog samen als naam én ID gelijk zijn. Dezelfde naam met verschillende ID's (bijvoorbeeld twee formaten met dezelfde bontekst) blijven aparte regels
 - [ ] `save_receipt` daarop aanpassen: nu wordt een regel met exact dezelfde naam als een aankoop van die dag overgeslagen, waardoor de tweede van zulke regels zou wegvallen. "Een product telt één keer per dag" wordt: één keer per naam én artikel-ID
@@ -187,6 +186,10 @@ Volgorde: na stap 1. Het kan er los van, maar stap 1 laat zien hoe de AH-data er
 ### [ ] Stap 3 – Aanbiedingen ophalen (AH)
 
 - [ ] Tabellen voor aanbiedingen en de artikelen per aanbieding, met geldigheid en kortingstype
+- [ ] Artikelen en aanbiedingen krijgen een kolom `supermarket`. Een artikel is uniek op `supermarket` + artikel-ID (voor AH het `hq_id`), niet op het ID alleen, zodat later andere supermarkten met eigen nummers erbij kunnen
+- [ ] Per artikel bewaren: `hq_id`, `webshop_id`, titel, merk, inhoud, categorie
+- [ ] Per aanbieding bewaren: titel, kortingstekst, de labels met code en getallen, geldig van/tot, en welke artikelen erbij horen
+- [ ] De artikeltabel is ook de vertaling van bon-ID naar artikel; er komt geen aparte vertaaltabel
 - [ ] Wekelijks automatisch ophalen (anoniem token, geen account)
 - [ ] Oude aanbiedingen opruimen
 
@@ -220,7 +223,12 @@ Grenzen: nog geen koppeling met aanbiedingen (stap 5), geen AI. Nog geen melding
 
 ### [ ] Stap 5 – Matchen en kortingskansen
 
-- [ ] AH-artikel → product: eerst bekend artikel-ID, dan alias, dan AI-voorstel volgens `docs/productregels.md` (beheerder keurt goed)
+- [ ] Koppeling artikel → product is gedeeld en gebeurt één keer per artikel, in drie niveaus:
+  1. Zeker: het artikel-ID staat op een eigen bon. Het product is dan bekend; automatisch koppelen. Dit is geen samenvoegen van producten en valt dus niet onder de goedkeuring uit `docs/productregels.md`.
+  2. Kandidaat: categorie en naam wijzen op een product dat iemand koopt of als favoriet heeft. AI-voorstel volgens `docs/productregels.md`, met de categorie van het artikel erbij; de beheerder keurt goed.
+  3. De rest: geen product. Komt het artikel later terug in de bonus, dan is het al bekend.
+- [ ] Naammatching is nooit het eindoordeel, alleen een manier om kandidaten te vinden (zie `docs/verkenning-ah-bonus.md`: avocado in douchegel, honing in thee)
+- [ ] Een aanbieding telt voor iemand als een artikel erin bij een product hoort dat die persoon koopt of als favoriet heeft, ongeacht merk of formaat
 - [ ] Aanbieding → product via de artikelen in de bonusgroep
 - [ ] Kortingskansen tonen op basis van aankoopprofiel en favorieten
 - [ ] Bij een favoriet die nu in de aanbieding is: de aanbieding tonen (supermarkt, korting, geldig tot), met één tik om het product op een lijst te zetten. Een specifieke favoriet ("pindakaas" + "calvé") toont alleen de aanbieding van dat merk.
@@ -250,6 +258,17 @@ Op basis van het aankoopinterval per product (mediaan) voorspellen wanneer iets 
 - [ ] Combineren met kortingskansen uit stap 5
 
 Uitwerken als er genoeg aankoopdata is.
+
+### [ ] Stap 9 – Meerdere supermarkten
+
+Pas oppakken als er een tweede bron van aanbiedingen is.
+
+- [ ] Tweede supermarkt als extra bron van artikelen en aanbiedingen; matching en profiel blijven gelijk
+- [ ] Aanbiedingen vergelijken op prijs per kilo of liter, ook tussen kortingsvormen (1+1 gratis tegen 25% korting)
+- [ ] Per gebruiker of huishouden vastleggen welke winkels ze bezoeken, of dat afleiden uit de bonnen
+- [ ] Volgorde van opties: prijs, eigen winkel, merkvoorkeur uit de persoonlijke laag
+
+Klaar als: iemand die kwark op de lijst zet zowel een AH- als een Jumbo-aanbieding op kwark ziet, met de beste voor die persoon bovenaan.
 
 ---
 
