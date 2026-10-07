@@ -50,19 +50,23 @@ const Data = (() => {
     items(lijstId) { return db.from("items").select("*").eq("list_id", lijstId).order("created_at", { ascending: true }); },
     voegItemToe(rij) { return db.from("items").insert(rij).select().single(); },
     voegItemsToe(rijen) { return db.from("items").insert(rijen).select(); },
-    // Zet een verwijderd item terug met zijn oorspronkelijke id, maker en tijd
+    // Zet een verwijderd item terug met zijn oorspronkelijke id, maker, tijd en aanbieding
     zetItemTerug(item) {
       return db.from("items").insert({
         id: item.id, list_id: item.list_id, name: item.name, quantity: item.quantity,
-        added_by: item.added_by, created_at: item.created_at
+        added_by: item.added_by, created_at: item.created_at, offer_id: item.offer_id
       });
     },
     verwijderItem(itemId) { return db.from("items").delete().eq("id", itemId); },
     // Gekocht: de database haalt het item weg en bewaart de aankoop (als de lijst meetelt); geeft het aankoop-id of null
     koopItem(itemId) { return db.rpc("buy_item", { p_item: itemId }); },
     maakAankoopOngedaan(aankoopId) { return db.rpc("undo_purchase", { p_purchase: aankoopId }); },
-    // Per item bij welke supermarkt er hoeveel aanbiedingen zijn
-    dealsVoorLijst(lijstId) { return db.rpc("deals_for_list", { p_list: lijstId }); },
+
+    // ---------- Aanbiedingen ----------
+    // Per item bij welke supermarkt er hoeveel geldige aanbiedingen zijn
+    aanbiedingenVoorLijst(lijstId) { return db.rpc("offers_for_list", { p_list: lijstId }); },
+    // De geldige aanbiedingen die voor jou tellen (favorieten en vaste producten), als JSON in de volgorde van tonen
+    aanbiedingenVoorMij() { return db.rpc("offers_for_me"); },
 
     // ---------- Aankopen ----------
     aankopen(lijstId) {

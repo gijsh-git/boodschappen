@@ -321,7 +321,8 @@ $("tabbalk").addEventListener("click", (e) => {
 });
 
 // ---------- Voor jou ----------
-// De vaste producten van het huishouden: de top 10 van de laatste 3 maanden uit het aankoopprofiel.
+// Bovenaan de aanbiedingen die voor jou tellen: via je favorieten en via de vaste producten van het huishouden.
+// Daaronder de vaste producten zelf: de top 10 van de laatste 3 maanden uit het aankoopprofiel.
 // Het product dat volgens het koopritme het eerst weer nodig is staat in de grote kaart; één tik zet het op de open lijst.
 function toonVoorJou() {
   voorjouOpen = true;
@@ -332,6 +333,14 @@ function toonVoorJou() {
   renderVoorJou();
   show("voorjou");
   loadVoorJou();
+  loadAanbod();
+}
+
+async function loadAanbod() {
+  const antwoord = await Logica.laadAanbiedingen(() => voorjouOpen);
+  if (!antwoord) return;
+  if (antwoord.fout) return say("voorjou-msg", antwoord.fout);
+  renderVoorJou();
 }
 
 async function loadVoorJou() {
@@ -380,7 +389,53 @@ function voorjouRij(product) {
     plus.className = "plus";
     plus.setAttribute("aria-label", `${hoofdletter(product.naam)} op de lijst zetten`);
     plus.innerHTML = '<svg width="24" height="24" aria-hidden="true"><use href="#icon-plus"/></svg>';
-    plus.addEventListener("click", () => zetOpLijst(product));
+    plus.addEventListener("click", () => zetOpLijst(product.naam));
+    li.append(plus);
+  }
+  return li;
+}
+
+// Laatste geldige dag van een aanbieding, bijv. "zo 11 okt"
+function totDatum(dag) {
+  return new Date(dag).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" }).replace(".", "");
+}
+
+// Waarom de aanbieding hier staat: je favoriet, of een product dat jullie vaak kopen
+function aanbodReden(aanbieding) {
+  const favoriet = aanbieding.favorieten[0];
+  if (favoriet) return "Favoriet: " + [favoriet.brand, favoriet.term].filter(Boolean).join(" ");
+  return "Koop je vaak: " + aanbieding.producten.map((p) => p.naam).join(", ");
+}
+
+// Een aanbieding die voor jou telt: de korting, waar en tot wanneer, en één tik om het op de open lijst te zetten
+function aanbodRij(aanbieding, opLijst) {
+  const li = document.createElement("li");
+  li.className = "voorjou-rij aanbod-rij";
+  const tekst = document.createElement("div");
+  tekst.className = "item-tekst";
+  const korting = document.createElement("span");
+  korting.className = "bonus-label";
+  korting.textContent = aanbieding.korting || "Bonus";
+  const naam = document.createElement("span");
+  naam.className = "item-naam";
+  naam.textContent = aanbieding.titel;
+  const sub = document.createElement("span");
+  sub.className = "item-sub";
+  sub.textContent = `${Logica.winkelNaam(aanbieding.supermarkt)} · t/m ${totDatum(aanbieding.geldig_tot)}`;
+  const reden = document.createElement("span");
+  reden.className = "item-sub";
+  const opDeLijst = Logica.aanbiedingNaam(aanbieding);
+  const staatErAl = opLijst.has(opDeLijst.trim().toLowerCase());
+  reden.textContent = aanbodReden(aanbieding) + (staatErAl ? " · staat op de lijst" : "");
+  tekst.append(korting, naam, sub, reden);
+  li.append(tekst);
+  if (currentList && !staatErAl) {
+    const plus = document.createElement("button");
+    plus.type = "button";
+    plus.className = "plus";
+    plus.setAttribute("aria-label", `${hoofdletter(opDeLijst)} op de lijst zetten`);
+    plus.innerHTML = '<svg width="24" height="24" aria-hidden="true"><use href="#icon-plus"/></svg>';
+    plus.addEventListener("click", () => zetOpLijst(opDeLijst, aanbieding.id));
     li.append(plus);
   }
   return li;
@@ -389,6 +444,10 @@ function voorjouRij(product) {
 function renderVoorJou() {
   const voorjou = Logica.voorJou();
   const over = Logica.voorJouOver(items.map((i) => i.name));
+  const aanbod = Logica.aanbiedingen() || [];
+  const opLijst = new Set(items.map((i) => i.name.trim().toLowerCase()));
+  $("aanbod-kop").hidden = aanbod.length === 0;
+  $("aanbod-lijst").replaceChildren(...aanbod.map((a) => aanbodRij(a, opLijst)));
   const [eerste, ...rest] = over;
   tipProduct = eerste || null;
   $("tip-kaart").hidden = !eerste;
@@ -406,11 +465,14 @@ function renderVoorJou() {
     : "Niets meer voor te stellen: je vaste producten staan op de lijst of je hebt ze overgeslagen.";
 }
 
-// Een voorgesteld product op de open lijst zetten
-async function zetOpLijst(product) {
+// Een voorgesteld product of een aanbieding op de open lijst zetten. Met een aanbieding erbij onthoudt het
+// item waar het vandaan komt, zodat het op de lijst het Bonus-label krijgt.
+async function zetOpLijst(naam, aanbiedingId) {
   if (!currentList) return;
   const lijst = currentList;
-  const { data, error } = await Data.voegItemToe({ list_id: lijst.id, name: hoofdletter(product.naam) });
+  const rij = { list_id: lijst.id, name: hoofdletter(naam) };
+  if (aanbiedingId) rij.offer_id = aanbiedingId;
+  const { data, error } = await Data.voegItemToe(rij);
   if (error) return say("voorjou-msg", error.message);
   if (currentList && currentList.id === lijst.id) {
     if (!items.some((i) => i.id === data.id)) items.push(data);
@@ -422,7 +484,7 @@ async function zetOpLijst(product) {
   say("voorjou-msg", `"${data.name}" staat op ${lijst.name}.`);
 }
 
-$("tip-toevoegen").addEventListener("click", () => { if (tipProduct) zetOpLijst(tipProduct); });
+$("tip-toevoegen").addEventListener("click", () => { if (tipProduct) zetOpLijst(tipProduct.naam); });
 $("tip-nietnu").addEventListener("click", () => {
   if (!tipProduct) return;
   Logica.slaOver(tipProduct.naam);

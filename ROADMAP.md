@@ -284,15 +284,23 @@ Gebouwd op 7 oktober 2026:
   1. Zeker: het artikel-ID staat op een eigen bon. Het product is dan bekend; automatisch koppelen. Dit is geen samenvoegen van producten en valt dus niet onder de goedkeuring uit `docs/productregels.md`.
   2. Kandidaat: categorie en naam wijzen op een product dat iemand koopt. AI-voorstel volgens `docs/productregels.md`, met de categorie van het artikel erbij; de beheerder keurt goed.
   3. De rest: geen product. Komt het artikel later terug in de bonus, dan is het al bekend.
-- [ ] Voor het aankoopprofiel is naammatching nooit het eindoordeel, alleen een manier om kandidaten te vinden (zie `docs/verkenning-ah-bonus.md`: avocado in douchegel, honing in thee)
-- [ ] Een aanbieding telt voor iemand via het aankoopprofiel als een artikel erin bij een product hoort dat die persoon koopt, ongeacht merk of formaat
-- [ ] Een aanbieding telt voor iemand via een favoriet volgens de regels van stap 4: de term als hele woorden in de titel van een artikel erin, het merk exact, de hoofdcategorie als de favoriet die heeft (een artikel zonder hoofdcategorie wordt daar niet op uitgesloten), zonder hoofdletters en accenten (`normalize_search`). Rechtstreeks op `articles`, zonder product ertussen
-- [ ] "Voor jou" = het aankoopprofiel van het huishouden plus de eigen favorieten; een aanbieding die via beide binnenkomt staat er één keer. De rangorde tussen de twee wordt hier bepaald
-- [ ] Aanbieding → product via de artikelen in de bonusgroep
-- [ ] Kortingskansen tonen op basis van aankoopprofiel en favorieten
-- [ ] Bij een favoriet die nu in de aanbieding is: de aanbieding tonen (supermarkt, korting, geldig tot), met één tik om het op een lijst te zetten: de term, met het merk ervoor als dat is ingesteld. Een favoriet met merk ("pindakaas" + "Calvé") toont alleen de aanbieding van dat merk.
+- [x] Voor het aankoopprofiel is naammatching nooit het eindoordeel, alleen een manier om kandidaten te vinden (zie `docs/verkenning-ah-bonus.md`: avocado in douchegel, honing in thee)
+- [x] Een aanbieding telt voor iemand via het aankoopprofiel als een artikel erin bij een product hoort dat die persoon koopt, ongeacht merk of formaat
+- [x] Een aanbieding telt voor iemand via een favoriet volgens de regels van stap 4: de term als hele woorden in de titel van een artikel erin, het merk exact, de hoofdcategorie als de favoriet die heeft (een artikel zonder hoofdcategorie wordt daar niet op uitgesloten), zonder hoofdletters en accenten (`normalize_search`). Rechtstreeks op `articles`, zonder product ertussen
+- [x] "Voor jou" = het aankoopprofiel van het huishouden plus de eigen favorieten; een aanbieding die via beide binnenkomt staat er één keer. De rangorde tussen de twee wordt hier bepaald
+- [x] Aanbieding → product via de artikelen in de bonusgroep
+- [x] Kortingskansen tonen op basis van aankoopprofiel en favorieten
+- [x] Bij een favoriet die nu in de aanbieding is: de aanbieding tonen (supermarkt, korting, geldig tot), met één tik om het op een lijst te zetten: de term, met het merk ervoor als dat is ingesteld. Een favoriet met merk ("pindakaas" + "Calvé") toont alleen de aanbieding van dat merk.
 
 Klaar als: een aanbieding op een product dat we vaak kopen of als favoriet hebben in de app verschijnt, en een aanbieding op iets wat we nooit kopen niet.
+
+Deel 1 gebouwd op 7 oktober 2026 (migraties `aanbiedingen_matchen` en `aanbieding_bij_item`):
+
+- Niveau 1 (artikel-ID op een eigen bon) heeft geen tabel: `article_products()` leidt het af uit de aankopen. Na het aanvullen hebben 1241 van de 1272 aankopen een artikel-ID, goed voor 601 koppelingen artikel → product.
+- De grens voor "koopt" staat in de tabel `settings`: minstens 3 aankoopdagen (`regular_min_days`), de laatste binnen 365 dagen (`regular_max_age_days`).
+- `offers_for_me()` geeft de aanbiedingen voor "Voor jou": favorieten bovenaan, daarna het profiel op aantal aankoopdagen. In de testweek 2 via favorieten en 18 via het profiel, van de 143.
+- Het Bonus-label op de lijst komt uit `offers_for_list()`: via het product van het item, of via de aanbieding waarmee het item vanuit "Voor jou" op de lijst is gezet (`items.offer_id`). Dat laatste geeft ook een favoriet op de lijst zijn label.
+- Nog open: niveau 2 (het voorstel voor artikelen van een ander merk of formaat, door een script buiten de app, goedkeuren in het scherm Producten) en het laten vervallen van de oude tabel `deals`, in een eigen commit nadat het nieuwe label getest is.
 
 ### [ ] Stap 6 – Automatische aankoopimport (alleen eigen accounts)
 

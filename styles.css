@@ -482,8 +482,11 @@ button.fav-kies {
 .tip-info { margin: 6px 0 16px; color: var(--grijs); }
 .tip-knoppen { display: flex; flex-wrap: wrap; gap: 10px; }
 .tip-knoppen button { display: flex; align-items: center; gap: 8px; }
-#voorjou-lijst:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
+#voorjou-lijst:not(:empty), #aanbod-lijst:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
 .voorjou-rij { flex-wrap: nowrap; gap: 12px; min-height: 68px; padding: 8px 8px 8px 16px; border: 0; border-radius: 16px; background: var(--vlak); }
+#aanbod-lijst:not(:empty) { margin-bottom: 20px; }
+.aanbod-rij { padding-top: 12px; padding-bottom: 12px; }
+.aanbod-rij .bonus-label { display: inline-block; margin-bottom: 6px; }
 button.plus { display: grid; place-items: center; flex: none; width: 48px; height: 48px; padding: 0; border-radius: 14px; }
 
 /* ---------- Terugvegen ---------- */

@@ -19,12 +19,16 @@ const Logica = (() => {
   // ---------- Aanbiedingen bij de lijst ----------
   let deals = {};      // item-id -> [{ supermarkt, aantal }]: actuele aanbiedingen per item
   let dealsVraag = 0;  // volgnummer, zodat een laat antwoord een nieuwer antwoord niet overschrijft
-  const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting in deals
+  const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting van de supermarkt
 
   // ---------- Voor jou ----------
   let voorjou = null;  // vaste producten uit het aankoopprofiel: { naam, dagen, om_de, laatste }; null = nog niet opgehaald
   let voorjouVraag = 0; // volgnummer, zodat een laat antwoord na uitloggen genegeerd wordt
   const nietNu = new Set(); // producten die je met "Niet nu" hebt weggetikt; geldt tot je de app sluit
+  // Geldige aanbiedingen die voor jou tellen, in de volgorde van de database (favorieten eerst):
+  // { id, supermarkt, titel, korting, geldig_tot, favorieten: [{ term, brand, artikel }], producten: [{ naam, dagen }] }
+  let aanbiedingen = null; // null = nog niet opgehaald
+  let aanbiedingenVraag = 0;
 
   function dagenGeleden(dag) {
     return Math.floor((Date.now() - new Date(dag).getTime()) / 864e5);
@@ -37,12 +41,12 @@ const Logica = (() => {
     // De aanbiedingen bij één item, of undefined als er geen zijn
     dealsVan(itemId) { return deals[itemId]; },
 
-    // Het zoeken gebeurt in de database (deals_for_list); we krijgen alleen per item terug bij welke
+    // Het zoeken gebeurt in de database (offers_for_list); we krijgen alleen per item terug bij welke
     // supermarkt er hoeveel aanbiedingen zijn. Geeft false bij een fout (dan gewoon geen labels) of als
     // er intussen een nieuwere vraag is gesteld.
     async laadDeals(lijstId) {
       const vraag = ++dealsVraag;
-      const { data, error } = await Data.dealsVoorLijst(lijstId);
+      const { data, error } = await Data.aanbiedingenVoorLijst(lijstId);
       if (vraag !== dealsVraag || error) return false;
       const nieuw = {};
       data.forEach((d) => (nieuw[d.item_id] ||= []).push(d));
@@ -55,6 +59,8 @@ const Logica = (() => {
       deals = {};
       dealsVraag++;
     },
+
+    winkelNaam(supermarkt) { return WINKELS[supermarkt] || supermarkt; },
 
     // De supermarkten met een aanbieding voluit, bijv. ["Albert Heijn", "PLUS"]
     dealWinkels(lijst) {
@@ -80,6 +86,30 @@ const Logica = (() => {
       voorjou = null;
       voorjouVraag++;
       nietNu.clear();
+      aanbiedingen = null;
+      aanbiedingenVraag++;
+    },
+
+    // De aanbiedingen die voor jou tellen: via je eigen favorieten en via de vaste producten van het huishouden.
+    // Zoeken en rangorde gebeuren in de database (offers_for_me).
+    aanbiedingen() { return aanbiedingen; },
+
+    // `nogOpen` zegt of het scherm er nog op wacht. Geeft null als het antwoord niet meer nodig is.
+    async laadAanbiedingen(nogOpen) {
+      const vraag = ++aanbiedingenVraag;
+      const { data, error } = await Data.aanbiedingenVoorMij();
+      if (vraag !== aanbiedingenVraag || !nogOpen()) return null;
+      if (error) return { fout: error.message };
+      aanbiedingen = data;
+      return {};
+    },
+
+    // Wat er op de lijst komt bij "zet op lijst". Via een favoriet: de term, met het merk ervoor als dat is
+    // ingesteld; bij alleen een merk de titel van een artikel uit de aanbieding. Anders het vaste product.
+    aanbiedingNaam(aanbieding) {
+      const favoriet = aanbieding.favorieten[0];
+      if (!favoriet) return aanbieding.producten[0].naam;
+      return favoriet.term ? [favoriet.brand, favoriet.term].filter(Boolean).join(" ") : favoriet.artikel;
     },
 
     // "Niet nu": het product komt niet meer terug tot je de app sluit
