@@ -58,6 +58,41 @@ const Data = (() => {
     },
     verwijderAankoop(aankoopId) { return db.from("purchases").delete().eq("id", aankoopId); },
 
+    // ---------- Bonnen ----------
+    // Staat een bon met dezelfde winkel, datum en totaal al in de lijst? (data is true of false)
+    bonBestaat(lijstId, winkel, datum, totaal) {
+      return db.rpc("receipt_exists", { p_list: lijstId, p_store: winkel, p_date: datum, p_total: totaal });
+    },
+    // Per bonregel de meest gelijkende aankoop van die dag
+    zoekAankopenBijBonregels(lijstId, datum, namen) {
+      return db.rpc("match_receipt_lines", { p_list: lijstId, p_date: datum, p_names: namen });
+    },
+    // Per bonregel het beste item op de lijst dat op of voor de bondatum is toegevoegd
+    zoekItemsBijBonregels(lijstId, datum, namen) {
+      return db.rpc("match_receipt_items", { p_list: lijstId, p_date: datum, p_names: namen });
+    },
+    bewaarBon(lijstId, winkel, datum, totaal, regels) {
+      return db.rpc("save_receipt", { p_list: lijstId, p_store: winkel, p_date: datum, p_total: totaal, p_lines: regels });
+    },
+    verwijderBon(bonId) { return db.rpc("delete_receipt", { p_receipt: bonId }); },
+    bonnen(lijstId) {
+      return db
+        .from("receipts")
+        .select("id, list_id, store, receipt_date, total, added_by")
+        .eq("list_id", lijstId)
+        .order("receipt_date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(200);
+    },
+    // De aankopen die bij een bon horen
+    bonInhoud(bonId) {
+      return db
+        .from("purchases")
+        .select("id, name, quantity, receipt_name, price, discount")
+        .eq("receipt_id", bonId)
+        .order("name", { ascending: true });
+    },
+
     // ---------- Live volgen ----------
     // Eén kanaal per lijst voor items, leden, de lijst zelf en aankopen. `op` heeft per soort een functie
     // die het Supabase-bericht krijgt: { item, lid, lijst, aankoop }. Een nieuw kanaal sluit het vorige.

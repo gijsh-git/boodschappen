@@ -1684,10 +1684,10 @@ async function controleerBon(bon = bonHuidig) {
     const namen = bon.regels.map((r) => r.naam);
     const [bestaat, gevonden, lijst] = await Promise.all([
       winkel
-        ? db.rpc("receipt_exists", { p_list: lijstId, p_store: winkel, p_date: bon.datum, p_total: leesBedrag(bon.totaal) })
+        ? Data.bonBestaat(lijstId, winkel, bon.datum, leesBedrag(bon.totaal))
         : { data: false },
-      db.rpc("match_receipt_lines", { p_list: lijstId, p_date: bon.datum, p_names: namen }),
-      db.rpc("match_receipt_items", { p_list: lijstId, p_date: bon.datum, p_names: namen })
+      Data.zoekAankopenBijBonregels(lijstId, bon.datum, namen),
+      Data.zoekItemsBijBonregels(lijstId, bon.datum, namen)
     ]);
     if (vraag !== bon.controle || bon.status !== "klaar" || !bonStapel.includes(bon) || !currentList || currentList.id !== lijstId) return false;
     fout = Boolean(bestaat.error || gevonden.error || lijst.error);
@@ -1795,9 +1795,7 @@ async function bewaarBon(bon) {
     purchase_id: r.koppel && r.koppelAan ? r.koppel.id : null,
     item_id: vanLijst(r) ? r.item.id : null
   }));
-  const { data, error } = await db.rpc("save_receipt", {
-    p_list: currentList.id, p_store: bon.supermarkt.trim(), p_date: bon.datum, p_total: leesBedrag(bon.totaal), p_lines: regels
-  });
+  const { data, error } = await Data.bewaarBon(currentList.id, bon.supermarkt.trim(), bon.datum, leesBedrag(bon.totaal), regels);
   if (error) return error.message;
   bon.status = "opgeslagen";
   bon.uitkomst = data || {};
@@ -2168,13 +2166,7 @@ function toonBonnen() {
 async function loadBonnen() {
   if (!currentList) return;
   const lijstId = currentList.id;
-  const { data, error } = await db
-    .from("receipts")
-    .select("id, list_id, store, receipt_date, total, added_by")
-    .eq("list_id", lijstId)
-    .order("receipt_date", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(200);
+  const { data, error } = await Data.bonnen(lijstId);
   if (!currentList || currentList.id !== lijstId) return;
   if (error) return say("bonnen-msg", error.message);
   bonnen = data;
@@ -2183,11 +2175,7 @@ async function loadBonnen() {
 
 // De aankopen die bij een bon horen; pas ophalen als je de bon openklapt
 async function loadBonInhoud(bon) {
-  const { data, error } = await db
-    .from("purchases")
-    .select("id, name, quantity, receipt_name, price, discount")
-    .eq("receipt_id", bon.id)
-    .order("name", { ascending: true });
+  const { data, error } = await Data.bonInhoud(bon.id);
   if (!currentList || currentList.id !== bon.list_id) return;
   if (error) return say("bonnen-msg", error.message);
   bonInhoud[bon.id] = data;
@@ -2269,7 +2257,7 @@ function renderBonnen() {
 async function verwijderBon(bon) {
   if (!confirm(`Bon van ${bon.store} van ${datum(bon.receipt_date)} verwijderen? De aankopen van deze bon verdwijnen ook. Wat je al op de lijst als gekocht had gemarkeerd blijft staan, zonder prijs.`)) return;
   say("bonnen-msg", "");
-  const { error } = await db.rpc("delete_receipt", { p_receipt: bon.id });
+  const { error } = await Data.verwijderBon(bon.id);
   if (!currentList || currentList.id !== bon.list_id) return;
   if (error) { say("bonnen-msg", error.message); return loadBonnen(); }
   bonnen = (bonnen || []).filter((b) => b.id !== bon.id);
