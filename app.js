@@ -1299,15 +1299,15 @@ $("add-form").addEventListener("submit", async (e) => {
   loadDeals();
 });
 
-// Gekocht: het item gaat van de lijst en de database bewaart het als aankoop (als de lijst meetelt)
+// Gekocht: het item gaat van de lijst en de database bewaart het als aankoop
 async function koop(item) {
   items = items.filter((i) => i.id !== item.id); // direct tonen, daarna opslaan
   render();
   const { data, error } = await Data.koopItem(item.id);
   if (!currentList || currentList.id !== item.list_id) return;
   if (error) { say("status", error.message); return loadItems(); }
-  // Geen aankoop terwijl de lijst wel meetelt: de ander was net eerder, dus er valt niets terug te draaien
-  if (!data && currentList.counts_for_profile !== false) return;
+  // Geen aankoop: de ander was net eerder, dus er valt niets terug te draaien
+  if (!data) return;
   toonOngedaan(`"${item.name}" gekocht`, item, data);
 }
 
