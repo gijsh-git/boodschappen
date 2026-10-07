@@ -1051,6 +1051,8 @@ function subscribe() {
       } else if (p.eventType === "UPDATE") {
         items = items.map((i) => (i.id === p.new.id ? p.new : i));
       } else if (p.eventType === "DELETE") {
+        // Dit bericht komt van alle lijsten: alleen verder als het item op deze lijst stond
+        if (!items.some((i) => i.id === p.old.id)) return;
         items = items.filter((i) => i.id !== p.old.id);
       }
       render();
@@ -1088,7 +1090,8 @@ function subscribe() {
         // Een bestaande aankoop is aan een bon gekoppeld en heeft nu een prijs
         aankopen = aankopen.map((a) => (a.id === p.new.id ? p.new : a));
       } else if (p.eventType === "DELETE") {
-        // Bij verwijderen stuurt de database alleen de id mee
+        // Bij verwijderen stuurt de database alleen de id mee, van alle lijsten: alleen verder als de aankoop hier stond
+        if (!aankopen.some((a) => a.id === p.old.id)) return;
         aankopen = aankopen.filter((a) => a.id !== p.old.id);
       }
       renderAankopen();

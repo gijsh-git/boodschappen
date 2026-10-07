@@ -61,14 +61,21 @@ const Data = (() => {
     // ---------- Live volgen ----------
     // Eén kanaal per lijst voor items, leden, de lijst zelf en aankopen. `op` heeft per soort een functie
     // die het Supabase-bericht krijgt: { item, lid, lijst, aankoop }. Een nieuw kanaal sluit het vorige.
+    // Een DELETE van items en aankopen bevat alleen de id, geen list_id, dus daar kan niet op de lijst gefilterd
+    // worden (Realtime stuurt zo'n bericht dan helemaal niet). Die luisteren zonder filter; de aanroeper kijkt
+    // zelf of de id in de open lijst zit.
     volgLijst(lijstId, op) {
       this.stopVolgen();
       kanaal = db
         .channel("items-" + lijstId)
-        .on("postgres_changes", { event: "*", schema: "public", table: "items", filter: `list_id=eq.${lijstId}` }, op.item)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "items", filter: `list_id=eq.${lijstId}` }, op.item)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "items", filter: `list_id=eq.${lijstId}` }, op.item)
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "items" }, op.item)
         .on("postgres_changes", { event: "*", schema: "public", table: "list_members", filter: `list_id=eq.${lijstId}` }, op.lid)
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "lists", filter: `id=eq.${lijstId}` }, op.lijst)
-        .on("postgres_changes", { event: "*", schema: "public", table: "purchases", filter: `list_id=eq.${lijstId}` }, op.aankoop)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "purchases", filter: `list_id=eq.${lijstId}` }, op.aankoop)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "purchases", filter: `list_id=eq.${lijstId}` }, op.aankoop)
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "purchases" }, op.aankoop)
         .subscribe();
     },
     stopVolgen() {
