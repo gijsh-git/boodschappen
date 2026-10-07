@@ -26,7 +26,7 @@ Bij twijfel: samenvoegen. Te ruim samenvoegen kost hooguit een irrelevante aanbi
 - Biologisch en gewoon: biologische komkommer onder "komkommer".
 - Huismerken van supermarkten (AH, Jumbo, Plus, g'woon): worden al bij normalisatie weggehaald.
 - Verpakking, formaat en "wit" bij brood: "mayonaise knijpfles" onder "mayonaise", "petit stokbrood wit" onder "stokbrood".
-- Verpakkingstekst van de supermarkt: "vers belegd broodje carpaccio" onder "broodje carpaccio".
+- Verpakkingstekst van de supermarkt: "vers belegd broodje carpaccio" onder "belegd broodje".
 
 ## Apart houden
 
@@ -146,4 +146,4 @@ Krenten-rozijnenbrood, rozijnenbol en rozijnen-krentenbol.
 1. Een onbekende naam wordt eerst een eigen product.
 2. De AI doet een voorstel op basis van dit bestand, met zekerheid en reden.
 3. De beheerder keurt goed of af. Niets wordt automatisch samengevoegd.
-4. Nieuwe beslissingen worden in dit bestand vastgelegd onder "Vastgestelde producten" of "Nog open".
+4. Nieuwe beslissingen worden in dit bestand vastgelegd onder "Vastgestelde producten".
