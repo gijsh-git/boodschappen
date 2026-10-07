@@ -183,19 +183,19 @@ Klaar als: een nieuw geïmporteerde AH-bon bij elke aankoop een artikel-ID heeft
 
 Volgorde: na stap 1. Het kan er los van, maar stap 1 laat zien hoe de AH-data eruitziet en dat helpt bij het beoordelen van deze stap.
 
-### [ ] Stap 3 – Aanbiedingen ophalen (AH)
+### [x] Stap 3 – Aanbiedingen ophalen (AH)
 
-- [ ] Tabellen voor aanbiedingen en de artikelen per aanbieding, met geldigheid en kortingstype
-- [ ] Artikelen en aanbiedingen krijgen een kolom `supermarket`. Een artikel is uniek op `supermarket` + `article_id`, niet op het ID alleen, zodat later andere supermarkten met eigen nummers erbij kunnen
-- [ ] Per artikel bewaren: `article_id` (dezelfde naam en betekenis als op `purchases`: het artikelnummer van de bon in het systeem van die supermarkt, voor AH het `hq_id`), `webshop_id`, titel, merk, inhoud, categorie
-- [ ] Per aanbieding bewaren: titel, kortingstekst, de labels met code en getallen, geldig van/tot, en welke artikelen erbij horen
-- [ ] De artikeltabel is ook de vertaling van bon-ID naar artikel; er komt geen aparte vertaaltabel
-- [ ] Wekelijks automatisch ophalen (anoniem token, geen account)
-- [ ] Oude aanbiedingen opruimen
+- [x] Tabellen voor aanbiedingen en de artikelen per aanbieding, met geldigheid en kortingstype
+- [x] Artikelen en aanbiedingen krijgen een kolom `supermarket`. Een artikel is uniek op `supermarket` + `article_id`, niet op het ID alleen, zodat later andere supermarkten met eigen nummers erbij kunnen
+- [x] Per artikel bewaren: `article_id` (dezelfde naam en betekenis als op `purchases`: het artikelnummer van de bon in het systeem van die supermarkt, voor AH het `hq_id`), `webshop_id`, titel, merk, inhoud, categorie
+- [x] Per aanbieding bewaren: titel, kortingstekst, de labels met code en getallen, geldig van/tot, en welke artikelen erbij horen
+- [x] De artikeltabel is ook de vertaling van bon-ID naar artikel; er komt geen aparte vertaaltabel
+- [x] Wekelijks automatisch ophalen (anoniem token, geen account)
+- [x] Oude aanbiedingen opruimen
 
 Klaar als: de bonus van deze week elke week vanzelf in de database staat.
 
-Gebouwd (7 oktober 2026), nog door te voeren en te testen:
+Gebouwd en doorgevoerd op 7 oktober 2026; de taak in GitHub Actions heeft die dag met de hand gedraaid en de week opgeslagen:
 
 - Tabellen `articles`, `offers` en `offer_articles`, gevuld door de functie `save_offers` (migratie `aanbiedingen`). De oude tabel `deals` met testdata blijft staan tot stap 5.
 - Ophalen draait in GitHub Actions (`.github/workflows/ah-bonus.yml`), maandag- en donderdagochtend: het bestaande `scripts/ah-bonus` en daarna `scripts/ah-bonus-opslaan.py`.
@@ -204,7 +204,7 @@ Gebouwd (7 oktober 2026), nog door te voeren en te testen:
 - Een artikel zonder `hq_id` (1 van de 2423) wordt overgeslagen.
 - Bij een losse aanbieding geeft AH alleen de subcategorie ("Courgette"), bij een groep "hoofdcategorie/subcategorie". Voor het voorstel in stap 5 is dat bij losse artikelen dus mager.
 
-Doorvoeren:
+Opnieuw opzetten (bijvoorbeeld bij een nieuw Supabase-project):
 
 1. `supabase db push --dry-run` en `supabase db push`
 2. Een sleutel maken: `openssl rand -hex 32`
