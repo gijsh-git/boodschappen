@@ -3,7 +3,8 @@
 
 Gebruikt dezelfde opslag als "Bon scannen" in de app: receipt_exists, match_receipt_lines en save_receipt.
 Daardoor telt niets dubbel: een bon met dezelfde supermarkt, datum en totaal wordt overgeslagen (ook bij
-opnieuw draaien, en ook als je hem al gescand had), en een product telt per dag één keer.
+opnieuw draaien, en ook als je hem al gescand had), en een product telt per dag één keer per artikel-ID.
+Het product_id van de bonregel gaat mee als article_id.
 
 Gebruik, vanuit de hoofdmap van het project:
   python3 scripts/ah-importeren.py           proef: laat zien wat er zou gebeuren, schrijft niets
@@ -97,20 +98,30 @@ def verdeel_kortingen(regels, kortingen):
     return los
 
 
+def bondatum(bon):
+    """De dag van de bon in Nederland; AH geeft de tijd in UTC."""
+    moment = datetime.fromisoformat(bon["datum"].replace("Z", "+00:00"))
+    return moment.astimezone(ZoneInfo("Europe/Amsterdam")).date().isoformat()
+
+
+def artikel_id(regel):
+    """Het artikelnummer van een bonregel als tekst (bij AH het hq_id), of None."""
+    return str(regel["product_id"]) if regel.get("product_id") else None
+
+
 def maak_bon(bon, namen):
     """Een bon uit ah-bonnen.json omzetten naar de invoer van save_receipt."""
-    # AH geeft de tijd in UTC; de bondatum is de dag in Nederland
-    moment = datetime.fromisoformat(bon["datum"].replace("Z", "+00:00"))
-    datum = moment.astimezone(ZoneInfo("Europe/Amsterdam")).date().isoformat()
-    # Hetzelfde product op meerdere regels wordt één regel, net als bij het scannen. Dat geldt ook voor
-    # bonteksten die dezelfde leesbare naam krijgen: de database telt een naam per dag maar één keer.
+    datum = bondatum(bon)
+    # Hetzelfde artikel op meerdere regels wordt één regel, net als bij het scannen: de database telt een
+    # naam met hetzelfde artikel-ID per dag maar één keer. Dezelfde naam met een ander ID (bijv. twee
+    # formaten met dezelfde bontekst) blijft een aparte regel.
     per_naam = {}
     for r in bon["regels"]:
         if r["naam"] in OVERSLAAN or r["aantal"] <= 0:
             continue
         naam = leesbaar(r["naam"], namen)
-        regel = per_naam.setdefault(naam, {
-            "name": naam, "receipt_name": r["naam"],
+        regel = per_naam.setdefault((naam, artikel_id(r)), {
+            "name": naam, "receipt_name": r["naam"], "article_id": artikel_id(r),
             "aantal": 0, "price": 0, "discount": None, "purchase_id": None,
         })
         if r["naam"] not in regel["receipt_name"].split(" + "):

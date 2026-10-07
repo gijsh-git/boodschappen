@@ -166,18 +166,18 @@ Uitkomst (7 oktober 2026), volledig in `docs/verkenning-ah-bonus.md`:
 - Via de naam in de titel raken er 56, waarvan het grootste deel ruis is (avocado in douchegel, paprika in chips). De categorie van het artikel is nodig om dat te scheiden.
 - De opzet blijft staan. Aanscherping voor stap 3 en 5: bewaar per artikel titel, merk, inhoud en categorie, en geef de categorie mee bij het voorstel artikel → product.
 
-### [ ] Stap 2 – Artikel-ID bij aankopen
+### [x] Stap 2 – Artikel-ID bij aankopen
 
 Huidige situatie: een bonregel is geen eigen tabel maar een rij in `purchases` met `receipt_id`, `receipt_name`, `price` en `discount`. De supermarkt staat al op de bon (`receipts.store`). `data/ah-bonnen.json` heeft per regel al een `product_id` van AH, maar `scripts/ah-importeren.py` gooit dat weg.
 
-Besluit: het `product_id` van de bon wordt als `hq_id` op `purchases` opgeslagen. De vertaling naar webshop-ID en de artikelgegevens komen uit de artikeltabel van stap 3.
+Besluit: het `product_id` van de bon wordt als `article_id` op `purchases` opgeslagen. De naam is bewust algemeen: het is het artikelnummer van de bon, in het systeem van de supermarkt op die bon. Voor AH is dat het `hq_id`; `hq_id` is een AH-naam en zou bij Jumbo misleidend zijn. De vertaling naar webshop-ID en de artikelgegevens komen uit de artikeltabel van stap 3.
 
-- [ ] Migratie: kolom `hq_id` op `purchases`, met een opmerking op de kolom dat dit het ID van de bon is en niet het webshop-ID. Geen kolom voor de supermarkt: die volgt uit de bon via `receipt_id`, en aankopen zonder bon hebben ook geen artikel-ID
-- [ ] `save_receipt` neemt het artikel-ID per regel aan en slaat het op, ook bij een regel die aan een bestaande aankoop of een item van de lijst wordt gekoppeld. `delete_receipt` maakt het weer leeg bij gekoppelde aankopen, net als de andere bonkolommen
-- [ ] `scripts/ah-importeren.py` geeft het `product_id` mee en voegt regels alleen nog samen als naam én ID gelijk zijn. Dezelfde naam met verschillende ID's (bijvoorbeeld twee formaten met dezelfde bontekst) blijven aparte regels
-- [ ] `save_receipt` daarop aanpassen: nu wordt een regel met exact dezelfde naam als een aankoop van die dag overgeslagen, waardoor de tweede van zulke regels zou wegvallen. "Een product telt één keer per dag" wordt: één keer per naam én artikel-ID
-- [ ] Bestaande AH-aankopen aanvullen vanuit `data/ah-bonnen.json`, op bon (winkel, datum, totaal) en `receipt_name`. Eerst een proefronde zonder schrijven, zoals de import zonder `--echt`, met een telling: hoeveel aankopen krijgen een ID, hoeveel niet, en waarom niet
-- [ ] Gescande bonnen ("Bon scannen") krijgen geen artikel-ID: op een foto staat het niet. Die aankopen matchen in stap 5 via de naam
+- [x] Migratie: kolom `article_id` op `purchases`, met een opmerking op de kolom dat dit het artikelnummer van de bon is, in het systeem van de supermarkt op die bon (voor AH het `hq_id`, niet het webshop-ID). Geen kolom voor de supermarkt: die volgt uit de bon via `receipt_id`, en aankopen zonder bon hebben ook geen artikel-ID
+- [x] `save_receipt` neemt het artikel-ID per regel aan en slaat het op, ook bij een regel die aan een bestaande aankoop of een item van de lijst wordt gekoppeld. `delete_receipt` maakt het weer leeg bij gekoppelde aankopen, net als de andere bonkolommen
+- [x] `scripts/ah-importeren.py` geeft het `product_id` mee en voegt regels alleen nog samen als naam én ID gelijk zijn. Dezelfde naam met verschillende ID's (bijvoorbeeld twee formaten met dezelfde bontekst) blijven aparte regels
+- [x] `save_receipt` daarop aanpassen: nu wordt een regel met exact dezelfde naam als een aankoop van die dag overgeslagen, waardoor de tweede van zulke regels zou wegvallen. "Een product telt één keer per dag" wordt: één keer per naam én artikel-ID. Ontbreekt het ID aan één van beide kanten (gescande bon, geswipet item), dan telt alleen de naam, zoals nu
+- [x] Bestaande AH-aankopen aanvullen vanuit `data/ah-bonnen.json`, op bon (winkel, datum, totaal) en `receipt_name` (`scripts/ah-artikel-aanvullen.py`, schrijft via `fill_article_ids`). Aankopen waarin de oude import twee artikelen had samengevoegd krijgen geen ID. Eerst een proefronde zonder schrijven, zoals de import zonder `--echt`, met een telling: hoeveel aankopen krijgen een ID, hoeveel niet, en waarom niet
+- [x] Gescande bonnen ("Bon scannen") krijgen geen artikel-ID: op een foto staat het niet. Die aankopen matchen in stap 5 via de naam
 
 Klaar als: een nieuw geïmporteerde AH-bon bij elke aankoop een artikel-ID heeft, twee regels met dezelfde naam maar een ander ID als twee aankopen zijn opgeslagen, en de telling van het aanvullen klopt met de database.
 
@@ -186,8 +186,8 @@ Volgorde: na stap 1. Het kan er los van, maar stap 1 laat zien hoe de AH-data er
 ### [ ] Stap 3 – Aanbiedingen ophalen (AH)
 
 - [ ] Tabellen voor aanbiedingen en de artikelen per aanbieding, met geldigheid en kortingstype
-- [ ] Artikelen en aanbiedingen krijgen een kolom `supermarket`. Een artikel is uniek op `supermarket` + artikel-ID (voor AH het `hq_id`), niet op het ID alleen, zodat later andere supermarkten met eigen nummers erbij kunnen
-- [ ] Per artikel bewaren: `hq_id`, `webshop_id`, titel, merk, inhoud, categorie
+- [ ] Artikelen en aanbiedingen krijgen een kolom `supermarket`. Een artikel is uniek op `supermarket` + `article_id`, niet op het ID alleen, zodat later andere supermarkten met eigen nummers erbij kunnen
+- [ ] Per artikel bewaren: `article_id` (dezelfde naam en betekenis als op `purchases`: het artikelnummer van de bon in het systeem van die supermarkt, voor AH het `hq_id`), `webshop_id`, titel, merk, inhoud, categorie
 - [ ] Per aanbieding bewaren: titel, kortingstekst, de labels met code en getallen, geldig van/tot, en welke artikelen erbij horen
 - [ ] De artikeltabel is ook de vertaling van bon-ID naar artikel; er komt geen aparte vertaaltabel
 - [ ] Wekelijks automatisch ophalen (anoniem token, geen account)
@@ -244,7 +244,7 @@ Alleen voor de testfase. Niet uitbreiden naar andere gebruikers.
 
 ### [ ] Stap 7 – Persoonlijke laag
 
-- Het `hq_id` op aankopen is de basis: hetzelfde artikel steeds opnieuw kopen (bijvoorbeeld altijd hetzelfde volkoren brood) laat een voorkeur zien binnen een product, naast wat `name` en `receipt_name` zeggen.
+- Het `article_id` op aankopen is de basis: hetzelfde artikel steeds opnieuw kopen (bijvoorbeeld altijd hetzelfde volkoren brood) laat een voorkeur zien binnen een product, naast wat `name` en `receipt_name` zeggen.
 - [ ] Voorkeur per variant afleiden uit `name` en `receipt_name` (bijvoorbeeld altijd volkoren)
 - [ ] "Niet voor mij" bij een aanbieding, en daarvan leren
 
