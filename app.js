@@ -17,6 +17,7 @@ if (uitnodiging) {
 }
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+Data.init(db);
 
 const $ = (id) => document.getElementById(id);
 const views = ["login", "forgot", "sent", "password", "naam", "profiel", "setup", "nieuw", "list", "aankopen", "foto", "bon", "bonnen", "stapel", "producten", "voorjou"];
@@ -181,7 +182,7 @@ async function verwerkUitnodiging() {
   let code = null;
   try { code = localStorage.getItem(UITNODIGING_SLEUTEL); localStorage.removeItem(UITNODIGING_SLEUTEL); } catch {}
   if (!code) return {};
-  const { data, error } = await db.rpc("join_list", { p_code: code });
+  const { data, error } = await Data.sluitAan(code);
   return error ? { fout: error.message } : { lijst: data };
 }
 
@@ -626,12 +627,7 @@ $("logout").addEventListener("click", logout);
 // ---------- Overzicht van lijsten ----------
 // Haalt al je lijsten op; geeft de fout terug als het misgaat
 async function loadLijsten() {
-  const { data, error } = await db
-    .from("list_members")
-    .select("list_id, lists(id, name, counts_for_profile, created_by, archived_at)")
-    // Alleen je eigen lidmaatschappen: je mag ook die van lijstgenoten zien, en dan staat een lijst er dubbel
-    .eq("user_id", userId)
-    .order("joined_at", { ascending: true });
+  const { data, error } = await Data.lijstenVanGebruiker(userId);
   if (error) return error;
   const alle = data.map((m) => m.lists).filter(Boolean);
   lijsten = alle.filter((l) => !l.archived_at);
@@ -721,7 +717,7 @@ async function archiveerLijst(lijst) {
   say("setup-msg", "");
   // Vooraf loslaten: anders meldt realtime onze eigen wijziging als "gearchiveerd door de maker"
   if (currentList && currentList.id === lijst.id) sluitLijst();
-  const { data, error } = await db.rpc("archive_list", { p_list: lijst.id, p_archived: true });
+  const { data, error } = await Data.archiveerLijst(lijst.id, true);
   if (error) return say("setup-msg", error.message);
   lijsten = lijsten.filter((l) => l.id !== lijst.id);
   archief = archief.filter((l) => l.id !== lijst.id).concat(data);
@@ -734,7 +730,7 @@ async function verwijderLijst(lijst) {
   say("setup-msg", "");
   // Vooraf loslaten: anders meldt realtime ons eigen verdwenen lidmaatschap als "je bent verwijderd"
   if (currentList && currentList.id === lijst.id) sluitLijst();
-  const { error } = await db.rpc("delete_list", { p_list: lijst.id });
+  const { error } = await Data.verwijderLijst(lijst.id);
   if (error) return say("setup-msg", error.message);
   lijsten = lijsten.filter((l) => l.id !== lijst.id);
   renderLijsten();
@@ -742,7 +738,7 @@ async function verwijderLijst(lijst) {
 
 async function zetLijstTerug(lijst) {
   say("setup-msg", "");
-  const { data, error } = await db.rpc("archive_list", { p_list: lijst.id, p_archived: false });
+  const { data, error } = await Data.archiveerLijst(lijst.id, false);
   if (error) return say("setup-msg", error.message);
   archief = archief.filter((l) => l.id !== lijst.id);
   if (!lijsten.some((l) => l.id === lijst.id)) lijsten.push(data);
@@ -796,7 +792,7 @@ $("nieuw-terug").addEventListener("click", toonLijsten);
 async function setTeltMee(lijst, aan) {
   lijst.counts_for_profile = aan; // direct tonen, daarna opslaan
   say("setup-msg", "");
-  const { error } = await db.rpc("set_list_profile", { p_list: lijst.id, p_counts: aan });
+  const { error } = await Data.zetLijstProfiel(lijst.id, aan);
   if (error) {
     await loadLijsten();
     renderLijsten();
@@ -809,7 +805,7 @@ $("lijsten-knop").addEventListener("click", toonLijsten);
 // ---------- Lijst maken / aansluiten ----------
 $("create-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const { data, error } = await db.rpc("create_list", { p_name: $("list-name").value.trim() });
+  const { data, error } = await Data.maakLijst($("list-name").value.trim());
   if (error) return say("nieuw-msg", error.message);
   $("list-name").value = "";
   openList(data);
@@ -820,7 +816,7 @@ $("join-form").addEventListener("submit", async (e) => {
   // Je mag de hele link plakken of alleen de code erin
   const invoer = $("join-code").value.trim();
   const code = (invoer.match(/uitnodiging=([0-9a-z]+)/i) || [null, invoer])[1];
-  const { data, error } = await db.rpc("join_list", { p_code: code });
+  const { data, error } = await Data.sluitAan(code);
   if (error) return say("nieuw-msg", error.message);
   $("join-code").value = "";
   openList(data);
@@ -846,7 +842,7 @@ async function openList(list) {
 
 // Namen van jezelf en je lijstgenoten ophalen (de database geeft alleen die profielen terug)
 async function loadNamen() {
-  const { data, error } = await db.from("profiles").select("user_id, display_name");
+  const { data, error } = await Data.namen();
   if (error) return;
   namen = Object.fromEntries(data.map((p) => [p.user_id, p.display_name]));
   render();
@@ -855,11 +851,7 @@ async function loadNamen() {
 // Deelnemers van de huidige lijst ophalen
 async function loadLeden() {
   const lijstId = currentList.id;
-  const { data, error } = await db
-    .from("list_members")
-    .select("user_id, joined_at, is_manager")
-    .eq("list_id", lijstId)
-    .order("joined_at", { ascending: true });
+  const { data, error } = await Data.leden(lijstId);
   if (!currentList || currentList.id !== lijstId) return;
   if (error) return;
   // Sta je er zelf niet meer in, dan ben je verwijderd (de database geeft dan niets terug)
@@ -938,7 +930,7 @@ $("uitnodig-knop").addEventListener("click", async () => {
   toonLedenPaneel(true);
   $("uitnodig-blok").hidden = true;
   say("leden-msg", "Link maken...");
-  const { data, error } = await db.rpc("create_invite", { p_list: lijstId });
+  const { data, error } = await Data.maakUitnodiging(lijstId);
   if (!currentList || currentList.id !== lijstId) return;
   if (error) return say("leden-msg", error.message);
   say("leden-msg", "");
@@ -966,7 +958,7 @@ async function zetBeheerder(lid, aan) {
   lid.is_manager = aan; // direct tonen, daarna opslaan
   say("leden-msg", "");
   renderLeden();
-  const { error } = await db.rpc("set_member_manager", { p_list: lijstId, p_user: lid.user_id, p_manager: aan });
+  const { error } = await Data.zetBeheerder(lijstId, lid.user_id, aan);
   if (!currentList || currentList.id !== lijstId) return;
   if (error) { say("leden-msg", error.message); loadLeden(); }
 }
@@ -976,7 +968,7 @@ async function verwijderLid(lid) {
   if (!confirm(`${naam} uit de lijst verwijderen?`)) return;
   const lijstId = currentList.id;
   say("leden-msg", "");
-  const { error } = await db.rpc("remove_member", { p_list: lijstId, p_user: lid.user_id });
+  const { error } = await Data.verwijderLid(lijstId, lid.user_id);
   if (!currentList || currentList.id !== lijstId) return;
   if (error) { say("leden-msg", error.message); return loadLeden(); }
   leden = leden.filter((m) => m.user_id !== lid.user_id);
@@ -986,7 +978,7 @@ async function verwijderLid(lid) {
 // Heeft de maker de open lijst intussen gearchiveerd? (realtime mist dat als de telefoon in standby stond)
 async function controleerArchief() {
   const lijstId = currentList.id;
-  const { data } = await db.from("lists").select("archived_at").eq("id", lijstId).maybeSingle();
+  const { data } = await Data.lijstGearchiveerdOp(lijstId);
   if (!currentList || currentList.id !== lijstId) return;
   if (data && data.archived_at) verlaatLijst(ARCHIEF_MELDING);
 }
