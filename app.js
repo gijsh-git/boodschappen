@@ -1136,7 +1136,7 @@ function itemRow(item) {
   koopKnop.setAttribute("aria-label", "Gekocht");
   koopKnop.addEventListener("click", () => koop(item));
 
-  // Naam, met eronder het aantal en wie het heeft toegevoegd
+  // Naam, met eronder het aantal, wie het heeft toegevoegd en wanneer
   const tekst = document.createElement("div");
   tekst.className = "item-tekst";
   const naam = document.createElement("span");
@@ -1144,14 +1144,11 @@ function itemRow(item) {
   naam.textContent = item.name;
   tekst.append(naam);
   const wie = namen[item.added_by];
-  const onder = [item.quantity, wie && "door " + wie].filter(Boolean).join(" · ");
-  if (onder) {
-    const sub = document.createElement("span");
-    sub.className = "item-sub";
-    sub.textContent = onder;
-    sub.title = "Toegevoegd op " + datumTijd(item.created_at);
-    tekst.append(sub);
-  }
+  const sub = document.createElement("span");
+  sub.className = "item-sub";
+  sub.textContent = [item.quantity, wie && "door " + wie, datumKort(item.created_at)].filter(Boolean).join(" · ");
+  sub.title = "Toegevoegd op " + datumTijd(item.created_at);
+  tekst.append(sub);
   voor.append(koopKnop, tekst);
 
   if (deals[item.id]) {
@@ -1246,6 +1243,22 @@ function datum(iso) {
   const opmaak = { weekday: "short", day: "numeric", month: "long" };
   if (d.getFullYear() !== new Date().getFullYear()) opmaak.year = "numeric";
   return d.toLocaleDateString("nl-NL", opmaak);
+}
+
+// Korte datum voor in een rij: "vandaag", "gisteren", de weekdag ("ma") binnen een week,
+// daarna "3 okt", met het jaar erbij als dat een ander jaar is
+function datumKort(iso) {
+  const d = new Date(iso);
+  const nu = new Date();
+  const middernacht = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate());
+  const dagen = Math.round((middernacht(nu) - middernacht(d)) / 864e5);
+  if (dagen <= 0) return "vandaag";
+  if (dagen === 1) return "gisteren";
+  if (dagen < 7) return d.toLocaleDateString("nl-NL", { weekday: "short" });
+  const opmaak = { day: "numeric", month: "short" };
+  if (d.getFullYear() !== nu.getFullYear()) opmaak.year = "numeric";
+  // Sommige browsers schrijven de korte maand met een punt ("okt.")
+  return d.toLocaleDateString("nl-NL", opmaak).replace(".", "");
 }
 
 // Datum en tijd in gewone taal, bijv. "di 6 oktober om 14:32"
