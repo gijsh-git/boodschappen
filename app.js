@@ -44,7 +44,6 @@ const LIJST_SLEUTEL = "bonusbuddy-lijst"; // localStorage: id van de laatst geop
 const ARCHIEF_MELDING = "Deze lijst is gearchiveerd door de maker.";
 const UITLEG_SLEUTEL = "bonusbuddy-veeguitleg"; // localStorage: "weg" als de uitleg over vegen is weggeklikt
 let currentList = null;
-let channel = null;
 let items = [];
 let leden = [];        // deelnemers van de huidige lijst: { user_id, joined_at }
 let deals = {};        // item-id -> [{ supermarkt, aantal }]: actuele aanbiedingen per item
@@ -437,11 +436,7 @@ function renderVoorJou() {
 async function zetOpLijst(product) {
   if (!currentList) return;
   const lijst = currentList;
-  const { data, error } = await db
-    .from("items")
-    .insert({ list_id: lijst.id, name: hoofdletter(product.naam) })
-    .select()
-    .single();
+  const { data, error } = await Data.voegItemToe({ list_id: lijst.id, name: hoofdletter(product.naam) });
   if (error) return say("voorjou-msg", error.message);
   if (currentList && currentList.id === lijst.id) {
     if (!items.some((i) => i.id === data.id)) items.push(data);
@@ -594,7 +589,7 @@ $("ap-lijst").addEventListener("change", () => {
 
 async function logout() {
   await db.auth.signOut();
-  if (channel) db.removeChannel(channel);
+  Data.stopVolgen();
   currentList = null;
   mustSetPassword = false;
   mijnNaam = null;
@@ -767,8 +762,7 @@ async function zetLijstTerug(lijst) {
 
 // De huidige lijst loslaten: geen live updates meer en niet meer onthouden als laatst geopend
 function sluitLijst() {
-  if (channel) db.removeChannel(channel);
-  channel = null;
+  Data.stopVolgen();
   currentList = null;
   items = [];
   leden = [];
@@ -1008,11 +1002,7 @@ async function loadItems() {
   loadLeden();
   controleerArchief();
   const lijstId = currentList.id;
-  const { data, error } = await db
-    .from("items")
-    .select("*")
-    .eq("list_id", lijstId)
-    .order("created_at", { ascending: true });
+  const { data, error } = await Data.items(lijstId);
   // Intussen van lijst gewisseld (of uitgelogd)? Dan dit antwoord negeren.
   if (!currentList || currentList.id !== lijstId) return;
   if (error) return say("status", error.message);
@@ -1027,7 +1017,7 @@ async function loadDeals() {
   if (!currentList) return;
   const lijstId = currentList.id;
   const vraag = ++dealsVraag;
-  const { data, error } = await db.rpc("deals_for_list", { p_list: lijstId });
+  const { data, error } = await Data.dealsVoorLijst(lijstId);
   if (vraag !== dealsVraag || !currentList || currentList.id !== lijstId) return;
   if (error) return; // geen aanbiedingen kunnen ophalen: dan gewoon geen labels
   const nieuw = {};
@@ -1053,67 +1043,57 @@ function renderBonus() {
 }
 
 function subscribe() {
-  if (channel) db.removeChannel(channel);
-  channel = db
-    .channel("items-" + currentList.id)
-    .on("postgres_changes",
-      { event: "*", schema: "public", table: "items", filter: `list_id=eq.${currentList.id}` },
-      (p) => {
-        if (p.eventType === "INSERT") {
-          if (!items.some((i) => i.id === p.new.id)) items.push(p.new);
-          loadDeals();
-        } else if (p.eventType === "UPDATE") {
-          items = items.map((i) => (i.id === p.new.id ? p.new : i));
-        } else if (p.eventType === "DELETE") {
-          items = items.filter((i) => i.id !== p.old.id);
-        }
-        render();
-      })
-    .on("postgres_changes",
-      { event: "*", schema: "public", table: "list_members", filter: `list_id=eq.${currentList.id}` },
-      (p) => {
-        if (!currentList) return;
-        if (p.eventType === "INSERT") {
-          // Iemand sluit aan: leden en de naam van de nieuwkomer ophalen
-          loadLeden();
-          loadNamen();
-        } else if (p.eventType === "UPDATE") {
-          // De maker heeft iemand beheerder gemaakt, of juist niet meer
-          loadLeden();
-        } else if (p.eventType === "DELETE") {
-          // Bij verwijderen zelf controleren om welke lijst het gaat
-          if (p.old.list_id !== currentList.id) return;
-          if (p.old.user_id === userId) return verlaatLijst();
-          leden = leden.filter((m) => m.user_id !== p.old.user_id);
-          renderLeden();
-        }
-      })
-    .on("postgres_changes",
-      { event: "UPDATE", schema: "public", table: "lists", filter: `id=eq.${currentList.id}` },
-      (p) => {
-        // De maker heeft de lijst gearchiveerd terwijl jij hem open had
-        if (currentList && p.new.id === currentList.id && p.new.archived_at) verlaatLijst(ARCHIEF_MELDING);
-      })
-    .on("postgres_changes",
-      { event: "*", schema: "public", table: "purchases", filter: `list_id=eq.${currentList.id}` },
-      (p) => {
-        // Nog niet opgehaald: dan komt alles straks mee met loadAankopen()
-        if (!currentList || !aankopen) return;
-        if (p.eventType === "INSERT") {
-          if (p.new.list_id !== currentList.id) return;
-          if (!aankopen.some((a) => a.id === p.new.id)) aankopen.unshift(p.new);
-          // Een aankoop van een bon heeft de bondatum en hoort dus niet altijd bovenaan
-          aankopen.sort((a, b) => new Date(b.bought_at) - new Date(a.bought_at));
-        } else if (p.eventType === "UPDATE") {
-          // Een bestaande aankoop is aan een bon gekoppeld en heeft nu een prijs
-          aankopen = aankopen.map((a) => (a.id === p.new.id ? p.new : a));
-        } else if (p.eventType === "DELETE") {
-          // Bij verwijderen stuurt de database alleen de id mee
-          aankopen = aankopen.filter((a) => a.id !== p.old.id);
-        }
-        renderAankopen();
-      })
-    .subscribe();
+  Data.volgLijst(currentList.id, {
+    item: (p) => {
+      if (p.eventType === "INSERT") {
+        if (!items.some((i) => i.id === p.new.id)) items.push(p.new);
+        loadDeals();
+      } else if (p.eventType === "UPDATE") {
+        items = items.map((i) => (i.id === p.new.id ? p.new : i));
+      } else if (p.eventType === "DELETE") {
+        items = items.filter((i) => i.id !== p.old.id);
+      }
+      render();
+    },
+    lid: (p) => {
+      if (!currentList) return;
+      if (p.eventType === "INSERT") {
+        // Iemand sluit aan: leden en de naam van de nieuwkomer ophalen
+        loadLeden();
+        loadNamen();
+      } else if (p.eventType === "UPDATE") {
+        // De maker heeft iemand beheerder gemaakt, of juist niet meer
+        loadLeden();
+      } else if (p.eventType === "DELETE") {
+        // Bij verwijderen zelf controleren om welke lijst het gaat
+        if (p.old.list_id !== currentList.id) return;
+        if (p.old.user_id === userId) return verlaatLijst();
+        leden = leden.filter((m) => m.user_id !== p.old.user_id);
+        renderLeden();
+      }
+    },
+    lijst: (p) => {
+      // De maker heeft de lijst gearchiveerd terwijl jij hem open had
+      if (currentList && p.new.id === currentList.id && p.new.archived_at) verlaatLijst(ARCHIEF_MELDING);
+    },
+    aankoop: (p) => {
+      // Nog niet opgehaald: dan komt alles straks mee met loadAankopen()
+      if (!currentList || !aankopen) return;
+      if (p.eventType === "INSERT") {
+        if (p.new.list_id !== currentList.id) return;
+        if (!aankopen.some((a) => a.id === p.new.id)) aankopen.unshift(p.new);
+        // Een aankoop van een bon heeft de bondatum en hoort dus niet altijd bovenaan
+        aankopen.sort((a, b) => new Date(b.bought_at) - new Date(a.bought_at));
+      } else if (p.eventType === "UPDATE") {
+        // Een bestaande aankoop is aan een bon gekoppeld en heeft nu een prijs
+        aankopen = aankopen.map((a) => (a.id === p.new.id ? p.new : a));
+      } else if (p.eventType === "DELETE") {
+        // Bij verwijderen stuurt de database alleen de id mee
+        aankopen = aankopen.filter((a) => a.id !== p.old.id);
+      }
+      renderAankopen();
+    }
+  });
 }
 
 // Als de app weer zichtbaar wordt (telefoon uit standby), opnieuw ophalen
@@ -1309,11 +1289,7 @@ $("add-form").addEventListener("submit", async (e) => {
   $("item-name").value = "";
   $("item-qty").value = "";
   $("item-name").focus();
-  const { data, error } = await db
-    .from("items")
-    .insert({ list_id: currentList.id, name, quantity })
-    .select()
-    .single();
+  const { data, error } = await Data.voegItemToe({ list_id: currentList.id, name, quantity });
   if (error) return say("status", error.message);
   if (!items.some((i) => i.id === data.id)) items.push(data);
   render();
@@ -1324,7 +1300,7 @@ $("add-form").addEventListener("submit", async (e) => {
 async function koop(item) {
   items = items.filter((i) => i.id !== item.id); // direct tonen, daarna opslaan
   render();
-  const { data, error } = await db.rpc("buy_item", { p_item: item.id });
+  const { data, error } = await Data.koopItem(item.id);
   if (!currentList || currentList.id !== item.list_id) return;
   if (error) { say("status", error.message); return loadItems(); }
   // Geen aankoop terwijl de lijst wel meetelt: de ander was net eerder, dus er valt niets terug te draaien
@@ -1335,7 +1311,7 @@ async function koop(item) {
 async function remove(item) {
   items = items.filter((i) => i.id !== item.id);
   render();
-  const { error } = await db.from("items").delete().eq("id", item.id);
+  const { error } = await Data.verwijderItem(item.id);
   if (!currentList || currentList.id !== item.list_id) return;
   if (error) { say("status", error.message); return loadItems(); }
   toonOngedaan(`"${item.name}" verwijderd`, item, null);
@@ -1371,11 +1347,8 @@ $("ongedaan-knop").addEventListener("click", async () => {
   // Met aankoop: de database zet het item terug en haalt de aankoop weg.
   // Zonder aankoop (verwijderd, of de lijst telt niet mee): het item zelf opnieuw toevoegen.
   const { error } = aankoopId
-    ? await db.rpc("undo_purchase", { p_purchase: aankoopId })
-    : await db.from("items").insert({
-        id: item.id, list_id: item.list_id, name: item.name, quantity: item.quantity,
-        added_by: item.added_by, created_at: item.created_at
-      });
+    ? await Data.maakAankoopOngedaan(aankoopId)
+    : await Data.zetItemTerug(item);
   if (!currentList || currentList.id !== item.list_id) return;
   if (error) say("status", error.message);
   loadItems();
@@ -1398,12 +1371,7 @@ function toonAankopen() {
 async function loadAankopen() {
   if (!currentList) return;
   const lijstId = currentList.id;
-  const { data, error } = await db
-    .from("purchases")
-    .select("id, list_id, item_id, name, quantity, bought_by, bought_at, receipt_id, receipt_name, price, discount")
-    .eq("list_id", lijstId)
-    .order("bought_at", { ascending: false })
-    .limit(200);
+  const { data, error } = await Data.aankopen(lijstId);
   if (!currentList || currentList.id !== lijstId) return;
   if (error) return say("aankopen-msg", error.message);
   aankopen = data;
@@ -1463,7 +1431,7 @@ async function verwijderAankoop(aankoop) {
   say("aankopen-msg", "");
   aankopen = (aankopen || []).filter((a) => a.id !== aankoop.id); // direct tonen, daarna opslaan
   renderAankopen();
-  const { error } = await db.from("purchases").delete().eq("id", aankoop.id);
+  const { error } = await Data.verwijderAankoop(aankoop.id);
   if (!currentList || currentList.id !== lijstId) return;
   if (error) { say("aankopen-msg", error.message); loadAankopen(); }
 }
@@ -1608,7 +1576,7 @@ $("foto-toevoegen").addEventListener("click", async () => {
   if (rijen.length === 0) return say("foto-msg", "Vink minstens één product aan.");
   say("foto-msg", "Bezig...");
   $("foto-toevoegen").disabled = true;
-  const { data, error } = await db.from("items").insert(rijen).select();
+  const { data, error } = await Data.voegItemsToe(rijen);
   if (!fotoOpen || !currentList || currentList.id !== lijstId) return;
   $("foto-toevoegen").disabled = false;
   if (error) return say("foto-msg", error.message);

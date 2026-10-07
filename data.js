@@ -3,6 +3,7 @@
 // Buiten dit bestand komt geen `db.` voor.
 const Data = (() => {
   let db;
+  let kanaal = null; // het live kanaal van de open lijst
 
   return {
     // Krijgt de Supabase-client van app.js, die hem pas maakt nadat de # van de mail-link is uitgelezen
@@ -27,6 +28,53 @@ const Data = (() => {
     zetLijstProfiel(lijstId, teltMee) { return db.rpc("set_list_profile", { p_list: lijstId, p_counts: teltMee }); },
     // Is de lijst intussen gearchiveerd? (data is null als je de lijst niet meer ziet)
     lijstGearchiveerdOp(lijstId) { return db.from("lists").select("archived_at").eq("id", lijstId).maybeSingle(); },
+
+    // ---------- Items ----------
+    items(lijstId) { return db.from("items").select("*").eq("list_id", lijstId).order("created_at", { ascending: true }); },
+    voegItemToe(rij) { return db.from("items").insert(rij).select().single(); },
+    voegItemsToe(rijen) { return db.from("items").insert(rijen).select(); },
+    // Zet een verwijderd item terug met zijn oorspronkelijke id, maker en tijd
+    zetItemTerug(item) {
+      return db.from("items").insert({
+        id: item.id, list_id: item.list_id, name: item.name, quantity: item.quantity,
+        added_by: item.added_by, created_at: item.created_at
+      });
+    },
+    verwijderItem(itemId) { return db.from("items").delete().eq("id", itemId); },
+    // Gekocht: de database haalt het item weg en bewaart de aankoop (als de lijst meetelt); geeft het aankoop-id of null
+    koopItem(itemId) { return db.rpc("buy_item", { p_item: itemId }); },
+    maakAankoopOngedaan(aankoopId) { return db.rpc("undo_purchase", { p_purchase: aankoopId }); },
+    // Per item bij welke supermarkt er hoeveel aanbiedingen zijn
+    dealsVoorLijst(lijstId) { return db.rpc("deals_for_list", { p_list: lijstId }); },
+
+    // ---------- Aankopen ----------
+    aankopen(lijstId) {
+      return db
+        .from("purchases")
+        .select("id, list_id, item_id, name, quantity, bought_by, bought_at, receipt_id, receipt_name, price, discount")
+        .eq("list_id", lijstId)
+        .order("bought_at", { ascending: false })
+        .limit(200);
+    },
+    verwijderAankoop(aankoopId) { return db.from("purchases").delete().eq("id", aankoopId); },
+
+    // ---------- Live volgen ----------
+    // Eén kanaal per lijst voor items, leden, de lijst zelf en aankopen. `op` heeft per soort een functie
+    // die het Supabase-bericht krijgt: { item, lid, lijst, aankoop }. Een nieuw kanaal sluit het vorige.
+    volgLijst(lijstId, op) {
+      this.stopVolgen();
+      kanaal = db
+        .channel("items-" + lijstId)
+        .on("postgres_changes", { event: "*", schema: "public", table: "items", filter: `list_id=eq.${lijstId}` }, op.item)
+        .on("postgres_changes", { event: "*", schema: "public", table: "list_members", filter: `list_id=eq.${lijstId}` }, op.lid)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "lists", filter: `id=eq.${lijstId}` }, op.lijst)
+        .on("postgres_changes", { event: "*", schema: "public", table: "purchases", filter: `list_id=eq.${lijstId}` }, op.aankoop)
+        .subscribe();
+    },
+    stopVolgen() {
+      if (kanaal) db.removeChannel(kanaal);
+      kanaal = null;
+    },
 
     // ---------- Leden ----------
     leden(lijstId) {
