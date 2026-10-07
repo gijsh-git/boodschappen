@@ -149,15 +149,22 @@ Vastgesteld op 7 oktober 2026. Vervangt de oude fases 4 "Slimmer matchen", 5 "Ec
 
 ## Testfase
 
-### [ ] Stap 1 – Verkenning AH-aanbiedingen
+### [x] Stap 1 – Verkenning AH-aanbiedingen
 
 Script dat met een anoniem AH-token één week bonusgroepen met hun artikelen ophaalt en als JSON opslaat. Draait lokaal, niet in de app.
 
-- [ ] Bonusgroepen + artikelen van één week opgeslagen
-- [ ] Naast de huidige productlijst gelegd: hoeveel aanbiedingen raken een product dat we kopen, via ID en via naam
-- [ ] Besluit: klopt de opzet hieronder, of moet er iets anders
+- [x] Bonusgroepen + artikelen van één week opgeslagen (`scripts/ah-bonus` → `data/ah-bonus.json`)
+- [x] Naast de huidige productlijst gelegd: hoeveel aanbiedingen raken een product dat we kopen, via ID en via naam (`scripts/ah-bonus-vergelijken.py`)
+- [x] Besluit: de opzet hieronder blijft staan, met de aanscherping voor stap 3 en 5 uit de uitkomst
 
 Klaar als: een kort overzicht met aantallen en voorbeelden van wat goed en fout gaat.
+
+Uitkomst (7 oktober 2026), volledig in `docs/verkenning-ah-bonus.md`:
+
+- Het `product_id` op de bon is het `hq_id` dat bij elk bonusartikel naast het webshop-ID staat. De vertaaltabel uit stap 2 kan dus elke week uit de bonus gevuld worden (stap 3).
+- Via ID raken 12 van de 143 aanbiedingen een vast product, zonder fouten. Maar het mist het andere merk of formaat van hetzelfde product (kwark, cola), en dat zijn juist de aanbiedingen waar het om gaat.
+- Via de naam in de titel raken er 56, waarvan het grootste deel ruis is (avocado in douchegel, paprika in chips). De categorie van het artikel is nodig om dat te scheiden.
+- De opzet blijft staan. Aanscherping voor stap 3 en 5: bewaar per artikel titel, merk, inhoud en categorie, en geef de categorie mee bij het voorstel artikel → product.
 
 ### [ ] Stap 2 – Artikel-ID bij aankopen
 
