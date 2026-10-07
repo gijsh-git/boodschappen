@@ -63,7 +63,8 @@ const BON_MAX = 20;    // meeste bonnen in één stapel; rem op de kosten van he
 const BON_TEGELIJK = 2; // zoveel bonnen worden tegelijk gelezen
 // Stapel gekozen bonnen: { nr, bestand, bestandsnaam, status, melding, supermarkt, datum, totaal, regels, dubbel, gecontroleerd, controleFout, controle, uitkomst }
 // status: "wacht", "lezen", "klaar" (gelezen, nog op te slaan), "fout" of "opgeslagen"
-// regels: { bonNaam, naam, aantal, prijs, korting, aan, koppel, koppelAan }
+// regels: { bonNaam, naam, aantal, prijs, korting, aan, koppel, koppelAan, item, itemAan }
+// item: { id, naam, zeker } = wat er bij deze regel nog op de lijst staat; itemAan: null zolang je niet zelf hebt gekozen
 let bonStapel = [];
 let bonNr = 0;         // volgnummer voor de bonnen in de stapel
 let bonHuidig = null;  // de bon uit de stapel die in "Bon controleren" open staat
@@ -1663,7 +1664,7 @@ async function leesBon(bon) {
     bon.regels = gelezen.regels.map((r) => ({
       bonNaam: r.bon_naam, naam: r.naam, aantal: r.aantal > 1 ? String(r.aantal) : "",
       prijs: bedragTekst(r.prijs), korting: r.korting || null,
-      aan: true, koppel: null, koppelAan: true
+      aan: true, koppel: null, koppelAan: true, item: null, itemAan: null
     }));
   } else {
     // Het bestand blijft staan, zodat "Opnieuw" in het overzicht het nog eens kan proberen
@@ -1676,26 +1677,29 @@ async function leesBon(bon) {
   controleerBon(bon);
 }
 
-// Vraagt de database of deze bon al eens is toegevoegd, en welke regels lijken op een aankoop
-// van dezelfde dag. Opnieuw na het wijzigen van supermarkt, datum, totaal of een productnaam,
+// Vraagt de database of deze bon al eens is toegevoegd, welke regels lijken op een aankoop
+// van dezelfde dag en welke op iets dat nog op de lijst staat. Opnieuw na het wijzigen van supermarkt, datum, totaal of een productnaam,
 // en na het opslaan van een andere bon uit de stapel. Geeft false als de controle is ingehaald of afgebroken.
 async function controleerBon(bon = bonHuidig) {
   if (!bon || bon.status !== "klaar" || !currentList) return false;
   const lijstId = currentList.id;
   const vraag = ++bon.controle;
   const winkel = bon.supermarkt.trim();
-  let dubbel = false, koppels = [], fout = false;
+  let dubbel = false, koppels = [], opLijst = [], fout = false;
   if (bon.datum) {
-    const [bestaat, gevonden] = await Promise.all([
+    const namen = bon.regels.map((r) => r.naam);
+    const [bestaat, gevonden, lijst] = await Promise.all([
       winkel
         ? db.rpc("receipt_exists", { p_list: lijstId, p_store: winkel, p_date: bon.datum, p_total: leesBedrag(bon.totaal) })
         : { data: false },
-      db.rpc("match_receipt_lines", { p_list: lijstId, p_date: bon.datum, p_names: bon.regels.map((r) => r.naam) })
+      db.rpc("match_receipt_lines", { p_list: lijstId, p_date: bon.datum, p_names: namen }),
+      db.rpc("match_receipt_items", { p_list: lijstId, p_date: bon.datum, p_names: namen })
     ]);
     if (vraag !== bon.controle || bon.status !== "klaar" || !bonStapel.includes(bon) || !currentList || currentList.id !== lijstId) return false;
-    fout = Boolean(bestaat.error || gevonden.error);
+    fout = Boolean(bestaat.error || gevonden.error || lijst.error);
     dubbel = !bestaat.error && bestaat.data === true;
     koppels = gevonden.error ? [] : gevonden.data;
+    opLijst = lijst.error ? [] : lijst.data;
   }
   bon.dubbel = dubbel;
   bon.controleFout = fout;
@@ -1704,9 +1708,29 @@ async function controleerBon(bon = bonHuidig) {
   const perRegel = {};
   koppels.forEach((k) => { perRegel[k.regel - 1] = { id: k.purchase_id, naam: k.name, heeftBon: k.has_receipt }; });
   // Alleen het regeltje over de koppeling bijwerken: de rij opnieuw opbouwen zou je uit een invoerveld gooien
-  bon.regels.forEach((regel, i) => { regel.koppel = perRegel[i] || null; toonKoppel(regel); });
+  const itemPerRegel = {};
+  opLijst.forEach((k) => { itemPerRegel[k.regel - 1] = { id: k.item_id, naam: k.name, zeker: k.zeker }; });
+  bon.regels.forEach((regel, i) => {
+    regel.koppel = perRegel[i] || null;
+    const item = itemPerRegel[i] || null;
+    // Een ander item dan eerst: dan geldt je eerdere keuze niet meer
+    if (!item || !regel.item || item.id !== regel.item.id) regel.itemAan = null;
+    regel.item = item;
+    toonKoppel(regel);
+  });
   renderStapel();
   return true;
+}
+
+// Het item dat bij deze bonregel nog op de lijst staat, als de regel niet al bij een aankoop van die dag hoort
+function lijstItem(regel) {
+  return regel.koppel ? null : regel.item;
+}
+
+// Gaat dat item bij het opslaan van de lijst? Hetzelfde product wel, een gelijkende naam alleen als je dat aanvinkt.
+function vanLijst(regel) {
+  const item = lijstItem(regel);
+  return Boolean(item) && (regel.itemAan === null ? item.zeker : regel.itemAan);
 }
 
 // Som van de aangevinkte regels, na aftrek van korting
@@ -1743,6 +1767,9 @@ function bonTwijfels(bon) {
   if (dubbelInStapel(bon)) twijfels.push("Deze bon staat twee keer in deze stapel.");
   const gekoppeld = aan.filter((r) => r.koppel).length;
   if (gekoppeld) twijfels.push(gekoppeld === 1 ? "1 regel lijkt op een aankoop van dezelfde dag." : `${gekoppeld} regels lijken op een aankoop van dezelfde dag.`);
+  // Hetzelfde product gaat vanzelf van de lijst; bij een gelijkende naam moet je eerst zelf kiezen
+  const lijktOp = aan.filter((r) => lijstItem(r) && !lijstItem(r).zeker && r.itemAan === null).length;
+  if (lijktOp) twijfels.push(lijktOp === 1 ? "1 regel lijkt op iets dat nog op de lijst staat." : `${lijktOp} regels lijken op iets dat nog op de lijst staat.`);
   if (bon.controleFout) twijfels.push("De controle op dubbelingen is niet gelukt.");
   return twijfels;
 }
@@ -1764,14 +1791,15 @@ function bonFout(bon) {
 }
 
 // De aangevinkte regels van een bon in één keer opslaan als aankopen, met de bondatum als aankoopdatum.
-// Geeft de foutmelding terug, of "" als het is gelukt.
+// Wat daarbij nog op de lijst staat gaat in dezelfde stap van de lijst. Geeft de foutmelding terug, of "" als het is gelukt.
 async function bewaarBon(bon) {
   const fout = bonFout(bon);
   if (fout) return fout;
   const regels = bon.regels.filter((r) => r.aan && r.naam.trim()).map((r) => ({
     name: r.naam.trim(), receipt_name: r.bonNaam, quantity: r.aantal.trim() || null,
     price: leesBedrag(r.prijs), discount: r.korting,
-    purchase_id: r.koppel && r.koppelAan ? r.koppel.id : null
+    purchase_id: r.koppel && r.koppelAan ? r.koppel.id : null,
+    item_id: vanLijst(r) ? r.item.id : null
   }));
   const { data, error } = await db.rpc("save_receipt", {
     p_list: currentList.id, p_store: bon.supermarkt.trim(), p_date: bon.datum, p_total: leesBedrag(bon.totaal), p_lines: regels
@@ -1779,6 +1807,8 @@ async function bewaarBon(bon) {
   if (error) return error.message;
   bon.status = "opgeslagen";
   bon.uitkomst = data || {};
+  // De lijst zelf loopt mee via realtime; dit vangt een gemiste melding op
+  if (bon.uitkomst.van_lijst) loadItems();
   return "";
 }
 
@@ -1786,6 +1816,7 @@ async function bewaarBon(bon) {
 function uitkomstTekst(bonnen) {
   const tel = (veld) => bonnen.reduce((s, b) => s + (b.uitkomst[veld] || 0), 0);
   const delen = [`${tel("toegevoegd")} toegevoegd`];
+  if (tel("van_lijst")) delen.push(`${tel("van_lijst")} van de lijst gehaald`);
   if (tel("gekoppeld")) delen.push(`${tel("gekoppeld")} gekoppeld aan een bestaande aankoop`);
   if (tel("overgeslagen")) delen.push(`${tel("overgeslagen")} overgeslagen omdat ze die dag al geteld zijn`);
   return delen.join(", ");
@@ -1813,20 +1844,29 @@ function vulBon() {
   say("bon-msg", bon.status === "klaar" ? "" : bon.status === "fout" ? bon.melding : "Bon wordt gelezen...");
 }
 
-// Regeltje onder een bonregel als het product die dag al bij de aankopen staat
+// Regeltje onder een bonregel als het product die dag al bij de aankopen staat, of nog op de lijst
 function toonKoppel(regel) {
   if (!regel.koppelVak) return;
+  const item = lijstItem(regel);
   regel.koppelVak.replaceChildren();
-  regel.koppelVak.hidden = !regel.koppel;
-  if (!regel.koppel) return;
+  regel.koppelVak.hidden = !regel.koppel && !item;
+  if (!regel.koppel && !item) return;
   const box = document.createElement("input");
   box.type = "checkbox";
-  box.checked = regel.koppelAan;
-  box.addEventListener("change", () => { regel.koppelAan = box.checked; });
   const tekst = document.createElement("span");
-  tekst.textContent = regel.koppel.heeftBon
-    ? `Staat die dag al op een andere bon als "${regel.koppel.naam}": telt niet opnieuw`
-    : `Die dag al gekocht als "${regel.koppel.naam}": telt één keer, de prijs komt erbij`;
+  if (regel.koppel) {
+    box.checked = regel.koppelAan;
+    box.addEventListener("change", () => { regel.koppelAan = box.checked; });
+    tekst.textContent = regel.koppel.heeftBon
+      ? `Staat die dag al op een andere bon als "${regel.koppel.naam}": telt niet opnieuw`
+      : `Die dag al gekocht als "${regel.koppel.naam}": telt één keer, de prijs komt erbij`;
+  } else {
+    box.checked = vanLijst(regel);
+    box.addEventListener("change", () => { regel.itemAan = box.checked; });
+    tekst.textContent = item.zeker
+      ? `Staat op de lijst als "${item.naam}": gaat van de lijst`
+      : `Lijkt op "${item.naam}" op de lijst: vink aan om dat van de lijst te halen`;
+  }
   regel.koppelVak.append(box, tekst);
 }
 

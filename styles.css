@@ -280,7 +280,7 @@ button.koop:hover::before, button.koop:focus-visible::before { border-color: var
 .bon-rij input.bon-aantal { flex: 0 0 56px; }
 .bon-rij input.bon-prijs { flex: 0 0 78px; text-align: right; }
 .bon-rij:has(.bon-aan:not(:checked)) input[type=text] { opacity: 0.5; }
-/* Onder de velden: de naam op de bon, de korting en een eventuele koppeling met een bestaande aankoop */
+/* Onder de velden: de naam op de bon, de korting en een eventuele koppeling met een bestaande aankoop of een item op de lijst */
 .bon-info { flex-basis: 100%; margin: 0; padding-left: 36px; color: var(--grijs); font-size: 0.85rem; overflow-wrap: anywhere; }
 .bon-koppel {
   flex: 0 0 100%; display: flex; align-items: center; gap: 8px; padding: 0 0 4px 36px;

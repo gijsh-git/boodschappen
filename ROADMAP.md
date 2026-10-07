@@ -115,6 +115,19 @@ Klaar als: de cijfers kloppen met Supabase, filters en periodes werken, brood al
 Grenzen: alleen aankopen uit lijsten waarvan ik deelnemer ben en die meetellen voor het profiel (ook gearchiveerde). Reken in de database: één functie die alles in één keer teruggeeft, de frontend toont alleen. Geen grafiekbibliotheek. Goed leesbaar op een telefoon. Geen seizoenspatronen, geen "samen gekocht" en geen voorspellingen.
 ```
 
+### [x] 3c – Een bon haalt producten van de lijst
+
+Regel: bij het opslaan van een bon wordt een item van de lijst gehaald en als aankoop vastgelegd als het hetzelfde product is als een bonregel én de bondatum op of na de dag van toevoegen ligt. Bij alleen een gelijkende naam gebeurt dit pas nadat je het aanvinkt in "Bon controleren".
+
+- Hetzelfde product = dezelfde naam of hetzelfde product in de producttabel (3a). Een gelijkende naam (pg_trgm) is alleen een voorstel, want "melk" en "volle melk" zijn verschillende producten.
+- De datum wordt per dag vergeleken (Europe/Amsterdam). Een item dat na de bondatum is toegevoegd blijft staan: dat is opnieuw nodig. Oude bonnen in bulk halen daardoor niets van de lijst.
+- Een bonregel die al bij een aankoop van die dag hoort (item was al geswipet) haalt niets van de lijst.
+- Het item wordt één aankoop met de bongegevens erbij, niet een aankoop naast een bonregel. De hoeveelheid op de lijst speelt geen rol.
+- "Alles zonder bijzonderheden opslaan" haalt alleen hetzelfde product weg; een bon met een gelijkende naam blijft staan voor controle.
+- Een bon verwijderen zet het item niet terug op de lijst; de aankoop blijft, zonder prijs.
+
+Klaar als: "melk" op de lijst staat, ik een bon van vandaag met melk opsla en de melk bij mij en mijn vriendin van de lijst verdwijnt en één keer bij de aankopen staat met prijs; een item dat ik na de bondatum heb toegevoegd blijft staan; en bij "volle melk" op de bon en "melk" op de lijst gebeurt er niets tot ik het aanvink.
+
 ---
 
 ## Fase 4 – Slimmer matchen
