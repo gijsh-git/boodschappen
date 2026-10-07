@@ -214,43 +214,83 @@ Opnieuw opzetten (bijvoorbeeld bij een nieuw Supabase-project):
 6. Dezelfde sleutel als secret `AANBIEDINGEN_SLEUTEL` in GitHub zetten (Settings > Secrets and variables > Actions)
 7. Committen en pushen, en de taak één keer met de hand starten (Actions > "AH-bonus ophalen" > Run workflow)
 
-### [ ] Stap 4 – Favorieten
+### [x] Stap 4 – Favorieten
 
-Algemeen of merkspecifiek, per gebruiker. In deze stap alleen het vastleggen en beheren; de aanbieding bij een favoriet tonen hoort bij stap 5.
+Definitie vastgesteld op 7 oktober 2026. Vervangt de eerdere opzet waarin een favoriet een product uit de catalogus was.
+
+Een favoriet is een product waarvan de gebruiker wil weten dat het in de aanbieding is.
+
+- Favorieten zijn per gebruiker, niet per lijst. Anderen zien ze niet, ook niet in hun "Voor jou".
+- Een favoriet is een zoekterm (bijvoorbeeld "pindakaas"), een merk (bijvoorbeeld Calvé) of allebei. Minstens één van de twee is ingevuld; alleen een merk mag ("alles van Verstegen").
+- Favorieten maak en beheer je op Mijn profiel, in een sectie "Mijn favorieten": toevoegen, aanpassen en verwijderen. Dat is de enige plek.
+- Term en merk zijn vrij te typen, met suggesties uit de termen en merken die in de aanbiedingen voorkomen.
+- Een favoriet heeft optioneel een categorie. Die wordt vanzelf gevuld als je een term uit de suggesties kiest; bij een zelf getypte term blijft hij leeg. De gebruiker vult hem niet met de hand in.
+- De term matcht op hele woorden in de titel van een artikel: "pindakaas" matcht niet "pindakaashagelslag", "melk" niet "kokosmelk". Een term van meerdere woorden matcht als alle woorden voorkomen.
+- Heeft de favoriet een categorie, dan tellen alleen artikelen in die categorie ("honing" matcht dan geen thee).
+- Het merk matcht exact. "AH" matcht niet "AH Excellent" of "AH Terra"; die staan als losse merken in de suggesties.
+- Zonder merk matcht elk merk. Met alleen een merk matcht elk artikel van dat merk.
+- Matching negeert hoofdletters en accenten.
+- Favorieten maken geen producten aan in de gedeelde catalogus.
+- Matches verschijnen in "Voor jou". "Voor jou" = het aankoopprofiel van het huishouden plus je eigen favorieten. Hoe die twee tegen elkaar wegen wordt pas bepaald als er een rangorde in "Voor jou" is.
+- Op de lijst zetten vanuit een favoriet zet de term op de lijst, met het merk ervoor als dat is ingesteld ("Calvé pindakaas"); bij alleen een merk de titel van het artikel.
+- Matching gebeurt in de RPC van stap 5. Deze stap is alleen vastleggen en beheren.
+- Geen ster bij een item of aankoop, voor nu.
+- Later: "Niet voor mij" bij een match (stap 7), en een instelbare melding als een favoriet in de aanbieding is (vraagt push-notificaties).
+
+Datamodel:
+
+- Een favoriet loopt niet via `products` en `product_aliases`, maar rechtstreeks naar `articles` (`title`, `brand`, `category`) van de artikelen in een geldige aanbieding. Favorieten en aankoopprofiel zijn twee aparte routes naar dezelfde aanbiedingen.
+- Nieuwe tabel `favorites` (`user_id`, `term`, `brand`, `category`, plus genormaliseerde kolommen voor term en merk). Term en merk mogen elk leeg zijn, niet allebei. Uniek per gebruiker op genormaliseerde term en merk. RLS op de eigen rijen, zoals `profiles`; schrijven kan dan rechtstreeks, zonder RPC.
+- Accenten negeren gebruikt de extensie `unaccent`, aangezet in een losse migratie (`20261007140000_unaccent.sql`). `normalized_name` elders is alleen `lower(trim())`, dus favorieten krijgen een eigen normalisatie.
+- Merken: `articles.brand` is bij alle 2423 artikelen van de testweek gevuld (133 merken). Suggesties komen daar rechtstreeks uit, huismerken inbegrepen ("AH", "AH Excellent", "AH Terra").
+- Termen: er bestaat geen kolom met termen. Suggesties worden afgeleid uit `articles`: de subcategorie (het deel na de "/" in `articles.category`) en de woorden in `title`, elk met de categorie erbij die bij de favoriet wordt bewaard. Bron is alles wat ooit in de bonus zat, niet alleen de lopende week.
+- De categorie bij een favoriet is de hoofdcategorie ("Koffie, thee"), het deel vóór de "/" in `articles.category`. De subcategorie is te smal: een favoriet "kaas" met "Geraspte kaas" zou plakken kaas missen.
+- Niet elk artikel heeft een hoofdcategorie. Van de 2423 artikelen in de testweek hebben er 149 alleen een subcategorie ("Courgette", de losse aanbiedingen, vooral groente en fruit) en 125 geen categorie; via andere artikelen is de hoofdcategorie daar niet op te zoeken. Een suggestie uit zo'n artikel komt zonder categorie. Voor stap 5: de categorie van een favoriet kan zulke artikelen niet uitsluiten, dus daar beslist alleen het hele woord.
+- Samenvoegen van producten raakt favorieten niet.
+- Een favoriet op de lijst zetten maakt via `ensure_product()` wel een product aan, net als elk ander item. "Geen producten in de catalogus" geldt voor het vastleggen.
 
 ```
 /plan
-Wat: gebruikers kunnen favorieten aangeven: producten waarvan ze altijd willen weten of ze in de aanbieding zijn.
+Wat: gebruikers kunnen favorieten vastleggen: een zoekterm, een merk of allebei, waarvan ze willen weten of het in de aanbieding is.
 Waarom: een favoriet is een expliciet signaal en werkt vanaf dag één. Een nieuwe gebruiker heeft nog geen aankoopprofiel, maar krijgt via favorieten meteen relevante aanbiedingen.
 Hoe het moet werken:
-- Een favoriet hoort bij een gebruiker, niet bij een lijst.
-- Twee niveaus:
-  1. Algemeen: een product uit de productcatalogus, bijv. "pindakaas". Elke aanbieding binnen dat product telt, ongeacht merk of soort.
-  2. Specifiek: hetzelfde product plus een verplicht merk of variant, bijv. "pindakaas" + "calvé". Alleen aanbiedingen die daaraan voldoen tellen.
-- Het specifieke deel is vrije tekst die straks (stap 5) moet voorkomen in de naam of het merk van een artikel in de bonusgroep. Het product zelf blijft het product uit de catalogus, volgens docs/productregels.md.
-- Toevoegen kan op twee plekken:
-  - Op Mijn profiel, in een sectie "Mijn favorieten": product zoeken in de catalogus, optioneel een merk of variant invullen.
-  - Via een ster bij een item op de lijst of bij een aankoop. Dat maakt een algemene favoriet van het product dat erbij hoort.
-- Op Mijn profiel kan ik favorieten bekijken, het merk of de variant aanpassen en ze verwijderen.
-- Valt een favoriet product later samen met een ander product (samenvoegen door de beheerder), dan schuift de favoriet mee.
+- Een favoriet hoort bij een gebruiker, niet bij een lijst, en bestaat uit een term ("pindakaas"), een merk ("Calvé") of allebei. Minstens één van de twee.
+- Term en merk zijn vrije tekst. Tijdens het typen komen er suggesties: merken uit articles.brand, termen afgeleid uit articles (subcategorie en woorden uit de titel).
+- Kies ik een term uit de suggesties, dan wordt de categorie van die suggestie bij de favoriet bewaard. Bij een zelf getypte term blijft de categorie leeg. Er is geen invoerveld voor de categorie; wel zie ik hem bij de favoriet staan.
+- Hoofdletters en accenten maken niet uit: "calve" en "Calvé" zijn hetzelfde merk, en dezelfde term met hetzelfde merk kan maar één keer.
+- Favorieten maken geen producten of aliassen aan.
+- Op Mijn profiel een sectie "Mijn favorieten": toevoegen, term en merk aanpassen, verwijderen.
 Klaar als:
-- ik "pindakaas" als algemene favoriet en "pindakaas" + "calvé" als specifieke favoriet kan toevoegen, aanpassen en verwijderen;
+- ik "pindakaas", "pindakaas" + "Calvé" en alleen "Verstegen" kan toevoegen, aanpassen en verwijderen;
+- een favoriet zonder term en zonder merk wordt geweigerd, ook door de database;
+- "Pindakaas" + "calve" daarna als dubbel wordt geweigerd;
+- een term uit de suggesties een categorie krijgt en een zelf getypte niet;
+- "AH" en "AH Excellent" als losse merken in de suggesties staan;
 - Els mijn favorieten niet ziet en ik de hare niet;
-- een favoriet blijft bestaan nadat het product is samengevoegd met een ander product.
-Grenzen: nog geen koppeling met aanbiedingen (stap 5), geen AI. Nog geen meldingen of pushberichten. Elke databasewijziging is een nieuw migratiebestand in supabase/migrations/. Verander swipen, bonscannen en het aankoopprofiel niet.
+- er na het toevoegen geen nieuw product in de catalogus staat.
+Grenzen: nog geen koppeling met aanbiedingen en niets in "Voor jou" (stap 5), geen ster bij items of aankopen, geen AI, geen meldingen of pushberichten. De extensie unaccent staat al aan (eigen migratie). Supabase-calls in data.js, logica in logica.js (ARCHITECTURE.md). Elke databasewijziging is een nieuw migratiebestand in supabase/migrations/. Verander swipen, bonscannen en het aankoopprofiel niet.
 ```
+
+Gebouwd op 7 oktober 2026:
+
+- Migraties `unaccent` en `favorieten`: de tabel `favorites` met RLS op de eigen rijen, de functie `normalize_search` (kleine letters, zonder accenten) en de suggesties `suggest_favorite_terms` en `suggest_favorite_brands`. De app schrijft rechtstreeks in de tabel; er is geen RPC voor.
+- De sectie "Mijn favorieten" op Mijn profiel. De regels (minstens één van de twee, dubbel, wanneer de categorie blijft staan) staan in het nieuwe `logica.js`.
+- Suggesties voor de term komen uit de subcategorie (gesplitst op komma's) en uit de woorden in de titel, zonder de woorden van het merk. Ze laten per hoofdcategorie een eigen regel zien ("honing · Koffie, thee" naast "honing · Koek, snoep, chocolade").
+- Nog niet: een favoriet doet nog niets. De aanbieding erbij tonen is stap 5.
 
 ### [ ] Stap 5 – Matchen en kortingskansen
 
 - [ ] Koppeling artikel → product is gedeeld en gebeurt één keer per artikel, in drie niveaus:
   1. Zeker: het artikel-ID staat op een eigen bon. Het product is dan bekend; automatisch koppelen. Dit is geen samenvoegen van producten en valt dus niet onder de goedkeuring uit `docs/productregels.md`.
-  2. Kandidaat: categorie en naam wijzen op een product dat iemand koopt of als favoriet heeft. AI-voorstel volgens `docs/productregels.md`, met de categorie van het artikel erbij; de beheerder keurt goed.
+  2. Kandidaat: categorie en naam wijzen op een product dat iemand koopt. AI-voorstel volgens `docs/productregels.md`, met de categorie van het artikel erbij; de beheerder keurt goed.
   3. De rest: geen product. Komt het artikel later terug in de bonus, dan is het al bekend.
-- [ ] Naammatching is nooit het eindoordeel, alleen een manier om kandidaten te vinden (zie `docs/verkenning-ah-bonus.md`: avocado in douchegel, honing in thee)
-- [ ] Een aanbieding telt voor iemand als een artikel erin bij een product hoort dat die persoon koopt of als favoriet heeft, ongeacht merk of formaat
+- [ ] Voor het aankoopprofiel is naammatching nooit het eindoordeel, alleen een manier om kandidaten te vinden (zie `docs/verkenning-ah-bonus.md`: avocado in douchegel, honing in thee)
+- [ ] Een aanbieding telt voor iemand via het aankoopprofiel als een artikel erin bij een product hoort dat die persoon koopt, ongeacht merk of formaat
+- [ ] Een aanbieding telt voor iemand via een favoriet volgens de regels van stap 4: de term als hele woorden in de titel van een artikel erin, het merk exact, de hoofdcategorie als de favoriet die heeft (een artikel zonder hoofdcategorie wordt daar niet op uitgesloten), zonder hoofdletters en accenten (`normalize_search`). Rechtstreeks op `articles`, zonder product ertussen
+- [ ] "Voor jou" = het aankoopprofiel van het huishouden plus de eigen favorieten; een aanbieding die via beide binnenkomt staat er één keer. De rangorde tussen de twee wordt hier bepaald
 - [ ] Aanbieding → product via de artikelen in de bonusgroep
 - [ ] Kortingskansen tonen op basis van aankoopprofiel en favorieten
-- [ ] Bij een favoriet die nu in de aanbieding is: de aanbieding tonen (supermarkt, korting, geldig tot), met één tik om het product op een lijst te zetten. Een specifieke favoriet ("pindakaas" + "calvé") toont alleen de aanbieding van dat merk.
+- [ ] Bij een favoriet die nu in de aanbieding is: de aanbieding tonen (supermarkt, korting, geldig tot), met één tik om het op een lijst te zetten: de term, met het merk ervoor als dat is ingesteld. Een favoriet met merk ("pindakaas" + "Calvé") toont alleen de aanbieding van dat merk.
 
 Klaar als: een aanbieding op een product dat we vaak kopen of als favoriet hebben in de app verschijnt, en een aanbieding op iets wat we nooit kopen niet.
 
