@@ -34,6 +34,6 @@ Elke regel hoort onder Local én Remote te staan. Staat een migratie alleen onde
 - Een migratie die is doorgevoerd pas je niet meer aan. Iets herstellen doe je met een nieuwe migratie.
 - Er is geen lokale testdatabase (dat zou Docker vragen). `db push` gaat dus direct naar de echte database; lees de SQL na en gebruik `--dry-run`.
 - De eerste migratie, de baseline, is de stand van de database op het moment dat de migraties zijn ingevoerd. Hij is in Supabase gemarkeerd als uitgevoerd en draait daar niet opnieuw.
-- Migraties bevatten alleen structuur, geen gegevens. Testdata voor aanbiedingen staat in `seed_deals.sql`.
+- Migraties bevatten alleen structuur, geen gegevens.
 - De Edge Functions in `supabase/functions/` vallen hier buiten; die deploy je apart.
 - Eenmalig per computer: `brew install supabase/tap/supabase`, `supabase login`, `.env` aanmaken uit `.env.example` en `supabase link --project-ref lswyhupnhkxrfjgalluk`.

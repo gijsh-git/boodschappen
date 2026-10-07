@@ -197,7 +197,7 @@ Klaar als: de bonus van deze week elke week vanzelf in de database staat.
 
 Gebouwd en doorgevoerd op 7 oktober 2026; de taak in GitHub Actions heeft die dag met de hand gedraaid en de week opgeslagen:
 
-- Tabellen `articles`, `offers` en `offer_articles`, gevuld door de functie `save_offers` (migratie `aanbiedingen`). De oude tabel `deals` met testdata blijft staan tot stap 5.
+- Tabellen `articles`, `offers` en `offer_articles`, gevuld door de functie `save_offers` (migratie `aanbiedingen`). De oude tabel `deals` met testdata is in stap 5 vervallen.
 - Ophalen draait in GitHub Actions (`.github/workflows/ah-bonus.yml`), maandag- en donderdagochtend: het bestaande `scripts/ah-bonus` en daarna `scripts/ah-bonus-opslaan.py`.
 - De service role key staat niet in GitHub: de repo is openbaar en die sleutel geeft toegang tot alles. Het script stuurt de week naar de Edge Function `aanbiedingen-opslaan`, die een eigen sleutel (`AANBIEDINGEN_SLEUTEL`) controleert en alleen `save_offers` aanroept. Wie die sleutel heeft kan alleen aanbiedingen opslaan.
 - Een aanbieding blijft tot 28 dagen na de laatste geldige dag staan; artikelen blijven altijd.
@@ -302,7 +302,8 @@ Deel 1 gebouwd op 7 oktober 2026 (migraties `aanbiedingen_matchen` en `aanbiedin
 - Het Bonus-label op de lijst komt uit `offers_for_list()`: via het product van het item, of via de aanbieding waarmee het item vanuit "Voor jou" op de lijst is gezet (`items.offer_id`). Dat laatste geeft ook een favoriet op de lijst zijn label.
 - Bijgesteld na de eerste test: "zet op lijst" bij een favoriet zet de aanbieding zelf op de lijst (de titel), niet de term. De term zegt niet wat er in de bonus is: de favoriet "banaan" raakte "AH Verse sappen en smoothies" en zette "Banaan" op de lijst. Bij een aanbieding via het profiel blijft het de productnaam.
 - De groene balk in de kop van de lijst klapt uit en toont per item wat er precies in de aanbieding is (`offer_details_for_list()`, migratie `aanbiedingen_bij_lijst_tonen`).
-- Nog open: niveau 2 (het voorstel voor artikelen van een ander merk of formaat, door een script buiten de app, goedkeuren in het scherm Producten) en het laten vervallen van de oude tabel `deals`, in een eigen commit nadat het nieuwe label getest is.
+- Nog open: niveau 2 (het voorstel voor artikelen van een ander merk of formaat, door een script buiten de app, goedkeuren in het scherm Producten).
+- De oude tabel `deals` en `deals_for_list` zijn vervallen (migratie `deals_vervalt`), nadat het nieuwe label getest was.
 
 ### [ ] Stap 6 – Automatische aankoopimport (alleen eigen accounts)
 
