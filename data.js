@@ -93,6 +93,30 @@ const Data = (() => {
         .order("name", { ascending: true });
     },
 
+    // ---------- Profiel ----------
+    // Je eigen naam (data is null als je er nog geen hebt ingevuld)
+    eigenNaam(userId) { return db.from("profiles").select("display_name").eq("user_id", userId).maybeSingle(); },
+    bewaarNaam(userId, naam) { return db.from("profiles").upsert({ user_id: userId, display_name: naam }); },
+    isBeheerder() { return db.rpc("is_admin"); },
+    // Het aankoopprofiel als JSON; periode is '4w', '3m', '12m' of 'alles', lijstId is null voor alle lijsten
+    aankoopprofiel(periode, lijstId) { return db.rpc("purchase_profile", { p_period: periode, p_list: lijstId }); },
+
+    // ---------- Producten ----------
+    productOverzicht() { return db.rpc("product_overview"); },
+    // De samenvoegingen die nog in een product zitten
+    productHerkomst(productId) {
+      return db
+        .from("product_merges")
+        .select("id, source_name, aliases")
+        .eq("target_id", productId)
+        .is("undone_at", null)
+        .order("merged_at", { ascending: false });
+    },
+    voegProductenSamen(bronId, doelId) { return db.rpc("merge_products", { p_source: bronId, p_target: doelId }); },
+    maakSamenvoegenOngedaan(samenvoegingId) { return db.rpc("undo_merge", { p_merge: samenvoegingId }); },
+    hernoemProduct(productId, naam) { return db.rpc("rename_product", { p_product: productId, p_name: naam }); },
+    zetProductProfiel(productId, teltMee) { return db.rpc("set_product_profile", { p_product: productId, p_counts: teltMee }); },
+
     // ---------- Live volgen ----------
     // Eén kanaal per lijst voor items, leden, de lijst zelf en aankopen. `op` heeft per soort een functie
     // die het Supabase-bericht krijgt: { item, lid, lijst, aankoop }. Een nieuw kanaal sluit het vorige.

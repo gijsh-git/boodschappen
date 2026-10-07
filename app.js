@@ -143,11 +143,7 @@ async function route() {
   // Supabase meldt de sessie opnieuw als de app terug in beeld komt; dan niet wegspringen van naam, profiel, voor jou, overzicht, aankopen, foto of bon
   if (naamOpen || profielOpen || voorjouOpen || lijstenOpen || aankopenOpen || fotoOpen || bonOpen) return;
   if (mijnNaam === null) {
-    const { data: profiel, error: profielFout } = await db
-      .from("profiles")
-      .select("display_name")
-      .eq("user_id", userId)
-      .maybeSingle();
+    const { data: profiel, error: profielFout } = await Data.eigenNaam(userId);
     if (mustSetPassword) return show("password");
     // Bij een fout (bijv. tabel bestaat nog niet) gewoon door naar de lijst
     if (!profielFout && !profiel) return toonNaam(false);
@@ -277,7 +273,7 @@ $("naam-form").addEventListener("submit", async (e) => {
   const naam = $("naam").value.trim();
   if (!naam) return say("naam-msg", "Vul je naam in.");
   say("naam-msg", "Bezig...");
-  const { error } = await db.from("profiles").upsert({ user_id: userId, display_name: naam });
+  const { error } = await Data.bewaarNaam(userId, naam);
   if (error) return say("naam-msg", nl(error));
   mijnNaam = naam;
   namen[userId] = naam;
@@ -306,7 +302,7 @@ function toonProfiel() {
 
 // De rol staat in de database; de knop is alleen een gemak, de functies controleren het zelf
 async function loadBeheerder() {
-  const { data } = await db.rpc("is_admin");
+  const { data } = await Data.isBeheerder();
   beheerder = data === true;
   $("producten-knop").hidden = !beheerder;
 }
@@ -347,7 +343,7 @@ function toonVoorJou() {
 
 async function loadVoorJou() {
   const vraag = ++voorjouVraag;
-  const { data, error } = await db.rpc("purchase_profile", { p_period: "3m", p_list: null });
+  const { data, error } = await Data.aankoopprofiel("3m", null);
   if (vraag !== voorjouVraag || !voorjouOpen) return;
   if (error) return say("voorjou-msg", error.message);
   voorjou = data.top;
@@ -461,7 +457,7 @@ $("tip-nietnu").addEventListener("click", () => {
 async function loadAankoopprofiel() {
   const vraag = ++profielVraag;
   say("ap-msg", aankoopprofiel ? "" : "Bezig...");
-  const { data, error } = await db.rpc("purchase_profile", { p_period: profielPeriode, p_list: profielLijst || null });
+  const { data, error } = await Data.aankoopprofiel(profielPeriode, profielLijst || null);
   if (vraag !== profielVraag || !profielOpen) return;
   if (error) return say("ap-msg", error.message);
   // De gekozen lijst telt niet meer mee of is weg: terug naar alle lijsten
@@ -2289,7 +2285,7 @@ function toonProducten() {
 }
 
 async function loadProducten() {
-  const { data, error } = await db.rpc("product_overview");
+  const { data, error } = await Data.productOverzicht();
   if (!profielOpen) return;
   if (error) return say("producten-msg", error.message);
   producten = data;
@@ -2299,12 +2295,7 @@ async function loadProducten() {
 
 // De samenvoegingen die nog in een product zitten; pas ophalen als je het product openklapt
 async function loadHerkomst(productId) {
-  const { data, error } = await db
-    .from("product_merges")
-    .select("id, source_name, aliases")
-    .eq("target_id", productId)
-    .is("undone_at", null)
-    .order("merged_at", { ascending: false });
+  const { data, error } = await Data.productHerkomst(productId);
   if (!profielOpen) return;
   if (error) return say("producten-msg", error.message);
   productHerkomst[productId] = data;
@@ -2445,7 +2436,7 @@ async function herlaadProducten(openId) {
 async function voegSamen(bron, doel) {
   if (!confirm(`"${bron.name}" samenvoegen met "${doel.name}"? Alles wat als "${bron.name}" is gekocht telt daarna als "${doel.name}". Je kunt dit weer losmaken.`)) return;
   say("producten-msg", "Bezig...");
-  const { error } = await db.rpc("merge_products", { p_source: bron.id, p_target: doel.id });
+  const { error } = await Data.voegProductenSamen(bron.id, doel.id);
   if (!profielOpen) return;
   if (error) return say("producten-msg", error.message);
   samenvoegBron = null;
@@ -2456,7 +2447,7 @@ async function voegSamen(bron, doel) {
 async function maakLos(product, samenvoeging) {
   if (!confirm(`"${samenvoeging.source_name}" weer losmaken van "${product.name}"?`)) return;
   say("producten-msg", "Bezig...");
-  const { error } = await db.rpc("undo_merge", { p_merge: samenvoeging.id });
+  const { error } = await Data.maakSamenvoegenOngedaan(samenvoeging.id);
   if (!profielOpen) return;
   if (error) return say("producten-msg", error.message);
   herlaadProducten(product.id);
@@ -2466,7 +2457,7 @@ async function hernoemProduct(product, naam) {
   if (!naam) return say("producten-msg", "Vul een naam in.");
   if (naam === product.name) return;
   say("producten-msg", "Bezig...");
-  const { data, error } = await db.rpc("rename_product", { p_product: product.id, p_name: naam });
+  const { data, error } = await Data.hernoemProduct(product.id, naam);
   if (!profielOpen) return;
   if (error) return say("producten-msg", error.message);
   product.name = data.name;
@@ -2476,7 +2467,7 @@ async function hernoemProduct(product, naam) {
 
 async function setProductTelt(product, aan) {
   say("producten-msg", "Bezig...");
-  const { data, error } = await db.rpc("set_product_profile", { p_product: product.id, p_counts: aan });
+  const { data, error } = await Data.zetProductProfiel(product.id, aan);
   if (!profielOpen) return;
   if (!error) product.telt_mee = data.counts_in_profile;
   say("producten-msg", error ? error.message : "");
