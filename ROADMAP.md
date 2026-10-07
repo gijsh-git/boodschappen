@@ -302,8 +302,52 @@ Deel 1 gebouwd op 7 oktober 2026 (migraties `aanbiedingen_matchen` en `aanbiedin
 - Het Bonus-label op de lijst komt uit `offers_for_list()`: via het product van het item, of via de aanbieding waarmee het item vanuit "Voor jou" op de lijst is gezet (`items.offer_id`). Dat laatste geeft ook een favoriet op de lijst zijn label.
 - Bijgesteld na de eerste test: "zet op lijst" bij een favoriet zet de aanbieding zelf op de lijst (de titel), niet de term. De term zegt niet wat er in de bonus is: de favoriet "banaan" raakte "AH Verse sappen en smoothies" en zette "Banaan" op de lijst. Bij een aanbieding via het profiel blijft het de productnaam.
 - De groene balk in de kop van de lijst klapt uit en toont per item wat er precies in de aanbieding is (`offer_details_for_list()`, migratie `aanbiedingen_bij_lijst_tonen`).
-- Nog open: niveau 2 (het voorstel voor artikelen van een ander merk of formaat, door een script buiten de app, goedkeuren in het scherm Producten).
+- Nog open: niveau 2 (het voorstel voor artikelen van een ander merk of formaat, door een script buiten de app, goedkeuren in het scherm Producten). Uitgewerkt in deel 2 hieronder.
 - De oude tabel `deals` en `deals_for_list` zijn vervallen (migratie `deals_vervalt`), nadat het nieuwe label getest was.
+
+#### Deel 2 – Niveau 2: artikelen van een ander merk of formaat
+
+Besluiten vastgesteld op 7 oktober 2026.
+
+Aanleiding: "AH Biologisch oranje pompoen" is in de bonus en "pompoen" staat op de lijst, maar er komt geen Bonus-label. Wij kochten de gewone AH pompoen, een ander artikelnummer, en niveau 1 kent alleen artikelen die op een eigen bon staan.
+
+- Kandidaat-producten: elk product met minstens één aankoop of een item op een lijst, van alle huishoudens. De grens voor een vast product geldt hier niet; die bepaalt alleen wat in "Voor jou" komt.
+- Eén product per artikel. Staat het artikelnummer op een bon (niveau 1), dan wint de bon: voor zo'n artikel wordt niets voorgesteld en een eerdere koppeling van niveau 2 telt niet meer.
+- De status wordt per artikel bewaard: voorstel, goedgekeurd of geen product. Een artikel zonder status is nog niet beoordeeld.
+- Een afwijzing wordt bewaard per combinatie van artikel en product. Die combinatie wordt nooit opnieuw voorgesteld; hetzelfde artikel mag later wel bij een ander product worden voorgesteld.
+- Een artikel met "geen product" wordt opnieuw beoordeeld als er producten zijn bijgekomen sinds het oordeel, en dan alleen tegen die nieuwe producten.
+- Samenvoegen: `merge_products` verhuist de koppelingen, voorstellen en afwijzingen van de bron naar het doel; `undo_merge` zet terug wat van de bron kwam. Wat na het samenvoegen op het doel is goedgekeurd blijft bij het doel.
+- Het script draait eerst met de hand, lokaal. Automatiseren (GitHub Actions) komt later, als de voorstellen goed blijken.
+- Beoordelen in het scherm Producten: alleen voorstellen met een product, gegroepeerd per product, met "alles goedkeuren" per groep. Per voorstel staat de zekerheid van de AI (hoog, middel, laag) en de reden. Voorstellen met zekerheid laag zijn twijfelgevallen: die staan in een eigen blok en vallen buiten "alles goedkeuren".
+- Is de subcategorie van het artikel exact gelijk aan de productnaam ("Pompoen" en "pompoen", via `normalize_search`), dan is de zekerheid hoog. Dat is een vaste regel in het script, geen oordeel van de AI. De subcategorie is het deel na de "/" in `articles.category`, of de hele categorie als er geen "/" in staat.
+- Een artikel aan een product koppelen is geen samenvoegen van producten: er verandert niets aan `products` en `product_aliases`.
+
+```
+/plan
+Wat: niveau 2 van de koppeling artikel → product. Een script buiten de app stelt per artikel uit de aanbiedingen voor bij welk bestaand product het hoort; ik keur de voorstellen goed in het scherm Producten.
+Waarom: nu telt een aanbieding alleen als het artikelnummer op een eigen bon staat. Een ander merk of formaat van hetzelfde product wordt gemist (biologische pompoen bij "pompoen", Campina kwark bij "kwark"), en dat zijn juist de aanbiedingen waar het om gaat.
+Hoe het moet werken:
+- Opslag: per artikel (supermarkt + artikelnummer) een status: voorstel, goedgekeurd of geen product, met het product, de zekerheid (hoog, middel, laag), de reden van de AI en wanneer het beoordeeld is. Daarnaast de afwijzingen, per combinatie van artikel en product. Een artikel hoort bij hooguit één product.
+- article_products() geeft naast niveau 1 ook de goedgekeurde koppelingen terug. Staat het artikelnummer op een bon, dan telt alleen de bon. Voor jou, het Bonus-label en de groene balk gebruiken die functie al en veranderen verder niet.
+- Het script (Python, standaardbibliotheek, zoals scripts/ah-importeren.py) logt in als beheerder en leest en schrijft alleen via databasefuncties met rolcontrole. Zonder --echt is het een proefronde die alleen telt en voorbeelden laat zien.
+- Het script beoordeelt: artikelen zonder status en zonder bon, en artikelen met "geen product" als er sindsdien producten zijn bijgekomen (alleen tegen die nieuwe producten). Kandidaten zijn alle producten met minstens één aankoop of een item op een lijst. Een afgewezen combinatie van artikel en product stelt het nooit opnieuw voor.
+- De AI krijgt per artikel titel, merk, inhoud en categorie, plus de kandidaat-producten en docs/productregels.md, en geeft terug: een product of geen product, de zekerheid en een korte reden. Vaste uitvoer via een JSON-schema; het model is een constante. De Anthropic-sleutel staat alleen lokaal in .env.
+- Vaste regel in het script, vóór de AI: is de subcategorie van het artikel exact gelijk aan de naam van een product (via normalize_search), dan is dat het voorstel, met zekerheid hoog.
+- Scherm Producten, alleen voor de beheerder: een blok "Voorstellen" met alleen de voorstellen met een product, gegroepeerd per product. Per voorstel de titel, het merk, de inhoud en de categorie van het artikel, de zekerheid en de reden. Per voorstel goedkeuren of afwijzen, en per groep "alles goedkeuren". Voorstellen met zekerheid laag staan in een eigen blok "Twijfelgevallen" en vallen buiten "alles goedkeuren".
+- Een goedgekeurde koppeling kan ik later weer losmaken; dat telt als een afwijzing van die combinatie.
+- merge_products verhuist koppelingen, voorstellen en afwijzingen van de bron naar het doel. undo_merge zet terug wat van de bron kwam; wat daarna op het doel is goedgekeurd blijft bij het doel.
+- Leg de besluiten vast in docs/productregels.md en werk CLAUDE.md bij.
+Klaar als:
+- de proefronde een telling geeft: hoeveel artikelen beoordeeld, hoeveel voorstellen per zekerheid, hoeveel "geen product", met voorbeelden van elk;
+- "AH Biologisch oranje pompoen" na goedkeuren bij het product "pompoen" hoort en een item "pompoen" op de lijst het Bonus-label krijgt, bij mij en bij Els;
+- een aanbieding op een ander merk van een vast product (bijvoorbeeld Campina kwark) na goedkeuren in "Voor jou" staat;
+- pompoensoep en het desembrood met pompoen niet bij "pompoen" worden voorgesteld;
+- een afgewezen voorstel na opnieuw draaien niet terugkomt, en opnieuw draaien zonder nieuwe artikelen of producten niets nieuws oplevert;
+- een artikel dat al op een eigen bon staat niet wordt voorgesteld;
+- na het samenvoegen van twee producten de koppelingen bij het doel staan, en na het losmaken weer bij de bron;
+- Els het blok "Voorstellen" niet ziet en de schrijffuncties haar weigeren.
+Grenzen: geen AI-aanroep vanuit de app en geen naammatching in de database: de naam is alleen een manier om kandidaten te vinden. Niveau 1 en de favorieten veranderen niet. Geen automatische goedkeuring, ook niet bij zekerheid hoog. Nog niet automatisch draaien. Alleen productnamen en artikelgegevens gaan naar de AI, geen aankopen of gebruikers. Supabase-calls in data.js, logica in logica.js (ARCHITECTURE.md). Elke databasewijziging is een nieuw migratiebestand in supabase/migrations/.
+```
 
 ### [ ] Stap 6 – Automatische aankoopimport (alleen eigen accounts)
 
