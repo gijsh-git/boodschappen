@@ -262,6 +262,25 @@
           </div>
         </section>
 
+        <!-- Favorieten: producten en merken waarvan je wilt weten dat ze in de aanbieding zijn -->
+        <section class="profiel-sectie" aria-labelledby="fav-kop">
+          <h2 id="fav-kop" class="sectie-kop">Mijn favorieten</h2>
+          <p class="uitleg">Producten waarvan je wilt weten dat ze in de aanbieding zijn. Vul een product in, een merk, of allebei. Alleen jij ziet ze. De aanbiedingen erbij komen later in Voor jou.</p>
+          <ul id="fav-lijst"></ul>
+          <p id="fav-leeg" class="uitleg" hidden>Je hebt nog geen favorieten.</p>
+          <form id="fav-form" class="fav-form" autocomplete="off">
+            <input id="fav-term" type="text" placeholder="Product, bijv. pindakaas" aria-label="Product" maxlength="60" autocapitalize="none">
+            <ul id="fav-term-sug" class="fav-sug" aria-label="Suggesties voor het product"></ul>
+            <input id="fav-merk" type="text" placeholder="Merk (hoeft niet)" aria-label="Merk" maxlength="60">
+            <ul id="fav-merk-sug" class="fav-sug" aria-label="Suggesties voor het merk"></ul>
+            <div class="fav-knoppen">
+              <button type="submit" id="fav-bewaar">Toevoegen</button>
+              <button type="button" id="fav-annuleer" class="wit" hidden>Annuleren</button>
+            </div>
+          </form>
+          <p id="fav-msg" class="msg" role="status"></p>
+        </section>
+
         <!-- Account: beheer (alleen de beheerder) en uitloggen -->
         <section class="profiel-sectie" aria-labelledby="account-kop">
           <h2 id="account-kop" class="sectie-kop">Account</h2>
@@ -586,6 +605,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="data.js"></script>
+  <script src="logica.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

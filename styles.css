@@ -461,6 +461,18 @@ button.menu-rij {
 .menu-pijl { color: var(--grijs); }
 button.menu-rij.uitloggen, .menu-rij.uitloggen > svg:first-child { color: var(--rood); }
 
+/* Mijn favorieten: lijst met daaronder het formulier; de suggesties klappen onder het veld uit */
+.fav-form { flex-direction: column; }
+.fav-rij { flex-wrap: nowrap; }
+.fav-rij button.del { display: grid; place-items: center; }
+ul.fav-sug:not(:empty) { margin-top: -4px; padding: 0 6px; }
+button.fav-kies {
+  display: flex; align-items: baseline; gap: 12px; width: 100%; min-height: 48px; padding: 0 8px;
+  background: none; color: var(--tekst); font-weight: 500; text-align: left; border-radius: 12px;
+}
+.fav-kies span { flex: 1; min-width: 0; }
+.fav-knoppen { display: flex; gap: 8px; }
+
 /* ---------- Voor jou ---------- */
 /* Grote kaart met het product dat het eerst weer nodig is */
 .tip-kaart { padding: 20px; background: var(--vlak); border: 1.5px solid var(--rand); border-radius: 24px; }

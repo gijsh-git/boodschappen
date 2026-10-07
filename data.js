@@ -118,6 +118,16 @@ const Data = (() => {
     // Het aankoopprofiel als JSON; periode is '4w', '3m', '12m' of 'alles', lijstId is null voor alle lijsten
     aankoopprofiel(periode, lijstId) { return db.rpc("purchase_profile", { p_period: periode, p_list: lijstId }); },
 
+    // ---------- Favorieten ----------
+    // Alleen je eigen favorieten (de database geeft geen andere terug), oudste eerst
+    favorieten() { return db.from("favorites").select("id, term, brand, category").order("created_at", { ascending: true }); },
+    voegFavorietToe(rij) { return db.from("favorites").insert(rij).select("id, term, brand, category").single(); },
+    wijzigFavoriet(id, rij) { return db.from("favorites").update(rij).eq("id", id).select("id, term, brand, category").single(); },
+    verwijderFavoriet(id) { return db.from("favorites").delete().eq("id", id); },
+    // Suggesties uit de artikelen die ooit in een aanbieding zaten: termen met hun hoofdcategorie, en merken
+    favorietTermen(tekst) { return db.rpc("suggest_favorite_terms", { p_query: tekst }); },
+    favorietMerken(tekst) { return db.rpc("suggest_favorite_brands", { p_query: tekst }); },
+
     // ---------- Producten ----------
     productOverzicht() { return db.rpc("product_overview"); },
     // De samenvoegingen die nog in een product zitten

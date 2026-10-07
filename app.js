@@ -294,6 +294,9 @@ function toonProfiel() {
   loadBeheerder();
   renderAankoopprofiel();
   loadAankoopprofiel();
+  stopFavorietBewerken();
+  renderFavorieten();
+  loadFavorieten();
 }
 
 // De rol staat in de database; de knop is alleen een gemak, de functies controleren het zelf
@@ -579,6 +582,152 @@ $("ap-lijst").addEventListener("change", () => {
   loadAankoopprofiel();
 });
 
+// ---------- Favorieten ----------
+// De sectie "Mijn favorieten" op het profiel. De favorieten zelf en de regels staan in logica.js;
+// hier alleen het tonen en het formulier.
+let favBewerk = null;    // de favoriet die in het formulier staat om te wijzigen; null = een nieuwe toevoegen
+let favSuggestie = null; // de gekozen suggestie voor de term ({ term, category }); bepaalt de categorie bij het opslaan
+const favTimers = {};    // per veld de wachttijd voordat de suggesties worden opgehaald
+
+async function loadFavorieten() {
+  const { fout } = await Logica.laadFavorieten();
+  if (!profielOpen) return;
+  if (fout) return say("fav-msg", fout);
+  renderFavorieten();
+}
+
+function renderFavorieten() {
+  const lijst = Logica.favorieten();
+  $("fav-lijst").replaceChildren(...(lijst || []).map(favorietRij));
+  $("fav-leeg").hidden = !lijst || lijst.length > 0;
+}
+
+function favorietRij(favoriet) {
+  const li = document.createElement("li");
+  li.className = "aankoop-rij fav-rij";
+
+  const tekst = document.createElement("div");
+  tekst.className = "aankoop-tekst";
+  const kop = document.createElement("div");
+  kop.className = "aankoop-kop";
+  const naam = document.createElement("span");
+  naam.textContent = favoriet.term || favoriet.brand;
+  kop.append(naam);
+  const info = document.createElement("p");
+  info.className = "aankoop-info";
+  const merk = !favoriet.term ? "Alles van dit merk" : favoriet.brand ? "Alleen " + favoriet.brand : "Elk merk";
+  info.textContent = favoriet.category ? `${merk} · in ${favoriet.category}` : merk;
+  tekst.append(kop, info);
+
+  const wijzig = document.createElement("button");
+  wijzig.type = "button";
+  wijzig.className = "del";
+  wijzig.setAttribute("aria-label", "Favoriet wijzigen");
+  wijzig.innerHTML = '<svg width="18" height="18" aria-hidden="true"><use href="#icon-potlood"/></svg>';
+  wijzig.addEventListener("click", () => bewerkFavoriet(favoriet));
+
+  const del = document.createElement("button");
+  del.type = "button";
+  del.className = "del";
+  del.textContent = "×";
+  del.setAttribute("aria-label", "Favoriet verwijderen");
+  del.addEventListener("click", async () => {
+    if (favBewerk && favBewerk.id === favoriet.id) stopFavorietBewerken();
+    const klaar = Logica.verwijderFavoriet(favoriet.id);
+    renderFavorieten();
+    const { fout } = await klaar;
+    say("fav-msg", fout || "");
+    if (fout) renderFavorieten();
+  });
+
+  li.append(tekst, wijzig, del);
+  return li;
+}
+
+// Zet een favoriet in het formulier om hem te wijzigen
+function bewerkFavoriet(favoriet) {
+  favBewerk = favoriet;
+  favSuggestie = favoriet.term ? { term: favoriet.term, category: favoriet.category } : null;
+  $("fav-term").value = favoriet.term || "";
+  $("fav-merk").value = favoriet.brand || "";
+  $("fav-bewaar").textContent = "Opslaan";
+  $("fav-annuleer").hidden = false;
+  sluitSuggesties();
+  say("fav-msg", "");
+  $("fav-term").focus();
+}
+
+// Formulier leeg, terug naar "Toevoegen"
+function stopFavorietBewerken() {
+  favBewerk = null;
+  favSuggestie = null;
+  $("fav-form").reset();
+  $("fav-bewaar").textContent = "Toevoegen";
+  $("fav-annuleer").hidden = true;
+  sluitSuggesties();
+  say("fav-msg", "");
+}
+
+function sluitSuggesties() {
+  for (const soort of ["term", "merk"]) {
+    clearTimeout(favTimers[soort]);
+    Logica.stopSuggesties(soort);
+    $(`fav-${soort}-sug`).replaceChildren();
+  }
+}
+
+// Haalt de suggesties voor één veld op, even nadat het typen stopt
+function vraagSuggesties(soort) {
+  clearTimeout(favTimers[soort]);
+  favTimers[soort] = setTimeout(async () => {
+    const veld = $(`fav-${soort}`);
+    const gevonden = await Logica.favorietSuggesties(soort, veld.value);
+    if (gevonden === null || !profielOpen) return;
+    // Staat er al precies wat de enige suggestie is, dan valt er niets te kiezen
+    const getypt = Logica.zoekvorm(veld.value);
+    const zinloos = soort === "merk" && gevonden.length === 1 && Logica.zoekvorm(gevonden[0].brand) === getypt;
+    $(`fav-${soort}-sug`).replaceChildren(...(zinloos ? [] : gevonden).map((s) => suggestieRij(soort, s)));
+  }, 250);
+}
+
+function suggestieRij(soort, suggestie) {
+  const li = document.createElement("li");
+  const knop = document.createElement("button");
+  knop.type = "button";
+  knop.className = "fav-kies";
+  const naam = document.createElement("span");
+  naam.textContent = soort === "term" ? suggestie.term : suggestie.brand;
+  knop.append(naam);
+  if (soort === "term" && suggestie.category) {
+    const categorie = document.createElement("small");
+    categorie.textContent = suggestie.category;
+    knop.append(categorie);
+  }
+  knop.addEventListener("click", () => {
+    $(`fav-${soort}`).value = naam.textContent;
+    if (soort === "term") favSuggestie = { term: suggestie.term, category: suggestie.category };
+    Logica.stopSuggesties(soort);
+    $(`fav-${soort}-sug`).replaceChildren();
+    $(soort === "term" ? "fav-merk" : "fav-bewaar").focus();
+  });
+  li.append(knop);
+  return li;
+}
+
+$("fav-term").addEventListener("input", () => vraagSuggesties("term"));
+$("fav-merk").addEventListener("input", () => vraagSuggesties("merk"));
+$("fav-annuleer").addEventListener("click", stopFavorietBewerken);
+$("fav-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  sluitSuggesties();
+  const { fout } = await Logica.bewaarFavoriet(favBewerk ? favBewerk.id : null, {
+    term: $("fav-term").value, merk: $("fav-merk").value, suggestie: favSuggestie
+  });
+  if (fout) return say("fav-msg", fout);
+  stopFavorietBewerken();
+  renderFavorieten();
+});
+
 async function logout() {
   await Data.logUit();
   Data.stopVolgen();
@@ -606,6 +755,7 @@ async function logout() {
   aankoopprofiel = null;
   profielLijst = "";
   profielVraag++;
+  Logica.vergeetFavorieten();
   verbergOngedaan();
   show("login");
 }
