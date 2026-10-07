@@ -21,7 +21,7 @@ Klassieke scripts, geen modules en geen build. Laadvolgorde in `index.html`: sup
 1. Buiten `data.js` komt geen `db.` voor. Controle: `grep -n "db\." app.js logica.js` geeft niets.
 2. Een nieuwe call komt altijd in `data.js`, ook voor een nieuwe RPC of tabel.
 3. Rekenwerk en matching horen in Postgres (RPC), niet in JS. `logica.js` is dunne glue eromheen.
-4. Een nieuw statisch bestand gaat in `ASSETS` in `sw.js`, en bump daarbij `CACHE`.
+4. Een nieuw statisch bestand gaat in `ASSETS` in `sw.js`. `CACHE` wordt bij elk gerefactord domein gebumpt (zie Werkwijze).
 5. Wijzig bij een verhuizing het gedrag niet. Verhuizen en veranderen gebeuren nooit in dezelfde commit.
 6. Werk `CLAUDE.md` bij zodra een beschrijving daar niet meer klopt (bijvoorbeeld de laadvolgorde).
 
@@ -30,6 +30,6 @@ Klassieke scripts, geen modules en geen build. Laadvolgorde in `index.html`: sup
 Er zijn geen tests, dus de stappen zijn klein.
 
 1. Verhuis de Supabase-calls per domein naar `data.js`, in deze volgorde: lijsten en leden; items en aankopen; bonnen; producten, profiel en aanbiedingen; auth en edge functions.
-2. Na elk domein: de app handmatig testen (realtime en optimistische updates met twee browsers), één commit, **stoppen**. Het volgende domein begint pas na een expliciete "ga door" van de gebruiker.
+2. Na elk domein: `CACHE` in `sw.js` bumpen (bij elk domein, niet alleen het eerste, zodat telefoons de gewijzigde scripts niet uit de oude cache laden), de app handmatig testen (realtime en optimistische updates met twee browsers), één commit, **stoppen**. Het volgende domein begint pas na een expliciete "ga door" van de gebruiker.
 3. Pas daarna logica uit de rendercode halen, waar dat winst oplevert, met dezelfde stop per onderdeel.
 4. "Favorieten" wordt eerst gedefinieerd en op de roadmap gezet, daarna volgt de kortingsmatching (roadmap-stap 5), als RPC in Postgres.
