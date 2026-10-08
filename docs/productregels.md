@@ -225,9 +225,27 @@ Besluiten (7 oktober 2026):
 1. De eerste naam is het product volgens dit bestand, het niveau waarop je wisselt: "pizza" voor elke pizza, "kipfilet" voor kipfiletreepjes. Varianten waar je niet tussen wisselt krijgen hun eigen naam ("cola zero", "halfvolle melk").
 2. Daarna hooguit twee specifiekere namen of een gangbaar synoniem, alleen als mensen dat ook zo opschrijven: "magere kwark", "baguette" naast "stokbrood".
 3. In de vorm die mensen typen: kleine letters, meervoud waar dat gebruikelijk is ("eieren", "tomaten"), zonder merk, huismerk, inhoud of verpakking. Een merk alleen als mensen het product zo noemen ("nutella").
-4. Een item krijgt het label als zijn naam na Nederlandse stamming gelijk is aan een lijstnaam van een artikel in een geldige aanbieding. Het gaat om de hele naam: "melk" raakt "halfvolle melk" niet.
+4. Een item krijgt het label als zijn naam na Nederlandse stamming gelijk is aan een lijstnaam van een artikel in een geldige aanbieding. Het gaat om de hele naam: "melk" raakt "halfvolle melk" niet. Sinds 8 oktober 2026 is dit laag 1 van "Matchen van lijsttermen" hieronder.
 5. Hiervoor is geen goedkeuring nodig en er worden geen producten voor aangemaakt. Het geldt alleen voor het label op de lijst; Voor jou werkt alleen via de bon en de goedgekeurde koppelingen.
 6. Bij een artikel waar de vaste regel aanslaat (subcategorie gelijk aan de productnaam) is de productnaam de enige lijstnaam.
+
+## Matchen van lijsttermen
+
+Wat iemand op de lijst typt is niet altijd de naam van een product of een lijstnaam: "proteine drank" met een spatie, "chocola", "tandenpasta", of een merk als "nivea". Voor het Bonus-label gaat een term daarom door vijf lagen; de eerste die iets oplevert telt.
+
+Besluiten (8 oktober 2026):
+
+1. Exact: gelijk aan een naam van een product, of gelijk aan een lijstnaam. Gelijk is: dezelfde letters en cijfers zonder spaties, koppeltekens en accenten ("proteine drank" is "proteinedrank"), of gelijk na stamming ("tomaat" is "tomaten").
+2. Synoniem: de term staat voor een andere naam ("chocola" voor "chocolade"), vastgelegd in `term_synonyms` met de bron (`manual` of `ai`) en de datum. Het doel is een lijstnaam of een productnaam.
+3. Merk: de term is het merk van een artikel ("nivea", "oral b").
+4. Tolerant: de term lijkt genoeg op een lijstnaam of een merk. Alleen de best gelijkende telt, vanaf 55 procent gelijkenis (`fuzzy_min_similarity_pct` in `settings`) en vanaf 5 tekens.
+5. Titel: alle woorden van de term staan in het merk en de titel van een artikel ("sensodyne tandpasta"). Dit is de minst precieze laag en komt daarom als laatste, en alleen bij een term van minstens twee woorden: een los woord in een titel zegt te weinig ("gember" raakte een groentesap, "boter" een smeerkaas, "suiker" pecannoten).
+6. Een synoniem is geen samenvoeging. Samenvoegen zegt dat twee namen hetzelfde product zijn, ook in het aankoopprofiel, en doet alleen de beheerder. Een synoniem telt alleen voor het label: een fout kost hooguit een label bij iets wat je toch al wilde kopen. Spelfouten die ook gekocht worden, voeg je nog steeds samen.
+7. De lagen 2 tot en met 5 gelden alleen voor het label op de lijst. Voor jou werkt alleen via de bon en de goedgekeurde koppelingen.
+8. Een term die na alle lagen niets oplevert, komt in `unmatched_terms` (alleen de term, hoe vaak en wanneer; geen gebruiker of lijst). "Niets" gaat over alle artikelen die ooit in een aanbieding zaten: een bekende term zonder aanbieding deze week is niet onbekend.
+9. Nog niet gebouwd: een AI-stap die de termen uit `unmatched_terms` aan een naam koppelt en dat als synoniem met bron `ai` opslaat.
+
+Controleren kan met `docs/matching-controle.sql`.
 
 ## Aanbieding op de lijst
 

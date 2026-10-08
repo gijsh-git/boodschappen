@@ -361,6 +361,22 @@ Gebouwd op 7 oktober 2026 (migratie `artikel_koppelingen`):
 - Eerste echte ronde op 7 oktober 2026: 2422 artikelen kregen lijstnamen, ongeveer 800 voorstellen (96 via de vaste regel), de rest "geen product". De AI koos het product eerst als nummer uit de lijst en pakte dan geregeld het product ernaast ("spekreepjes" werd "sperziebonen"); nu kiest hij de naam uit een vaste lijst in het uitvoerschema. Getest in de app: goedkeuren, afwijzen, losmaken en het label via de lijstnaam werken.
 - Nog open: het script draait met de hand. Automatisch draaien na elke bonusronde komt later.
 
+#### Deel 3 – Gelaagd matchen van lijsttermen
+
+Aanleiding (8 oktober 2026): het label kwam alleen bij exacte gelijkheid. "proteinedrank", "chocolade", "tandpasta" en "shampoo" werkten; "proteine drank" (de stemmer werkt per woord, dus een spatie geeft een ander resultaat), "proteinedrink", "chocola", "tandenpasta" en de merken "nivea", "parodontax" en "sensodyne" (lijstnamen zijn merkloos, en geen route keek naar `articles.brand`) niet.
+
+Gebouwd en doorgevoerd op 8 oktober 2026 (migraties `gelaagd_matchen` en `matchen_bijgesteld`):
+
+- [x] Eén functie `term_articles()` die zegt voor welke artikelen een term staat, in vijf lagen: exact (product, of lijstnaam zonder spaties en leestekens of na stamming), synoniem, merk, tolerant (pg_trgm, grens in `settings`), titel. `offers_for_list()` en `offer_details_for_list()` gebruiken die functie; hun signatuur en de app veranderen niet.
+- [x] `term_synonyms`: term → naam, met bron (`manual` of `ai`) en datum. Beheer voorlopig in de SQL Editor.
+- [x] `unmatched_terms`: termen die bij het toevoegen nergens op matchten, bijgehouden door `handle_unmatched_term()` vanuit een trigger op `items`.
+- [x] Nagelopen met `docs/matching-controle.sql` op alle 605 ooit getypte namen: 539 exact, 7 via het merk, 7 tolerant (chocola, tandenpasta, kokoswatet, margaringe, paradontax; twijfelachtig: "kruiden" bij kipkruiden en kruidenmix), 1 via de titel, 51 zonder treffer. Bijgesteld na die proef: de sleutelvorm geldt ook voor productnamen ("proteine drank" is "proteinedrank", een naam van eiwitdrank), en de titellaag geldt alleen vanaf twee woorden.
+- [ ] In de app een paar weken volgen; de grens voor tolerant bijstellen als er verkeerde labels komen. "margerine" en "adnijvie" halen de grens niet en wachten op een synoniem of de AI-stap.
+- [ ] AI-stap: een script leest `unmatched_terms` (zonder `judged_at`, en nog steeds zonder treffer), laat de AI een naam kiezen uit de lijstnamen en productnamen en schrijft `term_synonyms` met bron `ai`. Alleen de termen gaan naar de AI, geen gebruikers of lijsten.
+- [ ] Eventueel: een blok in het scherm Producten voor de niet-gematchte termen en de synoniemen.
+
+Besluiten staan in `docs/productregels.md` onder "Matchen van lijsttermen". Niet gedaan: `items.normalized_name` gelijktrekken met de nieuwe sleutelvorm (raakt de sleutel van `product_aliases`), en Voor jou.
+
 ### [ ] Stap 6 – Automatische aankoopimport (alleen eigen accounts)
 
 - [ ] Kassabonnen van Gijs (en eventueel Els) periodiek ophalen via de AH-API
