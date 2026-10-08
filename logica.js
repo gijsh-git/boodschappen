@@ -133,10 +133,9 @@ const Logica = (() => {
       return {};
     },
 
-    // Wat er op de lijst komt bij "zet op lijst". Via een favoriet: de aanbieding zelf, want de term zegt niet
-    // wat er in de bonus is ("banaan" bij een aanbieding op verse sappen). Via het profiel: het vaste product.
+    // Wat er op de lijst komt bij "zet op lijst": de aanbieding zelf, zoals ze op het scherm staat. De database
+    // maakt dezelfde naam (add_offer_item) en onthoudt bij het item het artikel en het product uit de catalogus.
     aanbiedingNaam(aanbieding) {
-      if (aanbieding.favorieten.length === 0) return aanbieding.producten[0].naam;
       return aanbieding.titel.replace(/\s*\*+$/, ""); // "Alle Perla*": het sterretje verwijst naar de kleine lettertjes
     },
 
@@ -148,10 +147,15 @@ const Logica = (() => {
       return product.om_de != null && dagenGeleden(product.laatste) >= Number(product.om_de);
     },
 
-    // Wat er nog voor te stellen is: zonder wat al op de lijst staat (`namenOpLijst`) of is weggetikt.
-    // Het product dat het verst over zijn gebruikelijke tussenpoos heen is staat bovenaan.
-    voorJouOver(namenOpLijst) {
-      const opLijst = new Set(namenOpLijst.map((n) => n.trim().toLowerCase()));
+    // Wat er nog voor te stellen is: zonder wat al op de lijst staat (`itemsOpLijst`) of is weggetikt. Op de
+    // lijst staan telt ook via een aanbieding: staat "AH Tijgerbrood" er met zijn aanbieding, dan is "brood" niet
+    // meer nodig. Het product dat het verst over zijn gebruikelijke tussenpoos heen is staat bovenaan.
+    voorJouOver(itemsOpLijst) {
+      const opLijst = new Set(itemsOpLijst.map((i) => i.name.trim().toLowerCase()));
+      const gekozen = new Set(itemsOpLijst.map((i) => i.offer_id).filter(Boolean));
+      for (const a of aanbiedingen || []) {
+        if (gekozen.has(a.id)) a.producten.forEach((p) => opLijst.add(p.naam.trim().toLowerCase()));
+      }
       const druk = (p) => (p.om_de == null ? 0 : dagenGeleden(p.laatste) / Number(p.om_de));
       return (voorjou || [])
         .filter((p) => !nietNu.has(p.naam) && !opLijst.has(p.naam.trim().toLowerCase()))

@@ -439,7 +439,7 @@ function aanbodRij(aanbieding, opLijst) {
 
 function renderVoorJou() {
   const voorjou = Logica.voorJou();
-  const over = Logica.voorJouOver(items.map((i) => i.name));
+  const over = Logica.voorJouOver(items);
   const aanbod = Logica.aanbiedingen() || [];
   const opLijst = new Set(items.map((i) => i.name.trim().toLowerCase()));
   $("aanbod-kop").hidden = aanbod.length === 0;
@@ -461,14 +461,15 @@ function renderVoorJou() {
     : "Niets meer voor te stellen: je vaste producten staan op de lijst of je hebt ze overgeslagen.";
 }
 
-// Een voorgesteld product of een aanbieding op de open lijst zetten. Met een aanbieding erbij onthoudt het
-// item waar het vandaan komt, zodat het op de lijst het Bonus-label krijgt.
+// Een voorgesteld product of een aanbieding op de open lijst zetten. Een aanbieding gaat via de database: die
+// zet de titel op de lijst en onthoudt bij het item de aanbieding (voor het Bonus-label), het artikel en het
+// product uit de catalogus.
 async function zetOpLijst(naam, aanbiedingId) {
   if (!currentList) return;
   const lijst = currentList;
-  const rij = { list_id: lijst.id, name: hoofdletter(naam) };
-  if (aanbiedingId) rij.offer_id = aanbiedingId;
-  const { data, error } = await Data.voegItemToe(rij);
+  const { data, error } = aanbiedingId
+    ? await Data.zetAanbiedingOpLijst(lijst.id, aanbiedingId)
+    : await Data.voegItemToe({ list_id: lijst.id, name: hoofdletter(naam) });
   if (error) return say("voorjou-msg", error.message);
   if (currentList && currentList.id === lijst.id) {
     if (!items.some((i) => i.id === data.id)) items.push(data);

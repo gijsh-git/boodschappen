@@ -50,11 +50,15 @@ const Data = (() => {
     items(lijstId) { return db.from("items").select("*").eq("list_id", lijstId).order("created_at", { ascending: true }); },
     voegItemToe(rij) { return db.from("items").insert(rij).select().single(); },
     voegItemsToe(rijen) { return db.from("items").insert(rijen).select(); },
-    // Zet een verwijderd item terug met zijn oorspronkelijke id, maker, tijd en aanbieding
+    // Zet een aanbieding uit "Voor jou" op de lijst: de database bepaalt de naam (de titel), het artikel en
+    // het product uit de catalogus, en geeft het nieuwe item terug
+    zetAanbiedingOpLijst(lijstId, aanbiedingId) { return db.rpc("add_offer_item", { p_list: lijstId, p_offer: aanbiedingId }); },
+    // Zet een verwijderd item terug met zijn oorspronkelijke id, maker, tijd, aanbieding, artikel en product
     zetItemTerug(item) {
       return db.from("items").insert({
         id: item.id, list_id: item.list_id, name: item.name, quantity: item.quantity,
-        added_by: item.added_by, created_at: item.created_at, offer_id: item.offer_id
+        added_by: item.added_by, created_at: item.created_at, offer_id: item.offer_id,
+        article_supermarket: item.article_supermarket, article_id: item.article_id, product_id: item.product_id
       });
     },
     verwijderItem(itemId) { return db.from("items").delete().eq("id", itemId); },
