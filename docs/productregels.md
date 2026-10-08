@@ -31,18 +31,18 @@ Bij twijfel: samenvoegen. Te ruim samenvoegen kost hooguit een irrelevante aanbi
 ## Apart houden
 
 - Varianten waar je niet tussen wisselt: halfvolle, volle en gewone melk; cola en cola zero; chocolademelk en chocomel 0%.
-- Zero, light, suikervrij, 0%, decaf en alcoholvrij tegenover de gewone variant, bij elk soort product en elk merk: fanta zero apart van "sinas", slimpie (siroop 0% suiker) apart van "siroop", ketchup zero apart van "ketchup", decaf apart van koffie, radler 0.0 apart van "radler". Ook als het huishouden de variant zelf niet koopt: een ander huishouden doet dat misschien wel.
+- Zero, light, suikervrij, 0%, decaf en alcoholvrij tegenover de gewone variant, bij elk soort product en elk merk: fanta zero apart van "sinas", slimpie (siroop 0% suiker) apart van "siroop", ketchup zero en ketchup "zero added sugar" apart van "ketchup", salsa "zero added sugar" apart van "salsa", decaf apart van koffie, radler 0.0 apart van "radler". Ook als het huishouden de variant zelf niet koopt: een ander huishouden doet dat misschien wel.
 - Alcoholvrij en gemengd tegenover gewoon: amstel 0.0, desperados en radler apart van "bier"; rosé apart van "witte wijn".
-- Pils tegenover speciaalbier: bokbier, tripel, IPA en witbier zijn "speciaalbier", apart van "bier".
+- Pils tegenover speciaalbier: bokbier, tripel, IPA, witbier en witpils zijn "speciaalbier", apart van "bier".
 - Producten voor een ander moment of gebruik: gesneden brood (ontbijt), stokbrood (maaltijd), afbakbroodjes, naanbrood; risottorijst apart van "rijst".
 - Producten die alleen in je eigen apparaat of systeem werken: koffiebonen, koffiecapsules en koffiepads; systeemscheermesjes per systeem (Mach3, Fusion5, ProGlide, Labs, Venus) en wegwerpscheermesjes; Swiffer-doekjes en -dusters; een fust voor een eigen tap (Blade). Het apparaat zelf, een handvat of een starterset hoort bij geen enkel product.
 - Vers tegenover gedroogd of uit pot of blik: "verse basilicum" apart van gedroogde "basilicum", Hak sperziebonen en spinazie uit de pot apart van verse "sperziebonen" en "spinazie". Een product zonder "vers" of "gedroogd" in de naam is vers, tenzij hieronder bij Vastgestelde producten anders staat.
 - Andere vorm van hetzelfde doel: eiwitpoeder apart van "eiwitdrank".
-- Sauzen met een eigen smaak of gebruik (knorr saus, maggi saus, groentesaus, woksaus) blijven apart. Hetzelfde geldt voor specerijmengsels met een eigen smaak (garam masala, za'atar, ras el hanout, de world spice blends van Verstegen): die zijn geen "kruidenmix".
+- Sauzen met een eigen smaak of gebruik (knorr saus, maggi saus, groentesaus, woksaus) blijven apart. Hetzelfde geldt voor specerijmengsels met een eigen smaak (garam masala, za'atar, ras el hanout, world spice blends): die zijn geen "kruidenmix".
 - Drop tegenover gums en winegums: zoute en zoete drop horen niet bij "snoep".
 - Beleg is geen brood: "kip voor op brood" is beleg.
 - Een losse merknaam zonder product ("zaanse hoeve", "melkunie", "sempio", "thai thai") wordt niet samengevoegd; die krijgt eerst een echte naam via data/ah-namen.json.
-- Een productnaam is de soort, niet het merk: "handzeep", niet "palmolive handzeep"; "snoep", niet "haribo snoep". Een merk in de productnaam trekt voorstellen naar dat merk in plaats van naar de soort. Zo'n product wordt hernoemd of samengevoegd met het product van de soort.
+- Een productnaam is de soort, niet het merk: "handzeep", niet "palmolive handzeep"; "snoep", niet "haribo snoep"; "kruiden", niet "verstegen kruiden". Een merk in de productnaam trekt voorstellen naar dat merk in plaats van naar de soort. Zo'n product wordt hernoemd of samengevoegd met het product van de soort.
 
 ## Geen boodschappen
 
@@ -80,7 +80,7 @@ Alle kant-en-klare eiwitdranken en -shakes, ongeacht merk of smaak: hipro, xxl n
 
 ### bier
 
-Pils, ongeacht merk of verpakking (blik, fles, krat). Niet: speciaalbier (ook sterk of zwaar bier als Grolsch Krachtig Kanon), alcoholvrij, radler, desperados, en een fust dat alleen in een eigen tap past (Heineken Blade).
+Pils, ongeacht merk of verpakking (blik, fles, krat). Niet: speciaalbier (ook sterk of zwaar bier als Grolsch Krachtig Kanon, en witpils), alcoholvrij, radler, desperados, en een fust dat alleen in een eigen tap past (Heineken Blade).
 
 ### radler
 
@@ -88,7 +88,7 @@ Radler met alcohol, ongeacht merk of smaak. Radler 0.0 is alcoholvrij en apart.
 
 ### speciaalbier
 
-Bier dat geen pils is, ongeacht merk: blond, bokbier, dubbel, tripel, quadrupel, IPA, witbier, weizen en zwaar bier. Wie pils koopt wisselt daar bij een aanbieding niet naar. Als lijstnaam is de eerste naam "speciaalbier", daarna de soort ("bokbier", "tripel"); niet "bier". Alcoholvrij speciaalbier valt onder alcoholvrij, niet hieronder.
+Bier dat geen pils is, ongeacht merk: blond, bokbier, dubbel, tripel, quadrupel, IPA, witbier, witpils, weizen en zwaar bier. Wie pils koopt wisselt daar bij een aanbieding niet naar. Als lijstnaam is de eerste naam "speciaalbier", daarna de soort ("bokbier", "tripel"); niet "bier". Alcoholvrij speciaalbier valt onder alcoholvrij, niet hieronder.
 
 ### sinas
 
@@ -178,9 +178,13 @@ Vochtige schoonmaakdoekjes, ongeacht merk of geur: dettol, ajax, dubro. Niet: Sw
 
 Gedroogd, uit een potje of zakje. Verse basilicum is het aparte product "verse basilicum".
 
-### kruidenmix en verstegen kruiden
+### kruiden en kruidenmix
 
-Twee producten. "kruidenmix": een zakje voor één gerecht (bami, nasi, chili con carne, stamppot, pasta bolognese). "verstegen kruiden": strooibussen en zakjes vlees-, vis-, aardappel- en Italiaanse kruiden. Specerijmengsels met een eigen smaak (world spice blends) horen bij geen van beide.
+Twee producten, beide zonder merk in de naam, zodat elk merk eronder valt (Verstegen, AH, Euroma, Jonnie Boer).
+
+"kruidenmix": alle mixen voor een gerecht of een vleessoort, in een zakje of strooibus: bami, nasi, chili con carne, stamppot, pasta bolognese, en vlees-, vis-, aardappel- en Italiaanse kruiden (kip pittige knoflook, speklapjes, stoofvlees, gehakt). Niet: specerijmengsels met een eigen smaak (world spice blends, garam masala).
+
+"kruiden": losse kruiden en specerijen: peperkorrels, paprikapoeder. Bestaat er voor een kruid een eigen product (oregano, basilicum, bieslook, nootmuskaat), dan hoort het artikel daar.
 
 ### halvarine
 
