@@ -18,7 +18,7 @@ Bij twijfel: samenvoegen. Te ruim samenvoegen kost hooguit een irrelevante aanbi
 
 - Schrijfwijze en tikfouten: "kip-kerriesalade" en "kipkerriesalade".
 - Enkelvoud en meervoud: "limoenen" en "limoen".
-- Synoniemen: "wraps" en "tortilla's", "baguette" en "stokbrood", "fanta" en "sinas".
+- Synoniemen: "wraps" en "tortilla's", "baguette" en "stokbrood", "fanta" en "sinas", "roerbakgroente" en "wokgroente".
 - Merken van hetzelfde soort product: "dr. oetker pizza" onder "pizza", "lay's chips" onder "chips", "heineken bier" onder "bier".
 - Smaken en soorten binnen hetzelfde product: pizza margherita onder "pizza", skyr aardbei onder "skyr", lipton raspberry ice tea onder "ice tea".
 - Vorm en snit: penne en rigatoni onder "pasta", kipdijreepjes onder "kipdijfilet", kaas in plakken onder "kaas".
@@ -31,14 +31,18 @@ Bij twijfel: samenvoegen. Te ruim samenvoegen kost hooguit een irrelevante aanbi
 ## Apart houden
 
 - Varianten waar je niet tussen wisselt: halfvolle, volle en gewone melk; cola en cola zero; chocolademelk en chocomel 0%.
+- Zero, light, suikervrij, 0%, decaf en alcoholvrij tegenover de gewone variant, bij elk soort product en elk merk: fanta zero apart van "sinas", slimpie (siroop 0% suiker) apart van "siroop", ketchup zero apart van "ketchup", decaf apart van koffie, radler 0.0 apart van "radler". Ook als het huishouden de variant zelf niet koopt: een ander huishouden doet dat misschien wel.
 - Alcoholvrij en gemengd tegenover gewoon: amstel 0.0, desperados en radler apart van "bier"; rosé apart van "witte wijn".
 - Pils tegenover speciaalbier: bokbier, tripel, IPA en witbier zijn "speciaalbier", apart van "bier".
 - Producten voor een ander moment of gebruik: gesneden brood (ontbijt), stokbrood (maaltijd), afbakbroodjes, naanbrood; risottorijst apart van "rijst".
-- Producten die alleen in je eigen apparaat werken: koffiebonen, koffiecapsules en koffiepads.
+- Producten die alleen in je eigen apparaat of systeem werken: koffiebonen, koffiecapsules en koffiepads; systeemscheermesjes per systeem (Mach3, Fusion5, ProGlide, Labs, Venus) en wegwerpscheermesjes; Swiffer-doekjes en -dusters; een fust voor een eigen tap (Blade). Het apparaat zelf, een handvat of een starterset hoort bij geen enkel product.
+- Vers tegenover gedroogd of uit pot of blik: "verse basilicum" apart van gedroogde "basilicum", Hak sperziebonen en spinazie uit de pot apart van verse "sperziebonen" en "spinazie". Een product zonder "vers" of "gedroogd" in de naam is vers, tenzij hieronder bij Vastgestelde producten anders staat.
 - Andere vorm van hetzelfde doel: eiwitpoeder apart van "eiwitdrank".
-- Sauzen met een eigen smaak of gebruik (knorr saus, maggi saus, groentesaus, woksaus) blijven apart.
+- Sauzen met een eigen smaak of gebruik (knorr saus, maggi saus, groentesaus, woksaus) blijven apart. Hetzelfde geldt voor specerijmengsels met een eigen smaak (garam masala, za'atar, ras el hanout, de world spice blends van Verstegen): die zijn geen "kruidenmix".
+- Drop tegenover gums en winegums: zoute en zoete drop horen niet bij "snoep".
 - Beleg is geen brood: "kip voor op brood" is beleg.
 - Een losse merknaam zonder product ("zaanse hoeve", "melkunie", "sempio", "thai thai") wordt niet samengevoegd; die krijgt eerst een echte naam via data/ah-namen.json.
+- Een productnaam is de soort, niet het merk: "handzeep", niet "palmolive handzeep"; "snoep", niet "haribo snoep". Een merk in de productnaam trekt voorstellen naar dat merk in plaats van naar de soort. Zo'n product wordt hernoemd of samengevoegd met het product van de soort.
 
 ## Geen boodschappen
 
@@ -76,11 +80,23 @@ Alle kant-en-klare eiwitdranken en -shakes, ongeacht merk of smaak: hipro, xxl n
 
 ### bier
 
-Pils, ongeacht merk of verpakking (blik, fles, krat, fust). Niet: speciaalbier, alcoholvrij, radler, desperados.
+Pils, ongeacht merk of verpakking (blik, fles, krat). Niet: speciaalbier (ook sterk of zwaar bier als Grolsch Krachtig Kanon), alcoholvrij, radler, desperados, en een fust dat alleen in een eigen tap past (Heineken Blade).
+
+### radler
+
+Radler met alcohol, ongeacht merk of smaak. Radler 0.0 is alcoholvrij en apart.
 
 ### speciaalbier
 
 Bier dat geen pils is, ongeacht merk: blond, bokbier, dubbel, tripel, quadrupel, IPA, witbier, weizen en zwaar bier. Wie pils koopt wisselt daar bij een aanbieding niet naar. Als lijstnaam is de eerste naam "speciaalbier", daarna de soort ("bokbier", "tripel"); niet "bier". Alcoholvrij speciaalbier valt onder alcoholvrij, niet hieronder.
+
+### sinas
+
+Sinaasappelfrisdrank met suiker, ongeacht merk: fanta orange, sisi. Niet: fanta zero, en andere smaken als fanta exotic of pineapple grapefruit, ook al zet de supermarkt ze onder "Sinas".
+
+### siroop
+
+Limonadesiroop met suiker, ongeacht merk of smaak. Siroop 0% suiker (slimpie) is apart.
 
 ### witte wijn
 
@@ -146,6 +162,34 @@ Warme hartige broodjes uit de bakkerij: frikandel-, kaas-, kaas-ui-, pizza-, sau
 
 Krenten-rozijnenbrood, rozijnenbol en rozijnen-krentenbol.
 
+### snoep
+
+Gums, winegums, schuimpjes, spekken en zure snoep in een zak, ongeacht merk: haribo, look-o-look, maoam. Niet: drop.
+
+### scheermesjes
+
+Wegwerpscheermesjes. Systeemmesjes en handvatten (Mach3, Fusion5, ProGlide, Labs, Venus) zijn apart, per systeem.
+
+### doekjes
+
+Vochtige schoonmaakdoekjes, ongeacht merk of geur: dettol, ajax, dubro. Niet: Swiffer-vloerdoekjes en -dusters (eigen systeem), zakdoekjes.
+
+### basilicum en bieslook
+
+Gedroogd, uit een potje of zakje. Verse basilicum is het aparte product "verse basilicum".
+
+### kruidenmix en verstegen kruiden
+
+Twee producten. "kruidenmix": een zakje voor één gerecht (bami, nasi, chili con carne, stamppot, pasta bolognese). "verstegen kruiden": strooibussen en zakjes vlees-, vis-, aardappel- en Italiaanse kruiden. Specerijmengsels met een eigen smaak (world spice blends) horen bij geen van beide.
+
+### halvarine
+
+Halvarine, margarine en plantaardige smeersels voor op brood, ongeacht merk: blue band, bona. "smeerbare boter" is boter en apart.
+
+### sperziebonen, spinazie en boerenkool
+
+Vers. Groente uit een pot (Hak) hoort er niet bij.
+
 ## Artikelen koppelen
 
 Een artikel van een supermarkt (uit de aanbiedingen) hoort bij hooguit één product. Dat is geen samenvoegen: er verandert niets aan de producten en hun namen.
@@ -154,13 +198,19 @@ Besluiten (7 oktober 2026):
 
 1. Staat het artikelnummer op een eigen bon, dan zegt de bon bij welk product het hoort. Dat wint altijd: voor zo'n artikel wordt niets voorgesteld en een eerdere koppeling telt niet meer.
 2. Voor de andere artikelen doet `scripts/artikel-voorstellen.py` een voorstel. Kandidaten zijn alle producten met minstens één aankoop of een item op een lijst, van alle huishoudens.
-3. Vaste regel, vóór de AI: is de subcategorie van het artikel gelijk aan de naam van een product ("Pompoen" en "pompoen"), dan is dat het voorstel, met zekerheid hoog. De subcategorie is het deel na de "/" in de categorie, of de hele categorie als er geen "/" in staat.
+3. Vaste regel, vóór de AI: is de subcategorie van het artikel gelijk aan de naam van een product ("Pompoen" en "pompoen"), dan is dat het voorstel, met zekerheid hoog. De subcategorie is het deel na de "/" in de categorie, of de hele categorie als er geen "/" in staat. Uitzondering (8 oktober 2026): noemt de titel een variant waar je niet tussen wisselt (zero, light, 0.0, 0%, decaf, alcoholvrij, suikervrij) of is het een starterset, dan beslist de AI.
 4. De rest beoordeelt de AI met dit bestand: een product of geen product, de zekerheid (hoog, middel, laag) en een korte reden. Dezelfde toets als bij samenvoegen: zou je bij een aanbieding dit artikel kopen in plaats van wat je gewoonlijk koopt?
 5. Een woord uit de productnaam in de titel is geen bewijs. Pompoensoep en desembrood met pompoen horen niet bij "pompoen".
 6. Niets wordt automatisch goedgekeurd, ook niet bij zekerheid hoog. De beheerder keurt goed of wijst af in het scherm Producten. Voorstellen met zekerheid laag staan apart als twijfelgevallen en vallen buiten "alles goedkeuren".
 7. Een afwijzing geldt voor de combinatie van artikel en product. Die wordt nooit opnieuw voorgesteld; hetzelfde artikel mag later wel bij een ander product worden voorgesteld. Een goedgekeurde koppeling losmaken telt als afwijzen.
 8. Een artikel met "geen product" wordt opnieuw beoordeeld als er sindsdien producten zijn bijgekomen, en dan alleen tegen die nieuwe producten.
 9. Bij het samenvoegen van producten verhuizen de koppelingen, voorstellen en afwijzingen van de bron naar het doel. Losmaken zet terug wat van de bron kwam; wat daarna op het doel is goedgekeurd blijft bij het doel.
+
+Besluiten (8 oktober 2026), na het nalezen van alle oordelen:
+
+10. De categorie van de supermarkt helpt, maar is geen bewijs. AH zet multipacks speciaalbier soms onder "Pils blik" en fanta exotic onder "Sinas". Wat de titel zegt, gaat voor.
+11. De meeste fouten zaten in voorstellen met zekerheid middel en in de vaste regel. Lees die na voordat je "alles goedkeuren" gebruikt.
+12. De correcties van dit nalezen staan in scripts/koppelingen-corrigeren.py.
 
 ## Lijstnamen
 
