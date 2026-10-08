@@ -4,7 +4,7 @@
 Niveau 1 kent alleen artikelen die op een eigen bon staan. Dit script beoordeelt de rest: artikelen zonder
 status, en artikelen met "geen product" als er sindsdien producten zijn bijgekomen (alleen tegen die nieuwe).
 Eerst een vaste regel: is de subcategorie van het artikel gelijk aan de naam van een product, dan is dat het
-voorstel, met zekerheid hoog. De rest gaat in porties naar de AI, met docs/productregels.md en de
+voorstel, met zekerheid hoog, behalve als de titel een variant als zero of decaf noemt. De rest gaat in porties naar de AI, met docs/productregels.md en de
 kandidaat-producten erbij. Er wordt niets goedgekeurd: dat doet de beheerder in het scherm Producten.
 
 Daarnaast krijgt elk artikel hooguit drie lijstnamen: de namen die iemand op een boodschappenlijst zou typen
@@ -27,6 +27,7 @@ import getpass
 import importlib.util
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -51,6 +52,9 @@ ZEKERHEID = {"hoog": "high", "middel": "medium", "laag": "low"}
 NAMEN_MAX = 3
 # Wat de AI als product teruggeeft als het artikel bij geen enkel kandidaat-product hoort
 GEEN = "geen product"
+# Titels waarbij de vaste regel niet geldt: een variant waar je niet tussen wisselt, of een starterset.
+# De supermarkt zet die vaak in dezelfde subcategorie ("Fanta Orange zero sugar" onder "Sinas"); de AI beslist.
+GEEN_VASTE_REGEL = re.compile(r"\b(zero|light|decaf|alcoholvrij|suikervrij|starterset|starterkit)\b|(?<![\d.,])0[.,]0(?![\d])|(?<![\d.,])0 ?%", re.I)
 
 OPDRACHT = """Je koppelt artikelen van een supermarkt aan de producten van een boodschappen-app. Een product is het niveau waarop een koper wisselt bij een aanbieding. Als een artikel in de aanbieding is, wil de app dat laten zien bij het product waar het bij hoort.
 
@@ -61,7 +65,7 @@ Kies per artikel het ene kandidaat-product waar het volgens de productregels bij
 - Staat het passende product niet in de lijst, geef dan "geen product". Kies geen product dat alleen in de buurt komt. De meeste artikelen horen bij geen enkel kandidaat-product.
 - Staat achter een artikel "niet:" met productnamen, dan zijn die producten voor dat artikel al afgewezen. Kies ze niet.
 - zekerheid: "hoog" als het er zonder twijfel bij hoort, "middel" als het waarschijnlijk klopt, "laag" bij echte twijfel over een variant van hetzelfde soort product, waarvan onduidelijk is of je ertussen wisselt. Bij "geen product" zegt de zekerheid hoe zeker je bent dat geen product past.
-- "laag" is geen vangnet. Komt een artikel alleen in de buurt van een product (hetzelfde merk, dezelfde afdeling, een woord gemeen, iets wat erop lijkt), geef dan "geen product": een vanillestokje van Verstegen is geen "verstegen kruiden", een appelkruimelkoek is geen "appelkruimelgebak".
+- "laag" is geen vangnet. Komt een artikel alleen in de buurt van een product (hetzelfde merk, dezelfde afdeling, een woord gemeen, iets wat erop lijkt), geef dan "geen product": een vanillestokje van Verstegen is geen "kruiden", een appelkruimelkoek is geen "appelkruimelgebak".
 - reden: één korte zin in het Nederlands.
 
 Geef daarnaast per artikel de lijstnamen: de namen die iemand op een boodschappenlijst zou typen om dit artikel te kopen. Minstens één en hooguit drie, van algemeen naar specifiek.
@@ -262,7 +266,7 @@ def main():
         mag = set(per_id) if a["nieuwe_producten"] is None else set(a["nieuwe_producten"]) & set(per_id)
         mag -= set(a["afgewezen"])
         p = per_zoek.get(a["subcategorie_zoek"] or "")
-        if a["product_nodig"] and p and p["id"] in mag:
+        if a["product_nodig"] and p and p["id"] in mag and not GEEN_VASTE_REGEL.search(a["titel"] or ""):
             sub = (a["categorie"] or "").split("/", 1)[-1]
             # De productnaam is hier ook wat je op de lijst typt; de AI komt er niet aan te pas
             via_regel.append(oordeel(a, p, "hoog", f"De subcategorie \"{sub}\" is gelijk aan de productnaam.", "rule", [p["naam"].lower()]))
