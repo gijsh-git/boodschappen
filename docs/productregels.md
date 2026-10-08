@@ -229,9 +229,21 @@ Besluiten (7 oktober 2026):
 5. Hiervoor is geen goedkeuring nodig en er worden geen producten voor aangemaakt. Het geldt alleen voor het label op de lijst; Voor jou werkt alleen via de bon en de goedgekeurde koppelingen.
 6. Bij een artikel waar de vaste regel aanslaat (subcategorie gelijk aan de productnaam) is de productnaam de enige lijstnaam.
 
+## Aanbieding op de lijst
+
+Wie op Voor jou een aanbieding op de lijst zet, krijgt de titel van die aanbieding als naam van het item ("AH Bakkersbrood tijgerbrood volkoren heel"), niet de naam van het product ("brood").
+
+Besluiten (8 oktober 2026):
+
+1. Het item onthoudt de aanbieding, het artikel (alleen als de aanbieding precies één artikel heeft) en het product uit de catalogus op dat moment. De naam verandert daarna niet meer mee met de titel of de productnaam.
+2. De titel wordt een naam van het catalogusproduct, zodat het aankoopprofiel en het Bonus-label op dat product blijven werken. Dat gebeurt alleen als alle gekoppelde artikelen in de aanbieding bij hetzelfde product horen (via de bon of een goedgekeurde koppeling) en de titel nog geen naam van een product was.
+3. Dit is de enige samenvoeging zonder de beheerder. Het doel komt uit koppelingen die al vaststaan, en ze staat tussen de samenvoegingen, dus losmaken kan.
+4. Horen de artikelen bij geen of bij meerdere producten ("Alle AH Bakkersbrood" met brood en stokbrood), dan krijgt de titel een eigen product, zoals elke nieuwe naam.
+5. Staat er al een item van hetzelfde product op de lijst, dan komt het nieuwe er los bij.
+
 ## Werkwijze
 
 1. Een onbekende naam wordt eerst een eigen product.
 2. De AI doet een voorstel op basis van dit bestand, met zekerheid en reden.
-3. De beheerder keurt goed of af. Niets wordt automatisch samengevoegd.
+3. De beheerder keurt goed of af. Niets wordt automatisch samengevoegd, behalve de titel van een aanbieding die vanuit Voor jou op de lijst komt (zie "Aanbieding op de lijst").
 4. Nieuwe beslissingen worden in dit bestand vastgelegd onder "Vastgestelde producten".
