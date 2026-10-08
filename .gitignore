@@ -6,3 +6,4 @@ data/
 .env.*
 !.env.example
 supabase/.temp/
+__pycache__/
