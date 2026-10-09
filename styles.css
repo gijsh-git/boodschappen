@@ -358,7 +358,7 @@ button.koop:hover::before, button.koop:focus-visible::before { border-color: var
 #producten-zoek { display: block; width: 100%; margin: 0 0 8px; }
 /* Er staat geen knop naast de naam: zonder volle breedte past het uitgeklapte blok ernaast in plaats van eronder */
 #producten .bonnen-open { flex-basis: 100%; }
-/* Schuifje "Telt mee in aankoopprofiel" in het formulier van een type */
+/* Schuifjes "Telt mee in aankoopprofiel" en "Bonus-label alleen bij dezelfde variant" in het formulier van een type */
 .product-telt { justify-content: space-between; padding: 6px 0 10px; color: var(--grijs); font-size: 0.9rem; }
 
 /* Wat aandacht vraagt: per type of voorstel een groep, per term of artikel een rij met knoppen */

@@ -181,7 +181,7 @@ const Data = (() => {
     wijzigType(typeId, velden) {
       return db.rpc("update_product_type", {
         p_type: typeId, p_name: velden.naam, p_main_group: velden.hoofdgroep, p_scope: velden.valtEronder,
-        p_excludes: velden.valtErNietOnder, p_counts: velden.teltMee,
+        p_excludes: velden.valtErNietOnder, p_counts: velden.teltMee, p_variant: velden.variantTelt,
       });
     },
     // Het type bron gaat op in doel (beide bij naam); niet terug te draaien
