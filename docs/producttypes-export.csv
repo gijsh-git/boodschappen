@@ -199,9 +199,11 @@ Fruit, verse sappen;pruimen;Verse pruimen, ongeacht ras.;Gedroogde pruimen.;ja
 Fruit, verse sappen;sinaasappels;Hand- en perssinaasappels, ongeacht ras of verpakking.;"Mandarijnen en clementines (mandarijnen); sinaasappelsap (verse jus d'orange).";ja
 Fruit, verse sappen;smoothie;Gekoelde smoothies en verse groentesappen, ongeacht smaak of merk: mango ananas, groentesap wortel sinaas gember, smoothie met kokosmelk.;"Vers geperst vruchtensap zonder smoothie-basis (vers sap); houdbare sappen uit pak horen bij de sappen van de houdbare afdeling.";ja
 Geen boodschappen;bioscoopbon;Bioscoopkaartjes en cadeaubonnen voor de bioscoop, zoals Pathé.;;nee
+Geen boodschappen;bloemen;;;ja
 Geen boodschappen;draagtas;Draagtassen en plastic zakken van de supermarkt.;;nee
 Geen boodschappen;kleding;Kleding en feestkleding: oranje trui, shirt, sokken.;;nee
 Geen boodschappen;onleesbare invoer;Willekeurig getypte tekens zonder betekenis.;;nee
+Geen boodschappen;Planten;;;ja
 Geen boodschappen;toilettas;Toilettassen en etuis voor verzorgingsspullen.;;nee
 Geen boodschappen;wenskaart;Wenskaarten en ansichtkaarten voor elke gelegenheid.;;nee
 Groente, aardappelen;aardappelen;Losse en verpakte aardappelen, ongeacht ras of kookeigenschap: vastkokend, kruimig, aardappelen voor de stamppot.;Krieltjes (krieltjes), aardappelpartjes en -schijfjes (aardappelpartjes), zoete aardappelen (zoete aardappelen).;ja
@@ -347,6 +349,7 @@ Koek, snoep, chocolade;suikervrije drop;Drop zonder suiker, zoet of zout: Klene 
 Koffie, thee;cappuccino;Oploskoffie met melkbasis in zakjes of bus: cappuccino, latte macchiato, latte caramel.;Zwarte oploskoffie (oploskoffie), Dolce Gusto cups met melk (dolce gusto cups).;ja
 Koffie, thee;chai latte;Poedermix voor chai latte, ongeacht smaak: spiced, vanilla.;Chai-thee in zakjes zoals rooibos spicy chai (thee).;ja
 Koffie, thee;decaf dolce gusto cups;Cafeïnevrije Dolce Gusto cups, zoals lungo decaf.;Gewone Dolce Gusto cups (dolce gusto cups).;ja
+Koffie, thee;decaf filterkoffie;;;ja
 Koffie, thee;decaf koffiebonen;Cafeïnevrije hele koffiebonen, ongeacht merk.;Gewone koffiebonen (koffiebonen).;ja
 Koffie, thee;decaf koffiecapsules;Cafeïnevrije Nespresso-compatibele capsules, zoals lungo decaf.;Gewone capsules (koffiecapsules).;ja
 Koffie, thee;decaf koffiepads;Cafeïnevrije koffiepads, ongeacht merk.;Gewone koffiepads (koffiepads).;ja
