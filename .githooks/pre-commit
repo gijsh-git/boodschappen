@@ -1,0 +1,13 @@
+#!/bin/sh
+# Bij elke commit: de typelijst uit de database opnieuw afdrukken naar docs/producttypes-export.csv en
+# meenemen in de commit, zodat het bestand in git nooit achterloopt op de database.
+# Aanzetten, eenmalig per kopie van de repo: git config core.hooksPath .githooks
+# Lukt het lezen niet (geen netwerk, geen sleutel in .env), dan gaat de commit gewoon door met een
+# waarschuwing: de export is een afdruk, geen voorwaarde.
+hoofdmap="$(git rev-parse --show-toplevel)"
+if python3 "$hoofdmap/scripts/producttypes-exporteren.py"; then
+  git add "$hoofdmap/docs/producttypes-export.csv"
+else
+  echo "LET OP: docs/producttypes-export.csv is niet ververst en kan achterlopen op de database." >&2
+fi
+exit 0

@@ -1,6 +1,6 @@
 -- Controlequeries voor de overstap naar producttypes: de oude catalogus naast de nieuwe types.
 -- Draai ze één voor één in de SQL Editor: die toont alleen de uitkomst van de laatste opdracht.
--- Ze lezen alleen. Zinvol nadat scripts/naar-producttypes.py --echt heeft gedraaid, en vóór fase 4.
+-- Ze lezen alleen. De vergelijking met de oude catalogus (query 2, 4 en 5) zegt iets zolang de oude tabellen bestaan.
 
 -- ---------- 1. Hoeveel is er gekoppeld? ----------
 -- artikelen: alle artikelen hebben een oordeel als "onbeoordeeld" 0 is.
@@ -93,7 +93,7 @@ order by pr.name, aankopen desc;
 
 -- ---------- 6. Wat de AI nergens kwijt kon ----------
 -- Artikelen met het oordeel "geen type", gegroepeerd op het type dat volgens de AI ontbreekt.
--- Een voorstel dat vaak terugkomt is een kandidaat voor docs/producttypes.csv.
+-- Een voorstel dat vaak terugkomt is een kandidaat voor een nieuw type (create_product_type).
 select coalesce(t.suggested_type, '(geen gewone boodschap)') as voorstel, count(*) as artikelen,
        (array_agg(x.title order by x.title))[1:4] as voorbeelden
 from public.article_types t

@@ -29,6 +29,7 @@ De termen zijn kort en slordig: tikfouten, afkortingen, enkelvoud of meervoud, s
 - Een losse merknaam zonder soort krijgt "${GEEN}": het merk kan van alles zijn.
 - Een term die te vaag is om één type te kiezen ("sap", "papier", "saus", "groenten", "iets lekkers") krijgt "${GEEN}". Gok niet: een fout type geeft een label op iets wat de koper niet zoekt.
 - Geen boodschap, onleesbaar of een notitie ("niet vergeten", "bellen"): het type voor onleesbare invoer als dat bestaat, anders "${GEEN}".
+- voorstel: alleen bij "${GEEN}", als de term wel een gewone boodschap is maar het type in de lijst ontbreekt ("afwasborstel"): de naam die dat type zou hebben, zoals op een boodschappenlijst (kleine letters, zonder merk). Bij een vage term, een losse merknaam of een gekozen type een lege tekst.
 - zekerheid: "hoog" als de term zonder twijfel dit type is, "middel" als het waarschijnlijk klopt, "laag" bij echte twijfel. Bij "${GEEN}" zegt de zekerheid hoe zeker je bent dat geen type past.
 - reden: één korte zin in het Nederlands.
 
@@ -36,7 +37,7 @@ Geef voor elke term precies één oordeel, met het nummer van de term.`;
 
 type Soort = { id: string; naam: string; hoofdgroep: string; valt_eronder: string | null; valt_er_niet_onder: string | null };
 type Term = { sleutel: string; term: string };
-type Rij = { term: string; type_id: string | null; brand: string | null; confidence: string; reason: string };
+type Rij = { term: string; type_id: string | null; brand: string | null; suggested_type: string | null; confidence: string; reason: string };
 
 function antwoord(inhoud: unknown, status = 200) {
   return new Response(JSON.stringify(inhoud), {
@@ -120,10 +121,11 @@ Deno.serve(async (req) => {
               term: { type: "integer", description: "Het nummer van de term in het bericht" },
               type: { type: "string", enum: [GEEN, ...perNaam.keys()], description: "De naam van het type, letterlijk uit de lijst" },
               merk: { type: "string", description: "Het merk dat de term naast de soort noemt, anders leeg" },
+              voorstel: { type: "string", description: `Alleen bij "${GEEN}": het type dat in de lijst ontbreekt, anders leeg` },
               zekerheid: { type: "string", enum: Object.keys(ZEKERHEID) },
               reden: { type: "string" },
             },
-            required: ["term", "type", "merk", "zekerheid", "reden"],
+            required: ["term", "type", "merk", "voorstel", "zekerheid", "reden"],
             additionalProperties: false,
           },
         },
@@ -169,6 +171,7 @@ Deno.serve(async (req) => {
         term: termen[nr - 1].term,
         type_id: soort ? soort.id : null,
         brand: soort ? String(o.merk ?? "").trim() || null : null,
+        suggested_type: soort ? null : String(o.voorstel ?? "").trim().toLowerCase() || null,
         confidence: ZEKERHEID[o.zekerheid],
         reason: String(o.reden ?? "").trim(),
       });

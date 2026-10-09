@@ -383,7 +383,7 @@ Aanleiding (8 oktober 2026): de catalogus groeit met elke nieuwe naam en elke bo
 
 Besluiten: een type is het wisselniveau, niet fijner ("brood", niet "volkorenbrood"); een AI-koppeling telt direct voor label, profiel en Voor jou; een favoriet is een type, een merk plus type, of alleen een merk.
 
-- [x] Fase 1: tabel `product_types`, `scripts/producttypes-voorstellen.py` (voorstel naar `docs/producttypes.csv`) en `scripts/producttypes-laden.py`.
+- [x] Fase 1 (de scripts van fase 1 en 3 waren eenmalig en zijn op 9 oktober 2026 verwijderd; ze staan in de git-historie): tabel `product_types`, `scripts/producttypes-voorstellen.py` (voorstel naar `docs/producttypes.csv`) en `scripts/producttypes-laden.py`.
 - [x] Gijs leest de typelijst na en laadt hem (8 oktober 2026: 606 types). "sap", "papier" en "deeg" zitten bewust in geen enkel type: te vaag om te kiezen.
 - [x] Fase 2: `article_types` en de Edge Function `artikelen-classificeren`: nieuwe artikelen krijgen bij het ophalen van de bonus in één ronde een type (titel, merk en categorie als invoer). Eerste ronde over alle artikelen.
 - [x] Fase 3: `scripts/naar-producttypes.py` koppelt de namen van catalogusproducten, de lijstnamen en de artikelen uit de oude catalogus aan een type; `term_synonyms` wordt de ene tabel naam → type. Gedaan op 9 oktober 2026: 2402 van de 2422 artikelen hebben een type, 939 namen zijn gekoppeld (929 uit de catalogus en de lijstnamen, 10 via de AI) en 1274 van de 1281 aankopen hebben een type; "papier", "sap" en "deeg" bewust niet. Tomatensoep en kippensoep zijn opgegaan in soep. Lijstitems en favorieten hoeven niet omgezet: er zijn 4 items (hun type volgt uit de naam) en nog geen favorieten.
@@ -394,6 +394,50 @@ Besluiten: een type is het wisselniveau, niet fijner ("brood", niet "volkorenbro
 - [ ] Fase 8: opruimen na een paar weken: `products`, `product_aliases`, `product_merges`, `article_links`, `article_link_rejections`, `article_names` en de scripts eromheen.
 
 Vervangt de open punten van deel 3 (de AI-stap en het blok in het scherm Producten).
+
+##### Fase 6 uitgewerkt: het scherm Koppelingen
+
+Uitgeschreven op 9 oktober 2026, nog niet gebouwd.
+
+Doel: de beheerder ziet wat de AI heeft gekoppeld, corrigeert wat fout is en ziet welke types ontbreken. Niets wacht op goedkeuring: alles telt al mee, het scherm is er om achteraf bij te sturen.
+
+Uitgangspunt in cijfers (9 oktober 2026): 1716 artikelen met een oordeel van de AI dat nog niet is nagekeken (1563 zekerheid hoog, 131 middel, 2 laag, 20 zonder type), en 19 termen via de AI (10 zonder type). Alles nakijken is geen werk voor een telefoon, dus het scherm vraagt alleen aandacht voor wat twijfelachtig is. Zekerheid hoog is wel in te zien, maar staat niet als taak klaar.
+
+Het scherm (zelfde plek: Profiel > "Koppelingen beheren", view `producten`, alleen voor de beheerder), van boven naar beneden:
+
+1. **Termen** (`<details>`, open als er iets in staat): wat mensen typten en de AI beoordeelde, nieuwste eerst. Per rij de term, het type of "geen type", het merk als dat erbij hoort, de zekerheid, de reden en de datum. Knoppen: "Klopt", "Ander type", en bij een type ook "Geen type".
+2. **Artikelen om na te kijken**: de oordelen met zekerheid middel en laag, gegroepeerd per type. Per groep "Alles klopt"; per artikel de titel, het merk, de categorie, de reden, en "Ander type" of "Geen type".
+3. **Geen type**: artikelen waar de AI niets bij vond, gegroepeerd op het type dat volgens de AI ontbreekt, met het aantal artikelen. Per groep "Type aanmaken" (naam, hoofdgroep en afbakening invullen; de artikelen worden daarna opnieuw beoordeeld) of "Geen boodschap" (blijft zonder type en verdwijnt uit de lijst). Per artikel ook "Ander type".
+4. **Types**: zoekveld en de lijst van alle types met het aantal artikelen, namen en aankopen. Een type openklappen toont de afbakening, de schakelaar "telt niet mee in profiel", en zijn namen en artikelen (ook die met zekerheid hoog), elk met "Ander type". Hernoemen en de afbakening wijzigen kan hier ook.
+
+"Ander type" opent één keuzelijst met een zoekveld over alle types, gegroepeerd per hoofdgroep; die wordt overal hergebruikt.
+
+Wat verdwijnt: de samenvoegbalk, de blokken "Voorstellen" en "Twijfelgevallen", de oude productlijst, en in de code alles rond `product_overview`, `merge_products`, `undo_merge`, `article_link_overview`, `approve_article_links` en `reject_article_link`. De databasefuncties zelf blijven tot fase 8.
+
+Database (één migratie, alles alleen voor de beheerder):
+
+- `type_link_overview()`: in één keer de termen, de artikelen om na te kijken, de artikelen zonder type en de types met hun tellingen.
+- `type_details(p_type)`: de namen en artikelen van één type, pas bij openklappen.
+- `mark_links_reviewed(p_terms, p_articles)`: "Klopt" en "Alles klopt"; zet alleen `reviewed_at`.
+- Bestaand en hergebruikt: `save_term_types(…, 'manual')` en `set_article_types(…, 'manual')` voor "Ander type" en "Geen type", `save_product_types()` voor een nieuw of gewijzigd type, `reset_untyped_articles()` daarna.
+- Nieuw voor termen: de AI onthoudt bij "geen type" welk type ontbreekt (`term_synonyms.suggested_type`, zoals bij artikelen), zodat "afwasborstel" in blok 3 terechtkomt naast de artikelen.
+- Hernoemen van een type: `rename_product_type(p_type, p_name)`; de oude naam blijft werken als naam van het type.
+
+Client, volgens `ARCHITECTURE.md`: de calls in `data.js`, state en regels in `logica.js` (vervangen het deel "Producten"), `app.js` rendert alleen. De logica van dit scherm staat al in `logica.js`, dus er is geen aparte verhuiscommit nodig.
+
+Volgorde, elk een eigen commit met een test:
+
+1. Migratie met de leesfuncties en `mark_links_reviewed`; nalopen in de SQL Editor. (Gedaan op 9 oktober 2026, samen met de export en de functies om een type aan te maken en te wijzigen.)
+2. Het scherm alleen-lezen: de vier blokken en de typelijst.
+3. De acties: "Klopt", "Ander type", "Geen type", met de keuzelijst.
+4. "Type aanmaken", hernoemen, samenvoegen en de schakelaar.
+5. Opruimen van de oude code in de client, `CACHE` bumpen, `CLAUDE.md` bijwerken.
+
+Open keuzes:
+
+- **De typelijst heeft één bron: de database** (besluit 9 oktober 2026). `docs/producttypes-export.csv` is alleen een afdruk, die `scripts/producttypes-exporteren.py` bij elke commit ververst via de git-hook in `.githooks/`. Types toevoegen aan een bestand en opnieuw laden bestaat niet meer; de scripts daarvoor zijn verwijderd. Tot stap 4 van deze fase af is, kan een type alleen via de SQL Editor worden aangemaakt, gewijzigd of samengevoegd.
+- **Merk bij een term corrigeren** ("sensodyne tandpasta" kreeg het verkeerde merk): later, niet in de eerste versie; "Ander type" laat het merk staan, "Geen type" haalt het weg.
+- **Een term die als "geen type" is beoordeeld opnieuw laten beoordelen** na een nieuw type: gebeurt automatisch voor termen waarvan het voorgestelde type gelijk is aan het nieuwe type, anders met de hand.
 
 ### [ ] Stap 6 – Automatische aankoopimport (alleen eigen accounts)
 
