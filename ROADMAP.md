@@ -600,9 +600,10 @@ Uitgangspunten:
 
 #### Deel 4 – Keuzes vastleggen
 
-- [ ] Elke keuze wordt opgeslagen: lijst, wie, oorspronkelijke term, type, variant, aanbieding, gekozen artikelen, actie (gekozen, weggeklikt, teruggehaald) en tijdstip.
-- [ ] Niets leest deze data nog. Hij is bedoeld om later de matching en de volgorde te verbeteren (welke overstappen maken mensen echt) en vervangt de oude persoonlijke laag.
+- [x] Elke keuze wordt opgeslagen: lijst, wie, oorspronkelijke term, type, variant, aanbieding, gekozen artikelen, actie (gekozen, weggeklikt, teruggehaald) en tijdstip.
+- [x] Niets leest deze data nog. Hij is bedoeld om later de matching en de volgorde te verbeteren (welke overstappen maken mensen echt) en vervangt de oude persoonlijke laag.
 - [ ] Voor de publieke fase: bewaartermijn vastleggen (AVG).
+- Gebouwd op 9 oktober 2026 (migratie `keuzes_vastleggen`, tabel `offer_actions`). Er is een vierde actie bij: "gewist" (keuze wissen). De aanbieding staat er als momentopname in, omdat aanbiedingen na 28 dagen worden opgeruimd. Terugvallen na afloop wordt niet vastgelegd. De rijen verdwijnen nu alleen met de lijst.
 
 Besloten op 9 oktober 2026:
 
