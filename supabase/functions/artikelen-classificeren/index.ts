@@ -4,7 +4,7 @@
 // AANBIEDINGEN_SLEUTEL). Per aanroep beoordeelt de AI een aantal artikelen die nog geen oordeel hebben, met
 // titel, merk, inhoud en categorie als invoer en de hele typelijst erbij, en slaat dat op via
 // save_article_types. Bij hetzelfde oordeel geeft de AI de variant (de smaak of soort binnen het type), die
-// alleen de volgorde in het bonuspaneel bepaalt; een artikel dat al een type had krijgt alleen die variant.
+// bepaalt bij welke term het artikel een Bonus-label geeft en de volgorde in het bonuspaneel; een artikel dat al een type had krijgt alleen die variant.
 // Het antwoord zegt hoeveel er nog over zijn; het script roept opnieuw aan tot dat 0 is.
 // Er gaan alleen artikelgegevens en de typelijst naar de AI. De API-sleutel staat alleen in Supabase
 // secrets (ANTHROPIC_API_KEY).

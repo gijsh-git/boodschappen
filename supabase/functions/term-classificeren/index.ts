@@ -5,7 +5,7 @@
 // De functie haalt de open termen op met term_work(), laat de AI per term een type uit de lijst kiezen (en
 // het merk als de term er een noemt) en slaat dat op met save_term_judgments(): als naam met bron ai, zonder
 // goedkeuring vooraf. Het label op de lijst verschijnt daarna vanzelf. Bij hetzelfde oordeel geeft de AI de
-// variant die de term noemt ("tomaat" bij "tomatensoep"), voor de volgorde in het bonuspaneel. Met
+// variant die de term noemt ("tomaat" bij "tomatensoep"): de term staat dan alleen voor die artikelen. Met
 // { "varianten": true } in het verzoek (het wekelijkse script) vult een aanroep ook de variant aan bij namen
 // die al een type hebben; hun type blijft wat het is. Er gaan alleen de termen en de typelijst naar de AI,
 // geen gebruikers of lijsten. De API-sleutel staat alleen in Supabase secrets.

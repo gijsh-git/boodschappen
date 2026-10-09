@@ -2850,7 +2850,7 @@ function kpArtikelGroep(groep) {
   return blok;
 }
 
-// Naam, hoofdgroep, afbakening en de vlaggen van een type: voor een nieuw type en voor een bestaand
+// Naam, hoofdgroep, afbakening en de vlag van een type: voor een nieuw type en voor een bestaand
 function kpTypeFormulier(begin, knopTekst, bewaar) {
   const form = kpEl("form", "type-formulier");
   const veld = (soort, waarde, label, max) => {
@@ -2876,21 +2876,13 @@ function kpTypeFormulier(begin, knopTekst, bewaar) {
   telt.setAttribute("role", "switch");
   telt.checked = begin.teltMee !== false;
   label.append(kpEl("span", "", "Telt mee in aankoopprofiel"), telt);
-  // Alleen bij een bestaand type: een nieuw type begint zonder
-  const variantLabel = kpEl("label", "product-telt");
-  const variant = kpEl("input", "schakelaar");
-  variant.type = "checkbox";
-  variant.setAttribute("role", "switch");
-  variant.checked = begin.variantTelt === true;
-  variantLabel.append(kpEl("span", "", "Bonus-label alleen bij dezelfde variant"), variant);
-  variantLabel.hidden = begin.variantTelt === undefined;
   const opslaan = kpEl("button", "", knopTekst);
   opslaan.type = "submit";
-  form.append(naam, hoofdgroep, eronder, nietEronder, label, variantLabel, opslaan);
+  form.append(naam, hoofdgroep, eronder, nietEronder, label, opslaan);
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     bewaar({ naam: naam.value.trim(), hoofdgroep: hoofdgroep.value, valtEronder: eronder.value.trim(),
-             valtErNietOnder: nietEronder.value.trim(), teltMee: telt.checked, variantTelt: variant.checked }, opslaan);
+             valtErNietOnder: nietEronder.value.trim(), teltMee: telt.checked }, opslaan);
   });
   return form;
 }
@@ -2929,8 +2921,7 @@ function kpTypeRij(type) {
   knop.setAttribute("aria-expanded", open);
   const kop = kpEl("div", "bonnen-kop");
   kop.append(kpEl("span", "", type.naam), kpEl("small", "", `${type.artikelen} art. · ${type.aankopen}×`));
-  knop.append(kop, kpEl("p", "bonnen-info", type.hoofdgroep + (type.telt_mee ? "" : " · telt niet mee in het aankoopprofiel")
-    + (type.variant_telt ? " · label per variant" : "")));
+  knop.append(kop, kpEl("p", "bonnen-info", type.hoofdgroep + (type.telt_mee ? "" : " · telt niet mee in het aankoopprofiel")));
   knop.addEventListener("click", () => {
     Logica.openType(open ? null : type.id);
     renderKoppelingen();
@@ -2941,7 +2932,7 @@ function kpTypeRij(type) {
 
   const blok = kpEl("div", "bonnen-regels");
   blok.append(kpTypeFormulier(
-    { naam: type.naam, hoofdgroep: type.hoofdgroep, valtEronder: type.valt_eronder, valtErNietOnder: type.valt_er_niet_onder, teltMee: type.telt_mee, variantTelt: !!type.variant_telt },
+    { naam: type.naam, hoofdgroep: type.hoofdgroep, valtEronder: type.valt_eronder, valtErNietOnder: type.valt_er_niet_onder, teltMee: type.telt_mee },
     "Opslaan", (velden, k) => kpDoe(k, () => Logica.wijzigType(type, velden), "Opgeslagen.")));
 
   // Samenvoegen: dit type gaat op in een ander. Dat is niet terug te draaien.

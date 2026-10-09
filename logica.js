@@ -49,7 +49,7 @@ const Logica = (() => {
   //   termen:      [{ sleutel, term, type_id, type, merk, zekerheid, reden, voorstel, op }]
   //   artikelen:   [{ supermarkt, artikel_id, titel, merk, inhoud, categorie, type_id, type, zekerheid, reden }]
   //   zonder_type: [{ supermarkt, artikel_id, titel, merk, inhoud, categorie, zekerheid, reden, voorstel }]
-  //   types:       [{ id, naam, hoofdgroep, valt_eronder, valt_er_niet_onder, telt_mee, variant_telt, artikelen, namen, aankopen }]
+  //   types:       [{ id, naam, hoofdgroep, valt_eronder, valt_er_niet_onder, telt_mee, artikelen, namen, aankopen }]
   let koppelingen = null;
   let typeOpen = null; // id van het type dat is opengeklapt
   let typeDetails = {}; // type-id -> { namen, artikelen }, pas opgehaald bij openklappen
@@ -542,7 +542,7 @@ const Logica = (() => {
       return this.herlaadKoppelingen();
     },
 
-    // velden: { naam, hoofdgroep, valtEronder, valtErNietOnder, teltMee }, bij wijzigen ook variantTelt. Geeft { nieuw } terug met wat erbij kwam.
+    // velden: { naam, hoofdgroep, valtEronder, valtErNietOnder, teltMee }. Geeft { nieuw } terug met wat erbij kwam.
     async maakType(velden, voorstel) {
       if (!velden.naam.trim()) return { fout: "Geef het type een naam." };
       if (!velden.hoofdgroep) return { fout: "Kies een hoofdgroep." };
