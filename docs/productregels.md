@@ -74,7 +74,7 @@ Alle kwark, ongeacht merk, vetgehalte of smaak: danio, lindahls, optimel, magere
 
 ### yoghurt
 
-Alle yoghurt, ongeacht merk of vetgehalte. Skyr en drinkyoghurt zijn aparte producten.
+Alle yoghurt, ongeacht merk of vetgehalte. Griekse yoghurt, skyr en drinkyoghurt zijn aparte producten: wie Griekse yoghurt koopt wisselt bij een aanbieding niet naar gewone yoghurt.
 
 ### eiwitdrank
 

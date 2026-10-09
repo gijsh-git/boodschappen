@@ -188,6 +188,8 @@ Fruit, verse sappen;citroenen;Verse citroenen, los of in een netje.;"Limoenen (l
 Fruit, verse sappen;druiven;Witte, rode en blauwe druiven, met of zonder pit.;Rozijnen.;ja
 Fruit, verse sappen;frambozen;Verse frambozen in een bakje.;"Blauwe bessen (blauwe bessen); diepvries frambozen.";ja
 Fruit, verse sappen;fruitsalade;Vers gesneden fruit in een bakje of doosje: fruitsalade, ananasstukjes en -sticks, gesneden watermeloen, aardbei cantaloupe kiwi.;Hele vruchten zoals een hele ananas (ananas) of een hele meloen (meloen).;ja
+Fruit, verse sappen;granaatappels;Hele verse granaatappels en granaatappelpitjes in een bakje.;Gemengd gesneden fruit (fruitsalade).;ja
+Fruit, verse sappen;grapefruits;Verse grapefruits, roze of wit, los of in een netje.;Sinaasappels (sinaasappels).;ja
 Fruit, verse sappen;kiwi's;Groene en gele kiwi's, los of in een bakje.;;ja
 Fruit, verse sappen;limoenen;Verse limoenen, los of in een netje.;Citroenen (citroenen).;ja
 Fruit, verse sappen;mandarijnen;Mandarijnen, clementines en easy peelers.;Sinaasappels (sinaasappels).;ja
@@ -258,6 +260,7 @@ Groente, aardappelen;spruitjes;Verse spruitjes, los of schoongemaakt.;Spruitjes 
 Groente, aardappelen;spruitjes uit pot;Spruitjes uit pot of blik.;Verse spruitjes (spruitjes).;ja
 Groente, aardappelen;sugarsnaps;Verse sugarsnaps en peultjes in een bakje of zak.;Sperziebonen horen bij sperziebonen.;ja
 Groente, aardappelen;tomaten;Tomaten, trostomaten en vleestomaten.;Cherrytomaten en romaatjes (cherrytomaten), tomatenblokjes en passata.;ja
+Groente, aardappelen;tuinkers;Verse tuinkers en andere kiemgroente in een bakje.;Sla (sla).;ja
 Groente, aardappelen;uien;Gele uien en sjalotten, los of in een net.;Rode uien (rode uien), lente-ui (lente-uitjes).;ja
 Groente, aardappelen;verse basilicum;Verse basilicum in een plantje, bosje of bakje.;Gedroogde basilicum hoort bij basilicum.;ja
 Groente, aardappelen;verse dille;Verse dille in een bosje of bakje.;Gedroogde dille hoort bij kruiden.;ja
@@ -269,6 +272,7 @@ Groente, aardappelen;witte bonen;Witte bonen uit pot of blik, ook cannellini bon
 Groente, aardappelen;wortels;Verse wortels en peen: winterpeen, bospeen, worteltjes, geraspte wortel.;Wortelen uit pot (doperwten bij doperwten met wortelen).;ja
 Groente, aardappelen;zoete aardappelen;Verse zoete aardappelen, heel of gesneden.;Gewone aardappelen (aardappelen), ovengroente met zoete aardappel (ovengroente).;ja
 Groente, aardappelen;zuurkool;Zuurkool, naturel of met wijn, gekoeld of uit pot.;Spitskool (spitskool).;ja
+Huishouden;afwasborstels;Borstels voor de afwas met de hand, zoals afwasborstels met steel of navulkopjes.;Schuursponsjes (sponsjes), vaatdoekjes (vaatdoekjes).;ja
 Huishouden;afwasmiddel;Afwasmiddel voor de afwas met de hand: dreft, sun.;Vaatwastabletten (vaatwastabletten).;ja
 Huishouden;allesreiniger;Allesreiniger voor het hele huis, ook navulling of eco: ajax, blue wonder, ecover, marcel's green soap.;Reinigers voor één ruimte: badkamerreiniger, keukenreiniger, glasreiniger, vloerreiniger.;ja
 Huishouden;aluminiumfolie;Aluminiumfolie op rol.;Huishoudfolie, bakpapier.;ja
@@ -330,6 +334,7 @@ Kaas;kaas;Hollandse en andere harde kaas aan het stuk of in plakken, ongeacht le
 Kaas;mascarpone;Mascarpone voor tiramisu en sauzen.;Roomkaas (roomkaas).;ja
 Kaas;mozzarella;Verse mozzarella in een bol of minibolletjes, ook buffelmozzarella.;Geraspte mozzarella (geraspte kaas).;ja
 Kaas;parmezaanse kaas;Parmezaan en grana padano aan het stuk of in schilfers.;Geraspte parmezaan (geraspte kaas).;ja
+Kaas;ricotta;Verse Italiaanse ricotta in een bakje, ongeacht merk.;Mascarpone (mascarpone), roomkaas (roomkaas).;ja
 Kaas;roodflorakaas;Zachte Franse kaas met roodflora of korst, ongeacht merk: clemont rouge, clemont blanc, saint paulin.;Clemont bleu (blauwe kaas), brie (brie), camembert (camembert).;ja
 Kaas;roomkaas;Roomkaas om te smeren of dippen, ongeacht merk of smaak: heks'nkaas, philadelphia, roomkaas sweet pepper.;Smeerkaas in een kuipje (smeerkaas), mascarpone (mascarpone).;ja
 Kaas;schapenkaas;Schapenkaas en Spaanse kaas aan het stuk: queso iberico, manchego.;Feta (feta).;ja
@@ -491,6 +496,8 @@ Soepen, sauzen, kruiden, olie;spicy mayo;Pittige mayo als topping, zoals crispy 
 Soepen, sauzen, kruiden, olie;suiker;Kristalsuiker, basterdsuiker, poedersuiker en rietsuiker, ongeacht merk.;Zoetstof hoort hier niet bij, gembersiroop hoort bij gembersiroop.;ja
 Soepen, sauzen, kruiden, olie;tuinbonen uit pot;Tuinbonen en tuinboontjes in pot of blik.;Verse of diepvries tuinbonen.;ja
 Soepen, sauzen, kruiden, olie;vegetarische knakworst;Vegetarische en plantaardige knakworstjes in pot of blik.;Knaks met vlees (knakworst).;ja
+Soepen, sauzen, kruiden, olie;verse munt;Verse munt in een bosje of bakje.;Gedroogde munt (kruiden).;ja
+Soepen, sauzen, kruiden, olie;wasabi;;;ja
 Soepen, sauzen, kruiden, olie;witte bonen in tomatensaus;Witte bonen in tomatensaus, zoals Hak of baked beans.;Witte bonen naturel (witte bonen).;ja
 Soepen, sauzen, kruiden, olie;wokolie;Wokolie, ook met knoflook of gember gearomatiseerd.;Olijfolie (olijfolie), zonnebloemolie (zonnebloemolie).;ja
 Soepen, sauzen, kruiden, olie;worteltjes uit pot;Worteltjes in pot of blik.;Doperwtjes met worteltjes (doperwtjes en worteltjes), verse wortels.;ja
@@ -530,6 +537,7 @@ Vis;mosselen;Verse of kant-en-klare mosselen, met of zonder saus.;;ja
 Vis;surimi;Surimi en krabsticks, ongeacht merk.;Surimi-krabsalade (vissalade).;ja
 Vis;tonijn;Tonijn uit blik of pot, op water of olie, ongeacht merk.;Tonijnsalade (vissalade).;ja
 Vis;tonijnsteak;Verse of diepgevroren rauwe tonijnsteak en tonijnfilet.;Tonijn uit blik hoort bij tonijn.;ja
+Vis;viskuit;Viskuit in een potje, zoals zalmeitjes en kaviaar.;Gerookte zalm (gerookte zalm).;ja
 Vis;witte vis;Filet van witvis, vers of diepgevroren, ongeacht soort: kabeljauw, schol, pangasius, koolvis, tilapia, heek, barramundi.;Gepaneerde of gefrituurde vis (vissticks, kibbeling), zalm (zalmfilet).;ja
 Vis;zalmfilet;Verse of diepgevroren rauwe zalmfilet, ongeacht herkomst, merk of biologisch: zalmfilet, zalmfilet à la minute, wilde sockeye zalm.;Gerookte zalm (gerookte zalm), zalmsalade (vissalade).;ja
 Vlees;biefstuk;Runderbiefstuk, kogelbiefstuk, entrecote en ossenhaas.;Hertenbiefstuk (hertenbiefstuk), stoofvlees (stoofvlees).;ja
@@ -588,6 +596,7 @@ Zuivel, eieren;crème fraîche;Crème fraîche, ook light niet: alleen de gewone
 Zuivel, eieren;drinkyoghurt;Drinkyoghurt van elk merk of smaak, zoals Optimel drink of Melkunie drinkyoghurt.;Eiwitdranken (eiwitdrank), ontbijtdranken als Alpro Meal to go (ontbijtdrank), karnemelk (karnemelk).;ja
 Zuivel, eieren;eieren;Eieren en scharreleieren, ook vrije-uitloop en biologisch.;Eiersalade (broodsalade).;ja
 Zuivel, eieren;eiwitdrank;Alle kant-en-klare eiwitdranken en -shakes, ongeacht merk of smaak: Melkunie Protein, Hipro, XXL Nutrition.;Eiwitpoeder (eigen type), proteïnekwark (kwark), proteïnepudding (pudding).;ja
+Zuivel, eieren;griekse yoghurt;Griekse yoghurt en yoghurt Griekse stijl, ongeacht merk, vetgehalte of smaak: 0%, 2%, 10%, met honing.;Gewone yoghurt (yoghurt), skyr (skyr), kwark (kwark), plantaardige yoghurt (plantaardige yoghurt).;ja
 Zuivel, eieren;halfvolle melk;Halfvolle melk van elk merk, ook biologisch of lang houdbaar.;Volle melk (volle melk), melk zonder vetgehalte (melk).;ja
 Zuivel, eieren;halvarine;Halvarine, margarine en plantaardige smeersels voor op brood, ongeacht merk: Blue Band, Bona.;Smeerbare boter en roomboter (boter), vloeibare bakboter (bakboter).;ja
 Zuivel, eieren;karnemelk;Karnemelk van elk merk.;Drinkyoghurt (drinkyoghurt).;ja
@@ -602,8 +611,8 @@ Zuivel, eieren;ontbijtdrank;Kant-en-klare ontbijtdranken als maaltijd onderweg: 
 Zuivel, eieren;plantaardige kwark;Plantaardige variatie op kwark, naturel of met smaak, zoals Alpro.;Zuivelkwark (kwark), plantaardige yoghurt (plantaardige yoghurt).;ja
 Zuivel, eieren;plantaardige melk;Plantaardige drinks als vervanger van melk: sojadrink, amandeldrink, cashewdrink, haverdrink.;Kokosmelk voor koken (kokosmelk), plantaardige yoghurt (plantaardige yoghurt).;ja
 Zuivel, eieren;pudding;Puddingen en kanten-klare toetjes in bakjes: vanille-, griesmeel- en chocoladepudding, chocolademousse, proteïnepudding.;Vla in pak (vla), yoghurt met smaak (yoghurt).;ja
-Zuivel, eieren;skyr;Alle skyr, ongeacht merk of smaak.;Yoghurt en Griekse yoghurt (yoghurt), kwark (kwark).;ja
+Zuivel, eieren;skyr;Alle skyr, ongeacht merk of smaak.;Yoghurt (yoghurt), Griekse yoghurt (griekse yoghurt), kwark (kwark).;ja
 Zuivel, eieren;slagroom;Slagroom in pak of spuitbus, ook plantaardige slagroom.;Kookroom (kookroom), koffiemelk (koffiemelk).;ja
 Zuivel, eieren;vla;Vla in pak of fles, ongeacht smaak: vanillevla, chocoladevla, dubbelvla.;Pudding en chocolademousse in bakjes (pudding).;ja
 Zuivel, eieren;volle melk;Volle melk van elk merk, ook biologisch of weidemelk.;Halfvolle melk (halfvolle melk).;ja
-Zuivel, eieren;yoghurt;Alle zuivelyoghurt ongeacht merk, vetgehalte of smaak: magere, halfvolle, volle, Griekse, vanilleyoghurt, Activia, proteïneyoghurt.;Skyr (skyr), drinkyoghurt (drinkyoghurt), kwark (kwark), plantaardige yoghurt (plantaardige yoghurt), kefir (kefir).;ja
+Zuivel, eieren;yoghurt;Alle zuivelyoghurt ongeacht merk, vetgehalte of smaak: magere, halfvolle, volle, vanilleyoghurt, Activia, proteïneyoghurt.;Griekse yoghurt (griekse yoghurt), skyr (skyr), drinkyoghurt (drinkyoghurt), kwark (kwark), plantaardige yoghurt (plantaardige yoghurt), kefir (kefir).;ja
