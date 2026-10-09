@@ -22,6 +22,7 @@ Bij twijfel: samenvoegen. Te ruim samenvoegen kost hooguit een irrelevante aanbi
 - Merken van hetzelfde soort product: "dr. oetker pizza" onder "pizza", "lay's chips" onder "chips", "heineken bier" onder "bier".
 - Smaken en soorten binnen hetzelfde product: pizza margherita onder "pizza", skyr aardbei onder "skyr", lipton raspberry ice tea onder "ice tea".
 - Vorm en snit: penne en rigatoni onder "pasta", kipdijreepjes onder "kipdijfilet", kaas in plakken onder "kaas".
+- Pijnstillers: paracetamol en ibuprofen samen onder "pijnstillers".
 - Rassen en variëteiten: elstar en pink lady onder "appels", trostomaten onder "tomaten", basmati onder "rijst".
 - Biologisch en gewoon: biologische komkommer onder "komkommer".
 - Huismerken van supermarkten (AH, Jumbo, Plus, g'woon): worden al bij normalisatie weggehaald.
@@ -41,6 +42,7 @@ Bij twijfel: samenvoegen. Te ruim samenvoegen kost hooguit een irrelevante aanbi
 - Sauzen met een eigen smaak of gebruik (knorr saus, maggi saus, groentesaus, woksaus) blijven apart. Hetzelfde geldt voor specerijmengsels met een eigen smaak (garam masala, za'atar, ras el hanout, world spice blends): die zijn geen "kruidenmix".
 - Drop tegenover gums en winegums: zoute en zoete drop horen niet bij "snoep".
 - Beleg is geen brood: "kip voor op brood" is beleg.
+- Chorizo is een eigen product, apart van "salami": je bakt het ook in een gerecht. Fuet en andere gedroogde worst in plakken blijven bij "salami".
 - Een losse merknaam zonder product ("zaanse hoeve", "melkunie", "sempio", "thai thai") wordt niet samengevoegd; die krijgt eerst een echte naam via data/ah-namen.json.
 - Een productnaam is de soort, niet het merk: "handzeep", niet "palmolive handzeep"; "snoep", niet "haribo snoep"; "kruiden", niet "verstegen kruiden". Een merk in de productnaam trekt voorstellen naar dat merk in plaats van naar de soort. Zo'n product wordt hernoemd of samengevoegd met het product van de soort.
 
@@ -77,6 +79,10 @@ Alle yoghurt, ongeacht merk of vetgehalte. Skyr en drinkyoghurt zijn aparte prod
 ### eiwitdrank
 
 Alle kant-en-klare eiwitdranken en -shakes, ongeacht merk of smaak: hipro, xxl nutrition, melkunie protein.
+
+### soep
+
+Kant-en-klare soep in zak, blik of vers, ongeacht merk of smaak: tomatensoep, kippensoep, groentesoep, pompoensoep, gepureerde soep en oosterse soepen. Besluit (9 oktober 2026): tomatensoep en kippensoep zijn geen eigen product. Wie "tomatensoep" op de lijst zet, ziet daardoor ook een aanbieding op een andere soep, en wie "soep" opschrijft mist de tomatensoep niet. Erwtensoep is een maaltijd en blijft apart.
 
 ### bier
 
@@ -184,6 +190,8 @@ Twee producten, beide zonder merk in de naam, zodat elk merk eronder valt (Verst
 
 "kruidenmix": alle mixen voor een gerecht of een vleessoort, in een zakje of strooibus: bami, nasi, chili con carne, stamppot, pasta bolognese, en vlees-, vis-, aardappel- en Italiaanse kruiden (kip pittige knoflook, speklapjes, stoofvlees, gehakt). Niet: specerijmengsels met een eigen smaak (world spice blends, garam masala).
 
+"specerijmengsel": specerijmengsels met een eigen smaak, zoals de world spice blends (garam masala, za'atar, ras el hanout, cajun, furikake). Besluit (9 oktober 2026): dit blijft een eigen product naast "kruidenmix", ook al zet de supermarkt ze vaak in dezelfde categorie.
+
 "kruiden": losse kruiden en specerijen: peperkorrels, paprikapoeder. Bestaat er voor een kruid een eigen product (oregano, basilicum, bieslook, nootmuskaat), dan hoort het artikel daar.
 
 ### halvarine
@@ -245,7 +253,16 @@ Besluiten (8 oktober 2026):
 8. Een term die na alle lagen niets oplevert, komt in `unmatched_terms` (alleen de term, hoe vaak en wanneer; geen gebruiker of lijst). "Niets" gaat over alle artikelen die ooit in een aanbieding zaten: een bekende term zonder aanbieding deze week is niet onbekend.
 9. Nog niet gebouwd: een AI-stap die de termen uit `unmatched_terms` aan een naam koppelt en dat als synoniem met bron `ai` opslaat.
 
-Controleren kan met `docs/matching-controle.sql`.
+Besluiten (9 oktober 2026), bij de overstap naar producttypes. Ze vervangen besluit 1 tot en met 5 en 9 hierboven:
+
+10. Een term staat voor een type, een merk, of allebei. De volgorde: de naam van een type, een merk, een naam van een type (`term_synonyms`), hetzelfde na stamming, een merk met een soort erbij, en als laatste tolerant.
+11. Een merk gaat vóór een naam. Wie precies "nivea" typt krijgt het label bij elk artikel van Nivea, ook al hangt de naam "nivea" voor het profiel aan één type. De naam van een type gaat wel vóór een merk ("maggi").
+12. Een merk met een soort erbij, in beide volgordes ("nivea shampoo", "tandpasta oral b"), staat voor de artikelen van dat merk binnen dat type. Heeft het merk daar geen artikelen, dan telt het hele type.
+13. Voor het profiel en de bon geldt de merkregel niet: een aankoop "fanta" telt als sinas.
+14. De titellaag is vervallen. Een term die nergens voor staat komt in `unmatched_terms`; de AI beoordeelt hem (nog te bouwen) en slaat de uitkomst op als naam met bron `ai`.
+15. Een naam die beoordeeld is zonder type ("papier", "sap", "deeg") is bekend en krijgt geen label. Hij wordt niet opnieuw beoordeeld.
+
+De verwachte uitkomsten in `docs/matching-controle.sql` zijn van vóór de types.
 
 ## Aanbieding op de lijst
 
