@@ -65,6 +65,14 @@ const Logica = (() => {
     // De aanbiedingen bij één item, of undefined als er geen zijn
     dealsVan(itemId) { return deals[itemId]; },
 
+    // Staat de aanbieding zelf op de lijst (vanuit Voor jou), dan haar korting en laatste dag voor het
+    // label: { korting, geldigTot }; anders null
+    eigenAanbieding(itemId) {
+      const eigen = (deals[itemId] || []).find((d) => d.korting);
+      // de bron schrijft "2 VOOR 5.99"
+      return eigen ? { korting: eigen.korting.toLowerCase(), geldigTot: eigen.geldig_tot } : null;
+    },
+
     // Het zoeken gebeurt in de database (offers_for_list); we krijgen alleen per item terug bij welke
     // supermarkt er hoeveel aanbiedingen zijn. Geeft false bij een fout (dan gewoon geen labels) of als
     // er intussen een nieuwere vraag is gesteld.
@@ -97,6 +105,10 @@ const Logica = (() => {
       const { error } = await Data.haalAanbiedingTerug(itemId, aanbiedingId);
       return error ? { fout: error.message } : {};
     },
+
+    // Wegklikken geldt voor een aanbieding die via de naam bij het item hoort, niet voor de aanbieding die
+    // zelf op de lijst staat (vanuit Voor jou)
+    kanWegklikken(detail, item) { return item.offer_id !== detail.id; },
 
     // "Niet deze week" in Voor jou: alleen voor jezelf, tot de aanbieding verloopt. Geeft {} of { fout }.
     async klikWegVoorMij(aanbiedingId) {

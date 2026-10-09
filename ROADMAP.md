@@ -492,7 +492,7 @@ Uitgangspunten:
 - [–] Een aparte hint "2 nodig voor de korting" is vervallen: het label zegt het al. De hoeveelheid wordt niet automatisch aangepast.
 - [x] Verloopt de aanbieding terwijl het item nog op de lijst staat, dan valt het item terug naar de oorspronkelijke invoer; aanbieding en varianten gaan eraf. Van meerdere items uit één keuze blijft er één over. Let op: `offer_id` wordt nu pas na 28 dagen leeggemaakt (`save_offers`), dus het terugvallen op `valid_to` is nieuw.
 - [x] Geldt voor de hele lijst en is via Realtime direct zichtbaar voor alle leden.
-- Gebouwd op 9 oktober 2026 (migraties `aanbieding_kiezen` en `keuze_losse_items`). Het veld is `items.original_name`, de keuze zelf staat als momentopname in `items.offer_choice`, en `items.choice_group` houdt de items uit één keuze bij elkaar. Erbij gekomen: "Keuze wissen" in het paneel (er blijft één item over met wat er stond) en ongedaan maken na swipen zet het item met zijn keuze terug. Een item dat vanuit "Voor jou" op de lijst staat heeft geen knop "Kiezen".
+- Gebouwd op 9 oktober 2026 (migraties `aanbieding_kiezen` en `keuze_losse_items`). Het veld is `items.original_name`, de keuze zelf staat als momentopname in `items.offer_choice`, en `items.choice_group` houdt de items uit één keuze bij elkaar. Erbij gekomen: "Keuze wissen" in het paneel (er blijft één item over met wat er stond) en ongedaan maken na swipen zet het item met zijn keuze terug. Een item dat vanuit "Voor jou" op de lijst staat heeft ook "Kiezen" (migratie `keuze_vanuit_voorjou`): je zet de aanbieding met de plus op de lijst en kiest daar de artikelen; "Keuze wissen" maakt er weer de aanbieding van.
 
 #### Deel 3 – Wegklikken
 

@@ -1326,7 +1326,7 @@ function bonusDetailRij(detail) {
 }
 
 // Onder een aanbieding in het paneel: de knop om hem te kiezen, of (na "Kiezen") de artikelen om aan te vinken.
-// Een item dat vanuit Voor jou op de lijst staat ís de aanbieding al en heeft geen knop.
+// Een item dat vanuit Voor jou op de lijst staat ís de aanbieding al: wel kiezen, niet wegklikken.
 function keuzeBlok(detail, item) {
   const blok = document.createElement("div");
   blok.className = "keuze";
@@ -1336,10 +1336,9 @@ function keuzeBlok(detail, item) {
     acties.className = "keuze-acties";
     if (detail.gekozen) {
       acties.append(keuzeKnop("Keuze wissen", "link", () => wisKeuze(item)));
-    } else if (!item.offer_id) {
-      acties.append(
-        keuzeKnop("Kiezen", "wit", () => openKeuze(detail)),
-        keuzeKnop("Niet deze week", "link", () => klikWeg(detail)));
+    } else {
+      acties.append(keuzeKnop("Kiezen", "wit", () => openKeuze(detail)));
+      if (Logica.kanWegklikken(detail, item)) acties.append(keuzeKnop("Niet deze week", "link", () => klikWeg(detail)));
     }
     blok.append(acties);
     return blok;
@@ -1592,10 +1591,12 @@ function itemRow(item) {
     label.className = "bonus-label";
     const onder = document.createElement("span");
     onder.className = "item-sub";
-    if (keuze) {
-      // Gekozen: de korting zelf en tot wanneer, uit de keuze op het item
-      label.textContent = keuze.korting || "Bonus";
-      if (keuze.geldigTot) onder.textContent = "t/m " + totDag(keuze.geldigTot);
+    // Gekozen, of de aanbieding zelf op de lijst (vanuit Voor jou): de korting en tot wanneer, uit de keuze
+    // op het item of uit de database
+    const vast = keuze || Logica.eigenAanbieding(item.id);
+    if (vast) {
+      label.textContent = vast.korting || "Bonus";
+      if (vast.geldigTot) onder.textContent = "t/m " + totDag(vast.geldigTot);
     } else {
       label.textContent = "Bonus";
       onder.textContent = Logica.dealWinkels(Logica.dealsVan(item.id)).join(", ");
