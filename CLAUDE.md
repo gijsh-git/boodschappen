@@ -14,13 +14,15 @@ There is nothing to build. Serve the directory over HTTP (the service worker and
 python3 -m http.server 8000
 ```
 
-`config.js` needs `SUPABASE_URL` and `SUPABASE_ANON_KEY`; while the URL still contains `JOUW-PROJECT`, `init()` stops at the login view. The app is hosted on GitHub Pages from `main` (https://gijsh-git.github.io/boodschappen/), so pushing to `main` deploys. The Edge Functions in `supabase/functions/` are not part of that deploy: after changing one, deploy it again (`supabase functions deploy <naam> --no-verify-jwt`). A fresh database, the redirect URLs, every function with its secrets and the Vault entries: `docs/systeem/opzet.md`.
+`config.js` needs `SUPABASE_URL` and `SUPABASE_ANON_KEY`; while the URL still contains `JOUW-PROJECT`, `init()` stops at the login view. The app is hosted on GitHub Pages from `main` (https://gijsh-git.github.io/boodschappen/), so pushing to `main` deploys. The Edge Functions in `supabase/functions/` are not part of that deploy: after changing one, deploy it again (`supabase functions deploy <naam> --no-verify-jwt`). A fresh database, the redirect URLs, every function with its secrets, the Vault entries and the Git hook: `docs/systeem/opzet.md`.
+
+`docs/producttypes-export.csv` is a printout of the type list in the database, rewritten and added by the pre-commit hook on every commit. Never edit it by hand and never load types from it.
 
 ## Architecture
 
 **Load order matters.** `index.html` loads five classic scripts in order: supabase-js v2 from the jsDelivr CDN (global `supabase`), `config.js` (sets `window.CONFIG`), `data.js` (global `Data`, all Supabase calls, see `ARCHITECTURE.md`; `app.js` calls `Data.init(url, key)`, which creates the client), `logica.js` (global `Logica`, state and rules without DOM; for now the favourites, Voor jou, the deals on the list and the screen "Koppelingen"), then `app.js`. There are no modules or imports. Every Supabase call lives in `data.js`: tables, RPCs, auth, the Edge Functions and the live channel (`Data.volgLijst()` / `Data.stopVolgen()`, which hands the Supabase messages to handlers in `subscribe()`). `app.js` contains no `db.`; where this file names a Supabase call (`db.rpc(...)`, `signInWithPassword`, `db.functions.invoke`), it is made by the matching function in `Data`. The rest of the logic still lives in `app.js` and moves to `logica.js` part by part (see `ARCHITECTURE.md`).
 
-**Views.** `index.html` holds sixteen `<section id="view-…">` elements (`login`, `forgot`, `sent`, `password`, `naam`, `profiel`, `producten`, `voorjou`, `setup`, `nieuw`, `list`, `aankopen`, `foto`, `bon`, `bonnen`, `stapel`); `show()` toggles their `hidden` attribute. Flow: `init()` → session check → `route()` fetches the user's `profiles` row (none yet → `naam` view to enter a display name once; it can be changed later in `profiel`, opened from the tab bar: the header shows your initial, name and e-mail address with a pencil button to edit the name, below it the purchase profile (see "Purchase profile"), "Mijn favorieten" (see "Favourites") and a menu "Account" with "Koppelingen beheren" (admin only) and "Uitloggen") → `loadLijsten()` fetches all the user's `list_members` rows into the module-level arrays `lijsten` (active) and `archief` (archived) → either `setup` (no lists yet) or `openList()` on the last opened list (id remembered in `localStorage` under `bonusbuddy-lijst`, falling back to the first list).
+**Views.** `index.html` holds sixteen `<section id="view-…">` elements (`login`, `forgot`, `sent`, `password`, `naam`, `profiel`, `producten`, `voorjou`, `setup`, `nieuw`, `list`, `aankopen`, `foto`, `bon`, `bonnen`, `stapel`); `show()` toggles their `hidden` attribute. Flow: `init()` → session check → `route()` fetches the user's `profiles` row (none yet → `naam` view to enter a display name once; what the `profiel` view holds is under "Profile screen") → `loadLijsten()` fetches all the user's `list_members` rows into the module-level arrays `lijsten` (active) and `archief` (archived) → either `setup` (no lists yet) or `openList()` on the last opened list (id remembered in `localStorage` under `bonusbuddy-lijst`, falling back to the first list).
 
 `route()` runs again on every auth event (e.g. when the app returns to the foreground), so screens that must stay put set a flag it checks first: `naamOpen`, `profielOpen`, `voorjouOpen`, `lijstenOpen`, `aankopenOpen`, `fotoOpen`, `bonOpen`.
 
@@ -38,7 +40,7 @@ python3 -m http.server 8000
 
 **Styling.** `styles.css` uses CSS variables with a dark-mode override, except the `.auth` screens (login, password), which pin the light values so they always look like the design. Fonts come from Google Fonts.
 
-**Service worker.** `sw.js` is network-first with a cache fallback, same-origin GET only, so Supabase and CDN requests are never cached. When adding a new static file, add it to `ASSETS`; bump the `CACHE` name to evict old caches.
+**Service worker.** `sw.js` is network-first with a cache fallback, same-origin GET only, so Supabase and CDN requests are never cached. When adding a new static file, add it to `ASSETS`. Bump the `CACHE` name in every commit that changes a client file (`index.html`, the scripts, `styles.css`), otherwise phones keep the old ones.
 
 ## Where the details are
 
@@ -48,7 +50,7 @@ Read the file for the domain you work in before changing it. A reference like (s
 |---|---|---|
 | Lijsten, archiveren, leden, uitnodigingen, inloggen | `docs/systeem/lijsten.md` | Multiple lists, Archiving and deleting, Members, Invitations, Auth is invite-only with passwords |
 | Items op de lijst, swipen, aankopen, foto naar items | `docs/systeem/items-en-aankopen.md` | Swipe, Purchases, Photo |
-| Aankoopprofiel, favorieten, Voor jou | `docs/systeem/profiel-en-voorjou.md` | Purchase profile, Favourites, Voor jou |
+| Profielscherm, aankoopprofiel, favorieten, Voor jou | `docs/systeem/profiel-en-voorjou.md` | Profile screen, Purchase profile, Favourites, Voor jou |
 | Aanbiedingen, Bonus-label, bonuspaneel, kiezen, wegklikken | `docs/systeem/aanbiedingen.md` (matching leunt op `producttypes.md`) | Offers, Bonus label, Matching offers, Variant, Choosing an offer, Dismissing an offer, Logging offer choices |
 | Producttypes, termen matchen, scherm Koppelingen, classificeren | `docs/systeem/producttypes.md` | Product types, Matching list terms |
 | Bonnen scannen, AH-import, AH-bonusscripts | `docs/systeem/bonnen.md` | Receipts, Historic AH receipts, AH bonus exploration |
