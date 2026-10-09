@@ -24,10 +24,6 @@ Na elke afgeronde roadmap-stap: lijst langslopen, urgentie bijstellen, iets naar
 - [Later] Samenvoegsuggestie in het scherm Producten als hetzelfde artikel op de bon onder twee productnamen staat (bijvoorbeeld "melk" en "halfvolle melk")
 - [Later] Bij bredere uitrol: in de gedeelde catalogus alleen samenvoegen wat voor iedereen hetzelfde betekent (spelling, meervoud, synoniemen); samenvoegen gaat over taal, niet over smaak
 
-## Recepten
-- [Later] Recept naar lijst: foto van een recept, AI zet de ingrediënten op de lijst
-- [Later] Alternatieven in de aanbieding, beoordeeld in de context van het recept (verse zalmfilet bij diepvries zalmfilet), als aparte suggestie los van het Bonus-label
-
 ## Design
 - [Later] Ontwerp verfijnen in Claude Design (staat onder "Later te beslissen" in de roadmap)
 
