@@ -20,7 +20,8 @@ const Logica = (() => {
   let deals = {};      // item-id -> [{ supermarkt, aantal }]: actuele aanbiedingen per item
   let dealsVraag = 0;  // volgnummer, zodat een laat antwoord een nieuwer antwoord niet overschrijft
   // Wat er precies in de aanbieding is, per item en aanbieding; null = nog niet opgehaald:
-  // { item_id, id, supermarkt, titel, korting, geldig_tot, artikelen: [titel], artikelen_totaal }
+  // { item_id, id, supermarkt, titel, korting, geldig_tot, artikelen: [titel], artikelen_totaal, artikelen_zelfde }
+  // In de volgorde van de database: per item, en daarbinnen eerst de aanbiedingen met dezelfde variant als het item.
   let dealDetails = null;
   let dealDetailsVraag = 0;
   const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting van de supermarkt
@@ -89,6 +90,9 @@ const Logica = (() => {
       dealDetails = data;
       return {};
     },
+
+    // Hoeveel van de genoemde artikelen dezelfde variant hebben als het item; die staan vooraan in `artikelen`
+    zelfdeVariant(detail) { return Math.min(detail.artikelen_zelfde || 0, detail.artikelen.length); },
 
     winkelNaam(supermarkt) { return WINKELS[supermarkt] || supermarkt; },
 

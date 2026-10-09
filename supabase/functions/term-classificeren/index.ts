@@ -4,8 +4,11 @@
 // header x-aanbiedingen-sleutel (secret AANBIEDINGEN_SLEUTEL; de database leest hem uit Vault).
 // De functie haalt de open termen op met term_work(), laat de AI per term een type uit de lijst kiezen (en
 // het merk als de term er een noemt) en slaat dat op met save_term_judgments(): als naam met bron ai, zonder
-// goedkeuring vooraf. Het label op de lijst verschijnt daarna vanzelf. Er gaan alleen de termen en de
-// typelijst naar de AI, geen gebruikers of lijsten. De API-sleutel staat alleen in Supabase secrets.
+// goedkeuring vooraf. Het label op de lijst verschijnt daarna vanzelf. Bij hetzelfde oordeel geeft de AI de
+// variant die de term noemt ("tomaat" bij "tomatensoep"), voor de volgorde in het bonuspaneel. Met
+// { "varianten": true } in het verzoek (het wekelijkse script) vult een aanroep ook de variant aan bij namen
+// die al een type hebben; hun type blijft wat het is. Er gaan alleen de termen en de typelijst naar de AI,
+// geen gebruikers of lijsten. De API-sleutel staat alleen in Supabase secrets.
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -29,6 +32,7 @@ De termen zijn kort en slordig: tikfouten, afkortingen, enkelvoud of meervoud, s
 - Een losse merknaam zonder soort krijgt "${GEEN}": het merk kan van alles zijn.
 - Een term die te vaag is om één type te kiezen ("sap", "papier", "saus", "groenten", "iets lekkers") krijgt "${GEEN}". Gok niet: een fout type geeft een label op iets wat de koper niet zoekt.
 - Geen boodschap, onleesbaar of een notitie ("niet vergeten", "bellen"): het type voor onleesbare invoer als dat bestaat, anders "${GEEN}".
+- variant: het ene woord dat zegt welke smaak of soort binnen het type de term noemt: "tomaat" bij "tomatensoep", "kip" bij "kippensoep", "aardbei" bij "aardbeien yoghurt", "paprika" bij "chips paprika". Enkelvoud, kleine letters, geen merk, en niet wat de naam van het type al zegt. Noemt de term geen smaak of soort ("soep", "chips", "halfvolle melk"), of is het "${GEEN}", dan een lege tekst.
 - voorstel: alleen bij "${GEEN}", als de term wel een gewone boodschap is maar het type in de lijst ontbreekt ("afwasborstel"): de naam die dat type zou hebben, zoals op een boodschappenlijst (kleine letters, zonder merk). Bij een vage term, een losse merknaam of een gekozen type een lege tekst.
 - zekerheid: "hoog" als de term zonder twijfel dit type is, "middel" als het waarschijnlijk klopt, "laag" bij echte twijfel. Bij "${GEEN}" zegt de zekerheid hoe zeker je bent dat geen type past.
 - reden: één korte zin in het Nederlands.
@@ -36,8 +40,9 @@ De termen zijn kort en slordig: tikfouten, afkortingen, enkelvoud of meervoud, s
 Geef voor elke term precies één oordeel, met het nummer van de term.`;
 
 type Soort = { id: string; naam: string; hoofdgroep: string; valt_eronder: string | null; valt_er_niet_onder: string | null };
-type Term = { sleutel: string; term: string };
-type Rij = { term: string; type_id: string | null; brand: string | null; suggested_type: string | null; confidence: string; reason: string };
+// alleen_variant: de naam heeft al een type en krijgt alleen nog een variant
+type Term = { sleutel: string; term: string; alleen_variant?: boolean };
+type Rij = { term: string; type_id: string | null; brand: string | null; variant: string | null; suggested_type: string | null; confidence: string; reason: string };
 
 function antwoord(inhoud: unknown, status = 200) {
   return new Response(JSON.stringify(inhoud), {
@@ -94,18 +99,22 @@ Deno.serve(async (req) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const claude = new Anthropic({ apiKey: apiSleutel });
-  const telling = { beoordeeld: 0, met_type: 0, geen_type: 0, ongeldig: 0, items: 0 };
+  const vraag = await req.json().catch(() => ({}));
+  const varianten = vraag?.varianten === true;
+  // nog_varianten: namen met een type die nog op een variant wachten (alleen geteld met varianten)
+  const telling = { beoordeeld: 0, met_type: 0, geen_type: 0, ongeldig: 0, items: 0, varianten: 0, nog_varianten: 0 };
 
   // Terwijl de AI bezig is kunnen er termen bijkomen (een foto met meerdere onbekende items geeft per item
   // een seintje, maar alleen de eerste aanroep pakt ze op): daarom een paar rondes achter elkaar.
   for (let ronde = 0; ronde < RONDES; ronde++) {
-    const { data: werk, error: leesFout } = await db.rpc("term_work", { p_limit: PORTIE });
+    const { data: werk, error: leesFout } = await db.rpc("term_work", { p_limit: PORTIE, p_variants: varianten });
     if (leesFout) {
       console.error("term_work mislukt:", leesFout.message);
       return antwoord({ fout: "Lezen mislukt: " + leesFout.message }, 500);
     }
     const termen: Term[] = werk.termen ?? [];
     const types: Soort[] = werk.types ?? [];
+    telling.nog_varianten = werk.nog_varianten ?? 0;
     if (termen.length === 0) break;
     if (types.length === 0) return antwoord({ fout: "Er zijn nog geen producttypes; laad eerst de typelijst." }, 409);
 
@@ -121,11 +130,12 @@ Deno.serve(async (req) => {
               term: { type: "integer", description: "Het nummer van de term in het bericht" },
               type: { type: "string", enum: [GEEN, ...perNaam.keys()], description: "De naam van het type, letterlijk uit de lijst" },
               merk: { type: "string", description: "Het merk dat de term naast de soort noemt, anders leeg" },
+              variant: { type: "string", description: "De smaak of soort die de term binnen het type noemt in één woord, anders leeg" },
               voorstel: { type: "string", description: `Alleen bij "${GEEN}": het type dat in de lijst ontbreekt, anders leeg` },
               zekerheid: { type: "string", enum: Object.keys(ZEKERHEID) },
               reden: { type: "string" },
             },
-            required: ["term", "type", "merk", "voorstel", "zekerheid", "reden"],
+            required: ["term", "type", "merk", "variant", "voorstel", "zekerheid", "reden"],
             additionalProperties: false,
           },
         },
@@ -159,6 +169,7 @@ Deno.serve(async (req) => {
     }
 
     const rijen: Rij[] = [];
+    const alleenVariant: { term: string; variant: string | null }[] = [];
     const gezien = new Set<number>();
     for (const o of Array.isArray(uit.oordelen) ? uit.oordelen : []) {
       const nr = o?.term;
@@ -167,19 +178,25 @@ Deno.serve(async (req) => {
       // Een naam buiten de lijst: de term blijft open
       if (soort === undefined) continue;
       gezien.add(nr);
+      const variant = soort ? String(o.variant ?? "").trim().toLowerCase() || null : null;
+      if (termen[nr - 1].alleen_variant) {
+        alleenVariant.push({ term: termen[nr - 1].term, variant });
+        continue;
+      }
       rijen.push({
         term: termen[nr - 1].term,
         type_id: soort ? soort.id : null,
         brand: soort ? String(o.merk ?? "").trim() || null : null,
+        variant,
         suggested_type: soort ? null : String(o.voorstel ?? "").trim().toLowerCase() || null,
         confidence: ZEKERHEID[o.zekerheid],
         reason: String(o.reden ?? "").trim(),
       });
     }
-    telling.ongeldig += termen.length - rijen.length;
-    if (rijen.length === 0) break;
+    telling.ongeldig += termen.length - rijen.length - alleenVariant.length;
+    if (rijen.length + alleenVariant.length === 0) break;
 
-    const { data: opgeslagen, error: schrijfFout } = await db.rpc("save_term_judgments", { p_rows: rijen });
+    const { data: opgeslagen, error: schrijfFout } = await db.rpc("save_term_judgments", { p_rows: rijen, p_variants: alleenVariant });
     if (schrijfFout) {
       console.error("save_term_judgments mislukt:", schrijfFout.message);
       return antwoord({ ...telling, fout: "Opslaan mislukt: " + schrijfFout.message }, 500);
@@ -188,6 +205,10 @@ Deno.serve(async (req) => {
     telling.met_type += rijen.filter((r) => r.type_id).length;
     telling.geen_type += rijen.filter((r) => !r.type_id).length;
     telling.items += opgeslagen.items ?? 0;
+    telling.varianten += opgeslagen.varianten ?? 0;
+    telling.nog_varianten = Math.max(0, telling.nog_varianten - alleenVariant.length);
+    // Aanvullen gaat één portie per aanroep: het script vraagt opnieuw tot er niets meer wacht
+    if (termen.some((t) => t.alleen_variant)) break;
   }
   return antwoord(telling);
 });

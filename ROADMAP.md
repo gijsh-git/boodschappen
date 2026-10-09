@@ -235,7 +235,7 @@ Een favoriet is een product waarvan de gebruiker wil weten dat het in de aanbied
 - Op de lijst zetten vanuit een favoriet zet de term op de lijst, met het merk ervoor als dat is ingesteld ("Calvé pindakaas"); bij alleen een merk de titel van het artikel.
 - Matching gebeurt in de RPC van stap 5. Deze stap is alleen vastleggen en beheren.
 - Geen ster bij een item of aankoop, voor nu.
-- Later: "Niet voor mij" bij een match (stap 7), en een instelbare melding als een favoriet in de aanbieding is (vraagt push-notificaties).
+- Later: wegklikken bij een match (stap 7), en een instelbare melding als een favoriet in de aanbieding is (vraagt push-notificaties).
 
 Datamodel:
 
@@ -371,9 +371,9 @@ Gebouwd en doorgevoerd op 8 oktober 2026 (migraties `gelaagd_matchen` en `matche
 - [x] `term_synonyms`: term → naam, met bron (`manual` of `ai`) en datum. Beheer voorlopig in de SQL Editor.
 - [x] `unmatched_terms`: termen die bij het toevoegen nergens op matchten, bijgehouden door `handle_unmatched_term()` vanuit een trigger op `items`.
 - [x] Nagelopen met `docs/matching-controle.sql` op alle 605 ooit getypte namen: 539 exact, 7 via het merk, 7 tolerant (chocola, tandenpasta, kokoswatet, margaringe, paradontax; twijfelachtig: "kruiden" bij kipkruiden en kruidenmix), 1 via de titel, 51 zonder treffer. Bijgesteld na die proef: de sleutelvorm geldt ook voor productnamen ("proteine drank" is "proteinedrank", een naam van eiwitdrank), en de titellaag geldt alleen vanaf twee woorden.
-- [ ] In de app een paar weken volgen; de grens voor tolerant bijstellen als er verkeerde labels komen. "margerine" en "adnijvie" halen de grens niet en wachten op een synoniem of de AI-stap.
-- [ ] AI-stap: een script leest `unmatched_terms` (zonder `judged_at`, en nog steeds zonder treffer), laat de AI een naam kiezen uit de lijstnamen en productnamen en schrijft `term_synonyms` met bron `ai`. Alleen de termen gaan naar de AI, geen gebruikers of lijsten.
-- [ ] Eventueel: een blok in het scherm Producten voor de niet-gematchte termen en de synoniemen.
+- [ ] In de app een paar weken volgen; de grens voor tolerant bijstellen als er verkeerde labels komen. ("margerine" en "adnijvie" zijn intussen namen van een type.)
+- [x] AI-stap: gebouwd in deel 4, fase 5, als Edge Function `term-classificeren` in plaats van een script; de uitkomst is een naam van een type met bron `ai`.
+- [x] Een blok voor de termen: het blok "Termen" in het scherm Koppelingen (deel 4, fase 6).
 
 Besluiten staan in `docs/productregels.md` onder "Matchen van lijsttermen". Niet gedaan: `items.normalized_name` gelijktrekken met de nieuwe sleutelvorm (raakt de sleutel van `product_aliases`), en Voor jou.
 
@@ -439,20 +439,75 @@ Open keuzes:
 - **Merk bij een term corrigeren** ("sensodyne tandpasta" kreeg het verkeerde merk): later, niet in de eerste versie; "Ander type" laat het merk staan, "Geen type" haalt het weg.
 - **Een term die als "geen type" is beoordeeld opnieuw laten beoordelen** na een nieuw type: gebeurt automatisch voor termen waarvan het voorgestelde type gelijk is aan het nieuwe type, anders met de hand.
 
-### [ ] Stap 6 – Automatische aankoopimport (alleen eigen accounts)
+### [–] Stap 6 – Automatische aankoopimport (vervallen)
 
-- [ ] Kassabonnen van Gijs (en eventueel Els) periodiek ophalen via de AH-API
-- [ ] Dubbele-boncontrole blijft werken
+Vervallen op 9 oktober 2026. De historie is één keer opgehaald (stap 2a); daarna komen bonnen binnen via "Bon scannen". Een periodieke koppeling met de AH-API is kwetsbaar, vraagt opgeslagen inloggegevens en is in de publieke fase niet bruikbaar. Een geswipet item is ook een aankoop (`buy_item`), dus stap 8 heeft ook zonder bon data.
 
-Alleen voor de testfase. Niet uitbreiden naar andere gebruikers.
+### [ ] Stap 7 – Aanbiedingen kiezen en wegklikken
 
-### [ ] Stap 7 – Persoonlijke laag
+Vastgesteld op 9 oktober 2026. Vervangt de oude stap 7 "Persoonlijke laag". "Voorkeur per variant" vervalt: merkfavorieten dekken dat grotendeels. "Niet voor mij" komt terug als wegklikken (deel 3).
 
-- Het `article_id` op aankopen is de basis: hetzelfde artikel steeds opnieuw kopen (bijvoorbeeld altijd hetzelfde volkoren brood) laat een voorkeur zien binnen een product, naast wat `name` en `receipt_name` zeggen.
-- [ ] Voorkeur per variant afleiden uit `name` en `receipt_name` (bijvoorbeeld altijd volkoren)
-- [ ] "Niet voor mij" bij een aanbieding, en daarvan leren
+Waar: het bonuspaneel van de lijst (`bonus-paneel`), waar per item de aanbiedingen staan ("Voor tomatensoep").
 
-Pas oppakken als stap 5 een paar weken draait.
+Uitgangspunten:
+
+- De matching blijft op type (het wisselniveau, `docs/productregels.md`). Dat bij "tomatensoep" ook Conimex laksa verschijnt is een gevolg van die keuze, geen fout. Het type wordt niet smaller gemaakt; binnen het type wordt gerangschikt (deel 1).
+- Wegklikken is voor wat je deze week niet wilt, niet om slechte matching op te vangen.
+- Toevoegen en wegklikken bij een item gelden voor de hele lijst. Wegklikken in "Voor jou" geldt per persoon.
+
+#### Deel 1 – Volgorde binnen het type
+
+- [x] Plat kenmerk `variant` naast het type, bijvoorbeeld "tomaat", "kip", "groente". Geen tweede laag onder de types en geen beheer.
+- [x] De AI vult het in bij dezelfde aanroep die nu het type bepaalt: bij artikelen in `artikelen-classificeren`, bij termen in `term-classificeren`.
+- [x] Bij een item eerst de aanbiedingen met een artikel met dezelfde variant als de term, daarna de rest. De variant bepaalt alleen de volgorde en sluit nooit iets uit; een fout kost een lagere plek, geen gemiste aanbieding.
+- [x] Binnen een aanbieding staan de artikelen met dezelfde variant bovenaan en zijn ze gemarkeerd.
+- Gebouwd op 9 oktober 2026 (migratie `variant`). De variant is vrije tekst van één woord en wordt vergeleken op de Nederlandse stam ("tomaat" is "tomaten"). Bestaande artikelen en namen zijn aangevuld met `scripts/ah-bonus-opslaan.py --types`; de wekelijkse ronde vult nieuwe aan. In het paneel staan de aanbiedingen nu per item bij elkaar.
+- Waarom niet op woorden in de titel: "tomatensoep" vindt "AH Verse soep Chinese tomaat" dan niet (samengesteld woord, andere spelling).
+
+#### Deel 2 – Een aanbieding kiezen
+
+- [ ] Per aanbieding een knop om hem te kiezen. Die opent de artikelen van de aanbieding; artikelen met dezelfde variant als de oorspronkelijke term staan al aangevinkt. Je kunt er één of meer bij of af klikken. Niets aangevinkt is de aanbieding als geheel.
+- [ ] De keuze vervangt het item op de lijst; er komt geen tweede rij. Dit wijkt bewust af van "Voor jou", waar `add_offer_item` altijd een aparte rij maakt.
+- [ ] De oorspronkelijke invoer blijft bewaard in een eigen veld op het item (bijvoorbeeld `items.original_name`), niet alleen in de weergave.
+- [ ] Weergave: bovenaan de gekozen variant (bij één), anders de titel van de aanbieding met de varianten eronder. Daaronder: "voor: tomatensoep · 2 voor 5,99 · t/m zo".
+- [ ] Meerdere varianten zijn één item. Bij swipen of een bon worden het losse aankopen.
+- [ ] Bij "2 voor", "2e halve prijs" en "1+1 gratis" een hint "2 nodig voor de korting". De hoeveelheid wordt niet automatisch aangepast.
+- [ ] Verloopt de aanbieding terwijl het item nog op de lijst staat, dan valt het item terug naar de oorspronkelijke invoer; aanbieding en varianten gaan eraf. Let op: `offer_id` wordt nu pas na 28 dagen leeggemaakt (`save_offers`), dus het terugvallen op `valid_to` is nieuw.
+- [ ] Geldt voor de hele lijst en is via Realtime direct zichtbaar voor alle leden.
+
+#### Deel 3 – Wegklikken
+
+- [ ] Per aanbieding bij een item "Niet deze week". Geldt voor de hele lijst, tot de aanbieding verloopt. Komt dezelfde actie later terug, dan is hij weer zichtbaar.
+- [ ] Er staat bij wie het wegklikte ("weggeklikt door Els"), en onderaan het paneel staat een ingeklapt blok "Weggeklikt (n)" om het terug te halen.
+- [ ] In "Voor jou" kun je een aanbieding ook wegklikken, daar per persoon en ook tot de aanbieding verloopt.
+
+#### Deel 4 – Keuzes vastleggen
+
+- [ ] Elke keuze wordt opgeslagen: lijst, wie, oorspronkelijke term, type, variant, aanbieding, gekozen artikelen, actie (gekozen, weggeklikt, teruggehaald) en tijdstip.
+- [ ] Niets leest deze data nog. Hij is bedoeld om later de matching en de volgorde te verbeteren (welke overstappen maken mensen echt) en vervangt de oude persoonlijke laag.
+- [ ] Voor de publieke fase: bewaartermijn vastleggen (AVG).
+
+Besloten op 9 oktober 2026:
+
+- Variant: vrije tekst, vergeleken op de Nederlandse stam (`list_stem`). Geen vaste lijst, geen tweede AI-aanroep.
+- Het Bonus-label verdwijnt als alle aanbiedingen van een item zijn weggeklikt. De balk blijft zolang er iets is weggeklikt, zodat het terug te halen is.
+- Een item valt terug bij het laden van de lijst (een RPC zet verlopen keuzes van die lijst terug), niet door een geplande taak.
+
+Klaar als:
+
+- bij "tomatensoep" de aanbiedingen met tomatensoep bovenaan staan en Conimex laksa lager, maar zichtbaar;
+- Unox kiezen "tomatensoep" vervangt door "Unox Chinese tomatensoep" met "voor: tomatensoep · 2 voor 5,99 · t/m zo", en Els dat meteen ziet;
+- het item na de looptijd weer "tomatensoep" heet;
+- Conimex wegklikken het voor ons allebei verbergt, met "weggeklikt door Gijs", en het terug te halen is;
+- elke keuze in de nieuwe tabel staat.
+
+```
+/plan
+Wat: in het bonuspaneel van de lijst kan ik per item een aanbieding kiezen (die vervangt het item) of een aanbieding wegklikken voor deze week. Daarnaast komen de aanbiedingen in een betere volgorde. Lees eerst stap 7 in ROADMAP.md; daar staan de keuzes.
+Waarom: bij een item als "tomatensoep" staan nu veel soepaanbiedingen door elkaar. Ik wil de aanbieding die ik ga kopen op de lijst kunnen zetten zonder te vergeten wat ik zocht, en de rest kunnen opruimen.
+Hoe het moet werken: zoals beschreven in de delen 1 tot en met 4 van stap 7. Doe de delen in die volgorde en stop na elk deel voor een test en een commit.
+Grenzen: de matching op type blijft zoals hij is; de variant bepaalt alleen de volgorde. "Voor jou" blijft werken zoals nu, op het wegklikken na. Supabase-calls in data.js, logica in logica.js (ARCHITECTURE.md). Elke databasewijziging is een nieuw migratiebestand in supabase/migrations/. Gewijzigde Edge Functions opnieuw deployen. Leg de open punten uit stap 7 aan mij voor in het plan.
+```
 
 ### [ ] Stap 8 – Binnenkort weer nodig
 
@@ -490,7 +545,7 @@ Niet bouwen voordat de testfase goed werkt. Wel alvast vastleggen.
 
 ## Wat vervalt of verschuift
 
-- Oude fase 4 "Slimmer matchen" (zoekwoorden, pg_trgm, aanbieding kiezen bij een item, leren van keuzes): vervangen door matchen op artikel-ID in stap 5. Het leren van afwijzingen komt terug als "Niet voor mij" in stap 7. Favorieten (oud 4d) is stap 4.
+- Oude fase 4 "Slimmer matchen" (zoekwoorden, pg_trgm, aanbieding kiezen bij een item, leren van keuzes): vervangen door matchen op artikel-ID in stap 5. Het leren van afwijzingen komt terug als wegklikken in stap 7. Favorieten (oud 4d) is stap 4.
 - Oude fase 5 "Echte aanbiedingen": wordt stap 1 en 3.
 - Oude fase 6 "Advies": gesplitst. Kortingskansen (inclusief favorieten) zit in stap 5, "binnenkort weer nodig" is stap 8. "Product uit profiel halen" is al af (vlag "telt niet mee in profiel" uit 3b).
 

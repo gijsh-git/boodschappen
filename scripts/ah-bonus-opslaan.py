@@ -7,7 +7,8 @@ hetzelfde nummer als op de kassabon. Verlopen aanbiedingen ruimt de functie zelf
 
 Daarna krijgen de artikelen die nog geen producttype hebben er een: de Edge Function artikelen-classificeren
 laat de AI ze in porties beoordelen (titel, merk en categorie als invoer). Per week zijn dat alleen de nieuwe
-artikelen; een artikel wordt één keer beoordeeld.
+artikelen; een artikel wordt één keer beoordeeld. Bij hetzelfde oordeel hoort de variant (de smaak of soort
+binnen het type); een artikel of naam met een type en zonder variant krijgt die alsnog.
 
 Gebruik, vanuit de hoofdmap van het project:
   python3 scripts/ah-bonus-opslaan.py           proef: telt wat er zou gebeuren, schrijft niets
@@ -36,6 +37,8 @@ BONUS = importeren.HOOFDMAP / "data" / "ah-bonus.json"
 MINSTENS = 20
 # Zo vaak mag het geven van types haperen voordat het script ermee stopt
 HAPERINGEN_MAX = 3
+# Zoveel porties namen krijgen per keer hooguit een variant
+RONDES_MAX = 50
 
 
 def tekst(waarde):
@@ -120,13 +123,22 @@ def geef_types(url, sleutel):
         if nog and not uit["beoordeeld"]:
             break
     print(f"Types: {totaal['met_type']} artikelen kregen een type, {totaal['geen_type']} horen bij geen enkel type.")
-    # Termen van de lijst die nog op een oordeel wachten (het seintje vanuit de database is een keer mislukt)
-    try:
-        uit = roep(url, sleutel, "term-classificeren", {}, wachten=300)
+    # Termen van de lijst die nog op een oordeel wachten (het seintje vanuit de database is een keer mislukt),
+    # en namen die al een type hebben maar nog geen variant: portie voor portie, tot er niets meer bijkomt
+    for _ in range(RONDES_MAX):
+        try:
+            uit = roep(url, sleutel, "term-classificeren", {"varianten": True}, wachten=300)
+        except RuntimeError as fout:
+            print(f"  open termen beoordelen mislukt: {fout}")
+            break
         if uit.get("beoordeeld"):
             print(f"Termen: {uit['beoordeeld']} open termen van de lijst alsnog beoordeeld.")
-    except RuntimeError as fout:
-        print(f"  open termen beoordelen mislukt: {fout}")
+        if uit.get("varianten"):
+            print(f"  {uit['varianten']} namen kregen een variant, nog {uit.get('nog_varianten', 0)}")
+        if uit.get("fout"):
+            print(f"  open termen beoordelen mislukt: {uit['fout']}")
+        if not uit.get("nog_varianten") or not uit.get("varianten"):
+            break
     return nog
 
 

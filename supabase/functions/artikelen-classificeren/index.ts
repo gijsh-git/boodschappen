@@ -3,7 +3,9 @@
 // dezelfde sleutel als bij aanbiedingen-opslaan in de header x-aanbiedingen-sleutel (secret
 // AANBIEDINGEN_SLEUTEL). Per aanroep beoordeelt de AI een aantal artikelen die nog geen oordeel hebben, met
 // titel, merk, inhoud en categorie als invoer en de hele typelijst erbij, en slaat dat op via
-// save_article_types. Het antwoord zegt hoeveel er nog over zijn; het script roept opnieuw aan tot dat 0 is.
+// save_article_types. Bij hetzelfde oordeel geeft de AI de variant (de smaak of soort binnen het type), die
+// alleen de volgorde in het bonuspaneel bepaalt; een artikel dat al een type had krijgt alleen die variant.
+// Het antwoord zegt hoeveel er nog over zijn; het script roept opnieuw aan tot dat 0 is.
 // Er gaan alleen artikelgegevens en de typelijst naar de AI. De API-sleutel staat alleen in Supabase
 // secrets (ANTHROPIC_API_KEY).
 import Anthropic from "npm:@anthropic-ai/sdk";
@@ -29,6 +31,7 @@ Kies per artikel het ene type waar het bij hoort, of "${GEEN}". Neem de naam van
 - Lees de afbakening. "Niet:" zegt wat er net niet bij hoort en waar dat wel hoort. Varianten waar je niet tussen wisselt hebben een eigen type: zero, light, suikervrij, 0%, decaf en alcoholvrij tegenover gewoon; halfvolle en volle melk; vers tegenover gedroogd of uit pot of blik; wat alleen in een eigen apparaat of systeem werkt. Bestaat dat eigen type niet, kies dan "${GEEN}" en niet de gewone variant.
 - Een apparaat, handvat of starterset, een cadeaupakket en een gemengde verpakking met meerdere soorten horen bij geen enkel type.
 - Past er geen type, kies dan "${GEEN}". Kies geen type dat alleen in de buurt komt. Geef in voorstel dan de naam van het type dat in de lijst ontbreekt, zoals iemand het op een boodschappenlijst zet (kleine letters, zonder merk), of een lege tekst als het geen gewone boodschap is. Bij een gekozen type is voorstel leeg.
+- variant: het ene woord dat zegt welke smaak of soort het artikel binnen zijn type is, zoals iemand het op een boodschappenlijst voor de soortnaam zet: "tomaat" bij tomatensoep, "kip" bij kippensoep, "aardbei" bij aardbeienyoghurt, "paprika" bij paprikachips, "naturel" bij chips naturel. Enkelvoud, kleine letters, het hoofdbestanddeel of de hoofdsmaak en geen bijzaak ("tomaat" bij Chinese tomatensoep). Geen merk, geen formaat, niet biologisch of huismerk, en niet wat de naam van het type al zegt. Valt er geen smaak of soort te noemen (halfvolle melk bij het type halfvolle melk, wc-papier), of is het "${GEEN}", dan een lege tekst.
 - zekerheid: "hoog" als het er zonder twijfel bij hoort, "middel" als het waarschijnlijk klopt, "laag" bij echte twijfel over een variant. Bij "${GEEN}" zegt de zekerheid hoe zeker je bent dat geen type past.
 - reden: één korte zin in het Nederlands.
 
@@ -36,7 +39,7 @@ Geef voor elk artikel precies één oordeel, met het nummer van het artikel.`;
 
 type Soort = { id: string; naam: string; hoofdgroep: string; valt_eronder: string | null; valt_er_niet_onder: string | null };
 type Artikel = { supermarket: string; article_id: string; titel: string; merk: string | null; inhoud: string | null; categorie: string | null };
-type Rij = { supermarket: string; article_id: string; type_id: string | null; suggested_type: string | null; confidence: string; reason: string };
+type Rij = { supermarket: string; article_id: string; type_id: string | null; variant: string | null; suggested_type: string | null; confidence: string; reason: string };
 
 function antwoord(inhoud: unknown, status = 200) {
   return new Response(JSON.stringify(inhoud), {
@@ -108,7 +111,7 @@ Deno.serve(async (req) => {
   const types: Soort[] = werk.types ?? [];
   const artikelen: Artikel[] = werk.artikelen ?? [];
   if (types.length === 0) return antwoord({ fout: "Er zijn nog geen producttypes; laad eerst de typelijst." }, 409);
-  if (artikelen.length === 0) return antwoord({ beoordeeld: 0, met_type: 0, geen_type: 0, ongeldig: 0, mislukt: 0, nog: 0 });
+  if (artikelen.length === 0) return antwoord({ beoordeeld: 0, met_type: 0, geen_type: 0, variant: 0, ongeldig: 0, mislukt: 0, nog: 0 });
 
   // Twee types met dezelfde naam kunnen niet voorkomen (unieke sleutel), dus de naam wijst het type aan
   const perNaam = new Map(types.map((t) => [t.naam, t]));
@@ -122,11 +125,12 @@ Deno.serve(async (req) => {
           properties: {
             artikel: { type: "integer", description: "Het nummer van het artikel in het bericht" },
             type: { type: "string", enum: [GEEN, ...perNaam.keys()], description: "De naam van het type, letterlijk uit de lijst" },
+            variant: { type: "string", description: "De smaak of soort binnen het type in één woord, anders leeg" },
             voorstel: { type: "string", description: `Alleen bij "${GEEN}": het type dat in de lijst ontbreekt, anders leeg` },
             zekerheid: { type: "string", enum: Object.keys(ZEKERHEID) },
             reden: { type: "string" },
           },
-          required: ["artikel", "type", "voorstel", "zekerheid", "reden"],
+          required: ["artikel", "type", "variant", "voorstel", "zekerheid", "reden"],
           additionalProperties: false,
         },
       },
@@ -167,6 +171,7 @@ Deno.serve(async (req) => {
         supermarket: a.supermarket,
         article_id: a.article_id,
         type_id: soort ? soort.id : null,
+        variant: soort ? String(o.variant ?? "").trim().toLowerCase() || null : null,
         suggested_type: soort ? null : String(o.voorstel ?? "").trim().toLowerCase() || null,
         confidence: ZEKERHEID[o.zekerheid],
         reason: String(o.reden ?? "").trim(),
@@ -198,11 +203,13 @@ Deno.serve(async (req) => {
     console.error("save_article_types mislukt:", schrijfFout.message);
     return antwoord({ fout: "Opslaan mislukt: " + schrijfFout.message }, 500);
   }
-  const opgeslagen = telling.met_type + telling.geen_type;
+  // variant: artikelen die al een type hadden en nu alleen een variant kregen
+  const opgeslagen = telling.met_type + telling.geen_type + (telling.variant ?? 0);
   return antwoord({
     beoordeeld: opgeslagen,
     met_type: telling.met_type,
     geen_type: telling.geen_type,
+    variant: telling.variant ?? 0,
     // Artikelen zonder bruikbaar oordeel en artikelen in een mislukte portie blijven onbeoordeeld
     ongeldig: artikelen.length - mislukt - rijen.length,
     mislukt,

@@ -1218,11 +1218,24 @@ async function loadBonusDetails() {
   renderBonusDetails();
 }
 
-// De artikelen in een aanbieding als tekst; bij een grote groep de eerste paar en hoeveel er nog meer zijn
-function artikelenTekst(detail) {
+// De artikelen in een aanbieding; bij een grote groep de eerste paar en hoeveel er nog meer zijn. De artikelen
+// met dezelfde variant als het item ("tomaat" bij tomatensoep) staan vooraan en zijn vet.
+function artikelenRegel(detail) {
   const meer = detail.artikelen_totaal - detail.artikelen.length;
-  if (detail.artikelen.length === 0) return "";
-  return detail.artikelen.join(", ") + (meer > 0 ? ` en nog ${meer} ${meer === 1 ? "ander artikel" : "andere artikelen"}` : "");
+  const delen = [];
+  detail.artikelen.forEach((titel, i) => {
+    if (i > 0) delen.push(", ");
+    if (i < Logica.zelfdeVariant(detail)) {
+      const zelfde = document.createElement("strong");
+      zelfde.className = "zelfde-variant";
+      zelfde.textContent = titel;
+      delen.push(zelfde);
+    } else {
+      delen.push(titel);
+    }
+  });
+  if (meer > 0) delen.push(` en nog ${meer} ${meer === 1 ? "ander artikel" : "andere artikelen"}`);
+  return delen;
 }
 
 // Eén aanbieding bij één item: de korting, de aanbieding, voor welk item, waar en tot wanneer, en de artikelen
@@ -1242,11 +1255,10 @@ function bonusDetailRij(detail) {
   sub.className = "item-sub";
   sub.textContent = [item && "Voor " + item.name, Logica.winkelNaam(detail.supermarkt), "t/m " + totDatum(detail.geldig_tot)].filter(Boolean).join(" · ");
   tekst.append(korting, naam, sub);
-  const artikelen = artikelenTekst(detail);
-  if (artikelen) {
+  if (detail.artikelen.length > 0) {
     const welke = document.createElement("span");
     welke.className = "item-sub";
-    welke.textContent = artikelen;
+    welke.append(...artikelenRegel(detail));
     tekst.append(welke);
   }
   li.append(tekst);

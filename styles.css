@@ -513,6 +513,8 @@ button.fav-kies {
 #aanbod-lijst:not(:empty) { margin-bottom: 20px; }
 .aanbod-rij { padding-top: 12px; padding-bottom: 12px; }
 .aanbod-rij .bonus-label { display: inline-block; margin-bottom: 6px; }
+/* Artikelen met dezelfde variant als het item op de lijst */
+.zelfde-variant { color: var(--tekst); font-weight: 700; }
 button.plus { display: grid; place-items: center; flex: none; width: 48px; height: 48px; padding: 0; border-radius: 14px; }
 
 /* ---------- Terugvegen ---------- */

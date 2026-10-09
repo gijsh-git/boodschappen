@@ -51,3 +51,18 @@ from public.article_types t
 join public.product_types ty on ty.id = t.type_id
 group by ty.main_group
 order by artikelen desc;
+
+-- ---------- 5. Varianten per type ----------
+-- De variant bepaalt alleen de volgorde in het bonuspaneel van de lijst. Per type welke varianten de artikelen
+-- hebben (op stam), en hoeveel artikelen nog op een variant wachten. Twee schrijfwijzen van dezelfde variant
+-- naast elkaar ("naturel" en "neutraal") kosten alleen een lagere plek.
+select ty.name as type, coalesce(t.variant_stem, '(geen)') as variant_stam,
+       count(*) as artikelen, (array_agg(distinct t.variant))[1:4] as geschreven_als,
+       count(*) filter (where t.variant_judged_at is null) as wacht
+from public.article_types t
+join public.product_types ty on ty.id = t.type_id
+group by ty.name, t.variant_stem
+order by lower(ty.name), artikelen desc;
+
+-- De variant die een getypte term noemt (vul de term in); leeg bij een typenaam, een los merk of geen variant.
+select public.term_variant('tomatensoep') as variant_stam;
