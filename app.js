@@ -1352,15 +1352,20 @@ function keuzeBlok(detail, item) {
   const lijst = document.createElement("div");
   lijst.className = "keuze-lijst";
   zichtbaar.forEach((optie) => {
-    const rij = document.createElement("label");
+    const rij = document.createElement("div");
+    rij.className = "keuze-rij";
+    const label = document.createElement("label");
     const box = document.createElement("input");
     box.type = "checkbox";
     box.checked = open.aan.has(optie.artikel_id);
-    box.addEventListener("change", () => Logica.zetKeuzeArtikel(optie.artikel_id, box.checked));
+    // Opnieuw tekenen: het aantal staat alleen bij een aangevinkt artikel
+    box.addEventListener("change", () => { Logica.zetKeuzeArtikel(optie.artikel_id, box.checked); renderBonusDetails(); });
     const titel = document.createElement("span");
     titel.textContent = optie.titel;
     if (optie.zelfde) titel.className = "zelfde-variant";
-    rij.append(box, titel);
+    label.append(box, titel);
+    rij.append(label);
+    if (box.checked) rij.append(keuzeAantal(optie));
     lijst.append(rij);
   });
   blok.append(lijst);
@@ -1368,13 +1373,31 @@ function keuzeBlok(detail, item) {
   if (meer > 0) {
     blok.append(keuzeKnop(`Toon ook de ${meer} andere artikelen`, "link", () => { Logica.toonAlleKeuzes(); renderBonusDetails(); }));
   }
-  blok.append(kpEl("p", "item-sub", "Elk aangevinkt artikel komt apart op de lijst. Niets aangevinkt? Dan de aanbieding als geheel."));
+  blok.append(kpEl("p", "item-sub", "Elk aangevinkt artikel komt apart op de lijst, met het aantal erbij. Niets aangevinkt? Dan de aanbieding als geheel."));
   const acties = document.createElement("div");
   acties.className = "keuze-acties";
   acties.append(
     keuzeKnop("Zet op de lijst", "", bevestigKeuze),
     keuzeKnop("Annuleren", "link", () => { Logica.sluitKeuze(); renderBonusDetails(); }));
   blok.append(acties);
+  return blok;
+}
+
+// Het aantal bij een aangevinkt artikel: min, het getal, plus
+function keuzeAantal(optie) {
+  const aantal = Logica.keuzeAantal(optie.artikel_id);
+  const blok = document.createElement("div");
+  blok.className = "keuze-aantal";
+  const stap = (teken, naam, verschil) => {
+    const knop = keuzeKnop(teken, "wit", () => { Logica.zetKeuzeAantal(optie.artikel_id, aantal + verschil); renderBonusDetails(); });
+    knop.setAttribute("aria-label", `${naam} ${optie.titel}`);
+    return knop;
+  };
+  const min = stap("−", "Minder", -1);
+  min.disabled = aantal <= 1;
+  const getal = kpEl("span", "", aantal + "×");
+  getal.setAttribute("aria-live", "polite");
+  blok.append(min, getal, stap("+", "Meer", 1));
   return blok;
 }
 

@@ -29,8 +29,10 @@ const Logica = (() => {
   const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting van de supermarkt
   // De aanbieding die je in het paneel aan het kiezen bent, of null:
   // { itemId, aanbiedingId, opties: [{ artikel_id, titel, zelfde, past, gekozen }] of null (nog bezig),
-  //   aan: Set van aangevinkte artikel-id's, alles: ook de artikelen tonen waar het item niet voor staat }
+  //   aan: Set van aangevinkte artikel-id's, aantal: Map van artikel-id naar aantal (ontbreekt = 1),
+  //   alles: ook de artikelen tonen waar het item niet voor staat }
   let keuze = null;
+  const KEUZE_MAX = 99; // hoogste aantal per artikel
 
   // ---------- Voor jou ----------
   let voorjou = null;  // vaste producten uit het aankoopprofiel: { naam, dagen, om_de, laatste }; null = nog niet opgehaald
@@ -128,7 +130,7 @@ const Logica = (() => {
     // Opent de artikelen van een aanbieding bij een item. Aangevinkt staan de artikelen met dezelfde variant
     // als de term. Geeft null als je intussen iets anders opende.
     async openKeuze(itemId, aanbiedingId) {
-      const mijn = keuze = { itemId, aanbiedingId, opties: null, aan: new Set(), alles: false };
+      const mijn = keuze = { itemId, aanbiedingId, opties: null, aan: new Set(), aantal: new Map(), alles: false };
       const { data, error } = await Data.keuzeOpties(itemId, aanbiedingId);
       if (keuze !== mijn) return null;
       if (error) { keuze = null; return { fout: error.message }; }
@@ -146,6 +148,13 @@ const Logica = (() => {
       if (aan) keuze.aan.add(artikelId); else keuze.aan.delete(artikelId);
     },
 
+    // Hoe vaak een aangevinkt artikel op de lijst moet: 1 t/m KEUZE_MAX
+    keuzeAantal(artikelId) { return (keuze && keuze.aantal.get(artikelId)) || 1; },
+
+    zetKeuzeAantal(artikelId, aantal) {
+      if (keuze) keuze.aantal.set(artikelId, Math.min(Math.max(Math.round(aantal) || 1, 1), KEUZE_MAX));
+    },
+
     // De artikelen die je ziet: waar het item voor staat, en met "toon alles" de hele aanbieding
     keuzeZichtbaar() {
       if (!keuze || !keuze.opties) return [];
@@ -155,11 +164,12 @@ const Logica = (() => {
     toonAlleKeuzes() { if (keuze) keuze.alles = true; },
 
     // Zet de keuze op de lijst: het item wordt het eerste aangevinkte artikel, voor elk volgend artikel komt
-    // er een item bij. Geeft { item } (het gewijzigde item) of { fout }.
+    // er een item bij, elk met zijn aantal. Geeft { item } (het gewijzigde item) of { fout }.
     async bevestigKeuze() {
       if (!keuze || !keuze.opties) return { fout: "Er is niets om te kiezen." };
       const mijn = keuze;
-      const { data, error } = await Data.kiesAanbieding(mijn.itemId, mijn.aanbiedingId, [...mijn.aan]);
+      const aantallen = Object.fromEntries([...mijn.aan].map((id) => [id, mijn.aantal.get(id) || 1]));
+      const { data, error } = await Data.kiesAanbieding(mijn.itemId, mijn.aanbiedingId, [...mijn.aan], aantallen);
       if (error) return { fout: error.message };
       if (keuze === mijn) keuze = null;
       return { item: data };

@@ -520,8 +520,14 @@ button.fav-kies {
 .keuze-acties:empty { display: none; }
 .keuze-acties button.wit { padding: 8px 16px; }
 .keuze-lijst { display: grid; margin: 8px 0 4px; }
-.keuze-lijst label { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; }
-.keuze-lijst label + label { border-top: 1px solid var(--rand); }
+.keuze-rij { display: flex; align-items: center; gap: 10px; }
+.keuze-rij + .keuze-rij { border-top: 1px solid var(--rand); }
+.keuze-rij label { display: flex; flex: 1; align-items: flex-start; gap: 10px; min-width: 0; padding: 7px 0; }
+/* Het aantal bij een aangevinkt artikel */
+.keuze-aantal { display: flex; flex: none; align-items: center; gap: 6px; }
+.keuze-aantal button.wit { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border-radius: 50%; font-size: 1.1rem; line-height: 1; }
+.keuze-aantal button:disabled { opacity: 0.4; }
+.keuze-aantal span { min-width: 2.2em; text-align: center; color: var(--tekst); font-weight: 700; font-variant-numeric: tabular-nums; }
 .keuze-lijst input[type=checkbox] { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--oranje); }
 .keuze p.item-sub { margin: 4px 0; }
 /* Onderaan het bonuspaneel: wat is weggeklikt, ingeklapt */

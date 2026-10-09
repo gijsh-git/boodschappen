@@ -59,15 +59,16 @@ const Data = (() => {
         id: item.id, list_id: item.list_id, name: item.name, quantity: item.quantity,
         added_by: item.added_by, created_at: item.created_at, offer_id: item.offer_id,
         article_supermarket: item.article_supermarket, article_id: item.article_id, type_id: item.type_id,
-        original_name: item.original_name, offer_choice: item.offer_choice
+        original_name: item.original_name, original_quantity: item.original_quantity, offer_choice: item.offer_choice
       });
     },
     // De artikelen van een aanbieding waaruit je bij een item kunt kiezen: [{ artikel_id, titel, zelfde, past, gekozen }]
     keuzeOpties(itemId, aanbiedingId) { return db.rpc("offer_choice_options", { p_item: itemId, p_offer: aanbiedingId }); },
     // Kiest een aanbieding bij een item (met de aangevinkte artikelen; leeg is de aanbieding als geheel): het
-    // item wordt vervangen en onthoudt wat er stond. Geeft het gewijzigde item terug.
-    kiesAanbieding(itemId, aanbiedingId, artikelIds) {
-      return db.rpc("choose_offer", { p_item: itemId, p_offer: aanbiedingId, p_articles: artikelIds });
+    // item wordt vervangen en onthoudt wat er stond. aantallen: per artikel-id hoe vaak, { id: 2 }. Geeft het
+    // gewijzigde item terug.
+    kiesAanbieding(itemId, aanbiedingId, artikelIds, aantallen) {
+      return db.rpc("choose_offer", { p_item: itemId, p_offer: aanbiedingId, p_articles: artikelIds, p_counts: aantallen });
     },
     // Haalt de keuze weg: het item heet weer wat er oorspronkelijk stond. Geeft het gewijzigde item terug.
     wisKeuze(itemId) { return db.rpc("clear_offer_choice", { p_item: itemId }); },
