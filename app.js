@@ -429,6 +429,11 @@ function aanbodRij(aanbieding, opLijst) {
   const staatErAl = opLijst.has(opDeLijst.trim().toLowerCase()) || items.some((i) => i.offer_id === aanbieding.id);
   reden.textContent = aanbodReden(aanbieding) + (staatErAl ? " · staat op de lijst" : "");
   tekst.append(korting, naam, sub, reden);
+  // Alleen voor jezelf, tot de aanbieding verloopt
+  const acties = document.createElement("div");
+  acties.className = "keuze-acties";
+  acties.append(keuzeKnop("Niet deze week", "link", () => klikWegVoorMij(aanbieding)));
+  tekst.append(acties);
   li.append(tekst);
   if (currentList && !staatErAl) {
     const plus = document.createElement("button");
@@ -440,6 +445,12 @@ function aanbodRij(aanbieding, opLijst) {
     li.append(plus);
   }
   return li;
+}
+
+async function klikWegVoorMij(aanbieding) {
+  const antwoord = await Logica.klikWegVoorMij(aanbieding.id);
+  if (antwoord.fout) return say("voorjou-msg", antwoord.fout);
+  renderVoorJou();
 }
 
 function renderVoorJou() {
@@ -1246,6 +1257,43 @@ function artikelenRegel(detail) {
   return delen;
 }
 
+// Een weggeklikte aanbieding in het blok onderaan het paneel: wat, voor welk item, door wie, en terughalen
+function wegRij(detail) {
+  const item = items.find((i) => i.id === detail.item_id);
+  const li = document.createElement("li");
+  li.className = "voorjou-rij aanbod-rij";
+  const tekst = document.createElement("div");
+  tekst.className = "item-tekst";
+  const naam = document.createElement("span");
+  naam.className = "item-naam";
+  naam.textContent = detail.titel;
+  const sub = document.createElement("span");
+  sub.className = "item-sub";
+  const wie = namen[detail.weggeklikt_door];
+  sub.textContent = [detail.korting, item && "voor " + item.name, wie ? "weggeklikt door " + wie : "weggeklikt"].filter(Boolean).join(" · ");
+  const acties = document.createElement("div");
+  acties.className = "keuze-acties";
+  acties.append(keuzeKnop("Terughalen", "link", () => haalTerug(detail)));
+  tekst.append(naam, sub, acties);
+  li.append(tekst);
+  return li;
+}
+
+// Wegklikken en terughalen gelden voor de hele lijst; de labels en het paneel daarna opnieuw ophalen
+async function klikWeg(detail) {
+  say("bonus-msg", "");
+  const antwoord = await Logica.klikWeg(detail.item_id, detail.id);
+  if (antwoord.fout) return say("bonus-msg", antwoord.fout);
+  loadDeals();
+}
+
+async function haalTerug(detail) {
+  say("bonus-msg", "");
+  const antwoord = await Logica.haalTerug(detail.item_id, detail.id);
+  if (antwoord.fout) return say("bonus-msg", antwoord.fout);
+  loadDeals();
+}
+
 // Eén aanbieding bij één item: de korting, de aanbieding, voor welk item, waar en tot wanneer, en de artikelen
 function bonusDetailRij(detail) {
   const item = items.find((i) => i.id === detail.item_id);
@@ -1289,7 +1337,9 @@ function keuzeBlok(detail, item) {
     if (detail.gekozen) {
       acties.append(keuzeKnop("Keuze wissen", "link", () => wisKeuze(item)));
     } else if (!item.offer_id) {
-      acties.append(keuzeKnop("Kiezen", "wit", () => openKeuze(detail)));
+      acties.append(
+        keuzeKnop("Kiezen", "wit", () => openKeuze(detail)),
+        keuzeKnop("Niet deze week", "link", () => klikWeg(detail)));
     }
     blok.append(acties);
     return blok;
@@ -1375,16 +1425,27 @@ function renderBonusDetails() {
   if ($("bonus-paneel").hidden) return;
   // Alleen bij items die nog op de lijst staan: een gekocht of verwijderd item valt meteen weg
   const details = (Logica.dealDetails() || []).filter((d) => items.some((i) => i.id === d.item_id));
-  $("bonus-details").replaceChildren(...details.map(bonusDetailRij));
+  $("bonus-details").replaceChildren(...details.filter((d) => !d.weggeklikt_door).map(bonusDetailRij));
+  // Onderaan, ingeklapt: wat is weggeklikt, om terug te halen
+  const weg = details.filter((d) => d.weggeklikt_door);
+  $("bonus-weg").hidden = weg.length === 0;
+  $("bonus-weg-kop").textContent = `Weggeklikt (${weg.length})`;
+  $("bonus-weg-lijst").replaceChildren(...weg.map(wegRij));
 }
 
 // Groene balk in de kop: hoeveel producten op de lijst in de aanbieding zijn, en waar. Tikken klapt de aanbiedingen uit.
 function renderBonus() {
   const metDeal = items.filter((i) => Logica.dealsVan(i.id));
-  $("bonus-balk").hidden = metDeal.length === 0;
-  if (metDeal.length === 0) return toonBonusPaneel(false);
+  // Is alles weggeklikt, dan blijft de balk staan: in het paneel haal je het terug
+  const weg = Logica.aantalWeggeklikt(items);
+  $("bonus-balk").hidden = metDeal.length === 0 && weg === 0;
+  if (metDeal.length === 0 && weg === 0) return toonBonusPaneel(false);
   renderBonusDetails();
   $("bonus-aantal").textContent = metDeal.length === 1 ? "1 product in de bonus" : `${metDeal.length} producten in de bonus`;
+  if (metDeal.length === 0) {
+    $("bonus-winkels").replaceChildren(weg === 1 ? "1 aanbieding weggeklikt" : `${weg} aanbiedingen weggeklikt`);
+    return;
+  }
   const winkels = document.createElement("em");
   winkels.textContent = Logica.dealWinkels(metDeal.flatMap((i) => Logica.dealsVan(i.id))).join(" en ");
   $("bonus-winkels").replaceChildren("Bij ", winkels);
@@ -1425,6 +1486,8 @@ function subscribe() {
         renderLeden();
       }
     },
+    // Iemand heeft een aanbieding weggeklikt of teruggehaald: de labels en het paneel kloppen niet meer
+    weggeklikt: () => { if (currentList) loadDeals(); },
     lijst: (p) => {
       // De maker heeft de lijst gearchiveerd terwijl jij hem open had
       if (currentList && p.new.id === currentList.id && p.new.archived_at) verlaatLijst(ARCHIEF_MELDING);

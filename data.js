@@ -79,12 +79,17 @@ const Data = (() => {
     maakAankoopOngedaan(aankoopId) { return db.rpc("undo_purchase", { p_purchase: aankoopId }); },
 
     // ---------- Aanbiedingen ----------
-    // Per item bij welke supermarkt er hoeveel geldige aanbiedingen zijn
+    // Per item bij welke supermarkt er hoeveel geldige aanbiedingen zijn, en hoeveel daarvan zijn weggeklikt
     aanbiedingenVoorLijst(lijstId) { return db.rpc("offers_for_list", { p_list: lijstId }); },
     // Per item en aanbieding wat er precies in de aanbieding is: titel, korting, geldig tot en de artikelen
     aanbiedingenBijLijst(lijstId) { return db.rpc("offer_details_for_list", { p_list: lijstId }); },
     // De geldige aanbiedingen die voor jou tellen (favorieten en vaste producten), als JSON in de volgorde van tonen
     aanbiedingenVoorMij() { return db.rpc("offers_for_me"); },
+    // "Niet deze week" bij een item: verbergt de aanbieding bij dat item voor de hele lijst, tot ze verloopt
+    klikAanbiedingWeg(itemId, aanbiedingId) { return db.rpc("dismiss_offer", { p_item: itemId, p_offer: aanbiedingId }); },
+    haalAanbiedingTerug(itemId, aanbiedingId) { return db.rpc("restore_offer", { p_item: itemId, p_offer: aanbiedingId }); },
+    // "Niet deze week" in Voor jou: alleen voor jezelf
+    klikAanbiedingWegVoorMij(aanbiedingId) { return db.rpc("dismiss_offer_for_me", { p_offer: aanbiedingId }); },
 
     // ---------- Aankopen ----------
     aankopen(lijstId) {
@@ -182,8 +187,9 @@ const Data = (() => {
     voegTypesSamen(bronNaam, doelNaam) { return db.rpc("merge_product_types", { p_source: bronNaam, p_target: doelNaam }); },
 
     // ---------- Live volgen ----------
-    // Eén kanaal per lijst voor items, leden, de lijst zelf en aankopen. `op` heeft per soort een functie
-    // die het Supabase-bericht krijgt: { item, lid, lijst, aankoop }. Een nieuw kanaal sluit het vorige.
+    // Eén kanaal per lijst voor items, leden, de lijst zelf, aankopen en weggeklikte aanbiedingen. `op` heeft
+    // per soort een functie die het Supabase-bericht krijgt: { item, lid, lijst, aankoop, weggeklikt }. Een
+    // nieuw kanaal sluit het vorige.
     // Een DELETE van items en aankopen bevat alleen de id, geen list_id, dus daar kan niet op de lijst gefilterd
     // worden (Realtime stuurt zo'n bericht dan helemaal niet). Die luisteren zonder filter; de aanroeper kijkt
     // zelf of de id in de open lijst zit.
@@ -199,6 +205,8 @@ const Data = (() => {
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "purchases", filter: `list_id=eq.${lijstId}` }, op.aankoop)
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "purchases", filter: `list_id=eq.${lijstId}` }, op.aankoop)
         .on("postgres_changes", { event: "DELETE", schema: "public", table: "purchases" }, op.aankoop)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "offer_dismissals", filter: `list_id=eq.${lijstId}` }, op.weggeklikt)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "offer_dismissals", filter: `list_id=eq.${lijstId}` }, op.weggeklikt)
         .subscribe();
     },
     stopVolgen() {

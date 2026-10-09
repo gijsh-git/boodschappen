@@ -593,9 +593,10 @@ Uitgangspunten:
 
 #### Deel 3 – Wegklikken
 
-- [ ] Per aanbieding bij een item "Niet deze week". Geldt voor de hele lijst, tot de aanbieding verloopt. Komt dezelfde actie later terug, dan is hij weer zichtbaar.
-- [ ] Er staat bij wie het wegklikte ("weggeklikt door Els"), en onderaan het paneel staat een ingeklapt blok "Weggeklikt (n)" om het terug te halen.
-- [ ] In "Voor jou" kun je een aanbieding ook wegklikken, daar per persoon en ook tot de aanbieding verloopt.
+- [x] Per aanbieding bij een item "Niet deze week". Geldt voor de hele lijst, tot de aanbieding verloopt. Komt dezelfde actie later terug, dan is hij weer zichtbaar.
+- [x] Er staat bij wie het wegklikte ("weggeklikt door Els"), en onderaan het paneel staat een ingeklapt blok "Weggeklikt (n)" om het terug te halen.
+- [x] In "Voor jou" kun je een aanbieding ook wegklikken, daar per persoon en ook tot de aanbieding verloopt.
+- Gebouwd op 9 oktober 2026 (migratie `aanbieding_wegklikken`, tabel `offer_dismissals`). Wegklikken geldt per item: "Alle Conimex" wegklikken bij tomatensoep laat hem bij kroepoek staan. Zijn alle aanbiedingen van een item weggeklikt, dan is het Bonus-label weg en zegt de groene balk "n aanbiedingen weggeklikt". In "Voor jou" is een weggeklikte aanbieding niet terug te halen; hij komt terug als de actie opnieuw loopt.
 
 #### Deel 4 – Keuzes vastleggen
 

@@ -508,7 +508,7 @@ button.fav-kies {
 .tip-info { margin: 6px 0 16px; color: var(--grijs); }
 .tip-knoppen { display: flex; flex-wrap: wrap; gap: 10px; }
 .tip-knoppen button { display: flex; align-items: center; gap: 8px; }
-#voorjou-lijst:not(:empty), #aanbod-lijst:not(:empty), #bonus-details:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
+#voorjou-lijst:not(:empty), #aanbod-lijst:not(:empty), #bonus-details:not(:empty), #bonus-weg-lijst:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
 .voorjou-rij { flex-wrap: nowrap; gap: 12px; min-height: 68px; padding: 8px 8px 8px 16px; border: 0; border-radius: 16px; background: var(--vlak); }
 #aanbod-lijst:not(:empty) { margin-bottom: 20px; }
 .aanbod-rij { padding-top: 12px; padding-bottom: 12px; }
@@ -524,6 +524,11 @@ button.fav-kies {
 .keuze-lijst label + label { border-top: 1px solid var(--rand); }
 .keuze-lijst input[type=checkbox] { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--oranje); }
 .keuze p.item-sub { margin: 4px 0; }
+/* Onderaan het bonuspaneel: wat is weggeklikt, ingeklapt */
+.bonus-weg { margin-top: 10px; }
+.bonus-weg summary { padding: 8px 4px; color: var(--grijs); font-weight: 600; cursor: pointer; }
+#bonus-weg-lijst { margin-top: 6px; }
+#bonus-weg-lijst .item-naam { font-weight: 600; }
 button.plus { display: grid; place-items: center; flex: none; width: 48px; height: 48px; padding: 0; border-radius: 14px; }
 
 /* ---------- Terugvegen ---------- */

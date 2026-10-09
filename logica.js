@@ -17,10 +17,12 @@ const Logica = (() => {
   }
 
   // ---------- Aanbiedingen bij de lijst ----------
-  let deals = {};      // item-id -> [{ supermarkt, aantal }]: actuele aanbiedingen per item
+  let deals = {};      // item-id -> [{ supermarkt, aantal }]: actuele aanbiedingen per item, zonder wat is weggeklikt
+  let wegPerItem = {}; // item-id -> hoeveel aanbiedingen er bij dat item zijn weggeklikt
   let dealsVraag = 0;  // volgnummer, zodat een laat antwoord een nieuwer antwoord niet overschrijft
   // Wat er precies in de aanbieding is, per item en aanbieding; null = nog niet opgehaald:
-  // { item_id, id, supermarkt, titel, korting, geldig_tot, artikelen: [titel], artikelen_totaal, artikelen_zelfde, gekozen }
+  // { item_id, id, supermarkt, titel, korting, geldig_tot, artikelen: [titel], artikelen_totaal, artikelen_zelfde, gekozen,
+  //   weggeklikt_door: id van wie de aanbieding bij dit item heeft weggeklikt, of null }
   // In de volgorde van de database: per item, en daarbinnen eerst de aanbiedingen met dezelfde variant als het item.
   let dealDetails = null;
   let dealDetailsVraag = 0;
@@ -69,14 +71,43 @@ const Logica = (() => {
       const { data, error } = await Data.aanbiedingenVoorLijst(lijstId);
       if (vraag !== dealsVraag || error) return false;
       const nieuw = {};
-      data.forEach((d) => (nieuw[d.item_id] ||= []).push(d));
+      const weg = {};
+      data.forEach((d) => {
+        if (d.aantal > 0) (nieuw[d.item_id] ||= []).push(d);
+        if (d.weggeklikt > 0) weg[d.item_id] = (weg[d.item_id] || 0) + d.weggeklikt;
+      });
       deals = nieuw;
+      wegPerItem = weg;
       return true;
+    },
+
+    // Hoeveel aanbiedingen er bij deze items zijn weggeklikt ("Niet deze week")
+    aantalWeggeklikt(items) { return items.reduce((som, i) => som + (wegPerItem[i.id] || 0), 0); },
+
+    // "Niet deze week" bij een item, en terughalen: geldt voor de hele lijst. Geeft {} of { fout }.
+    async klikWeg(itemId, aanbiedingId) {
+      const { error } = await Data.klikAanbiedingWeg(itemId, aanbiedingId);
+      if (error) return { fout: error.message };
+      if (keuze && keuze.itemId === itemId && keuze.aanbiedingId === aanbiedingId) keuze = null;
+      return {};
+    },
+    async haalTerug(itemId, aanbiedingId) {
+      const { error } = await Data.haalAanbiedingTerug(itemId, aanbiedingId);
+      return error ? { fout: error.message } : {};
+    },
+
+    // "Niet deze week" in Voor jou: alleen voor jezelf, tot de aanbieding verloopt. Geeft {} of { fout }.
+    async klikWegVoorMij(aanbiedingId) {
+      const { error } = await Data.klikAanbiedingWegVoorMij(aanbiedingId);
+      if (error) return { fout: error.message };
+      if (aanbiedingen) aanbiedingen = aanbiedingen.filter((a) => a.id !== aanbiedingId);
+      return {};
     },
 
     // Bij wisselen van lijst en uitloggen; een antwoord dat nog onderweg is hoort bij de vorige lijst
     vergeetDeals() {
       deals = {};
+      wegPerItem = {};
       dealsVraag++;
       dealDetails = null;
       dealDetailsVraag++;
