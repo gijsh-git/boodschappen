@@ -1,6 +1,6 @@
 # ARCHITECTURE.md
 
-Dit document zegt hoe de code **hoort** te zijn opgebouwd. Hoe het systeem nu werkt (views, tabellen, RPC's, flows) staat in `CLAUDE.md`; dat wordt hier niet herhaald.
+Dit document zegt hoe de code **hoort** te zijn opgebouwd. Hoe het systeem nu werkt (views, tabellen, RPC's, flows) staat in `CLAUDE.md` en, per domein, in `docs/systeem/`; dat wordt hier niet herhaald.
 
 ## Huidig
 
@@ -23,7 +23,7 @@ Klassieke scripts, geen modules en geen build. Laadvolgorde in `index.html`: sup
 3. Rekenwerk en matching horen in Postgres (RPC), niet in JS. `logica.js` is dunne glue eromheen.
 4. Een nieuw statisch bestand gaat in `ASSETS` in `sw.js`. `CACHE` wordt bij elk gerefactord domein gebumpt (zie Werkwijze).
 5. Wijzig bij een verhuizing het gedrag niet. Verhuizen en veranderen gebeuren nooit in dezelfde commit.
-6. Werk `CLAUDE.md` bij zodra een beschrijving daar niet meer klopt (bijvoorbeeld de laadvolgorde).
+6. Werk `CLAUDE.md` of het bestand in `docs/systeem/` bij zodra een beschrijving daar niet meer klopt (bijvoorbeeld de laadvolgorde).
 7. Nieuwe logica komt in `logica.js`, nooit in `app.js`. Dat geldt ook voor de glue rond een nieuwe RPC.
 8. Pas je een onderdeel van `app.js` aan, verhuis dan eerst de logica van dat onderdeel naar `logica.js` (state, optimistische updates, controles; alles wat de DOM niet aanraakt). Volgens regel 5 is dat een eigen commit, vóór de wijziging zelf. Een onderdeel is wat bij één scherm of flow hoort, bijvoorbeeld de bonstapel of Voor jou; de rest van `app.js` blijft liggen.
 

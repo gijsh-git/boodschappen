@@ -28,7 +28,6 @@ Na elke afgeronde roadmap-stap: lijst langslopen, urgentie bijstellen, iets naar
 - [Later] Ontwerp verfijnen in Claude Design (staat onder "Later te beslissen" in de roadmap)
 
 ## Techniek en onderhoud
-- [Binnenkort] CLAUDE.md compact houden: alleen wat bij elke taak nodig is, details naar docs/ met een verwijzing wanneer Code ze moet lezen
 - [Binnenkort] Logica uit app.js naar logica.js verhuizen op de plek waar je toch iets bouwt, niet als losse stap
 
 ## Privacy en uitrol

@@ -19,6 +19,24 @@ Een stap is pas klaar als alle punten onder "Klaar als" kloppen.
 
 ---
 
+## Oorspronkelijke wensen
+
+In bouwvolgorde:
+
+1. Gedeelde boodschappenlijst voor mij en mijn vriendin, wijzigingen direct zichtbaar bij de ander
+2. Items toevoegen, afstrepen en verwijderen
+3. Zien wie een item heeft toegevoegd
+4. Kortingen van supermarkten tonen bij items op de lijst
+5. Items naar rechts swipen = gekocht (met datum en wie), naar links = verwijderd. Ook bruikbaar zonder swipen.
+6. Een tabel met aankopen als basis voor het aankoopprofiel, alleen voor lijsten die meetellen voor het profiel
+7. Alle onderdelen (lijstitems, aankopen, bonregels, aanbiedingen) koppelen aan hetzelfde product via zoekwoorden
+8. Items groeperen per afdeling
+9. Een lijst vullen vanuit een foto of screenshot (bijv. ingrediënten van een recept)
+10. Kassabonnen scannen om aankopen toe te voegen, ook historische bonnen in bulk
+11. Op basis van patronen gericht kortingsadvies geven
+
+---
+
 ## Fase 0 – Voorbereiding
 
 - [ ] Back-up maken van de Supabase-database (vraag Claude hoe, of via Supabase > Database > Backups)
