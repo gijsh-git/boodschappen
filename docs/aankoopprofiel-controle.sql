@@ -27,8 +27,8 @@ from public.purchases a
 join public.lists l on l.id = a.list_id and l.counts_for_profile
 join public.list_members m on m.list_id = l.id
 join auth.users u on u.id = m.user_id and u.email = current_setting('controle.email')
-left join public.product_aliases pa on pa.normalized_name = a.normalized_name
-left join public.products pr on pr.id = pa.product_id
+left join public.purchase_types() pt on pt.purchase_id = a.id
+left join public.product_types pr on pr.id = pt.type_id
 left join public.receipts r on r.id = a.receipt_id
 where current_setting('controle.lijst') = '' or l.name = current_setting('controle.lijst');
 
@@ -90,4 +90,4 @@ group by 1
 order by 1;
 
 -- 10. Welke producten hebben de vlag "telt niet mee"?
-select name from public.products where not counts_in_profile order by name;
+select name from public.product_types where not counts_in_profile order by name;

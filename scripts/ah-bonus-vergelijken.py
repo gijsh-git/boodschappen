@@ -7,12 +7,11 @@ Twee manieren om een aanbieding aan een aankoop te koppelen:
   via naam  de naam van het product komt als hele woorden voor in de titel van een artikel in de aanbieding
 
 Gebruik, vanuit de hoofdmap van het project:
-  python3 scripts/ah-bonus-vergelijken.py               producten = de leesbare namen uit data/ah-namen.json
-  python3 scripts/ah-bonus-vergelijken.py --producten   producten uit de database (samengevoegd); vraagt de
-                                                        inlog van de beheerder, het wachtwoord wordt nergens bewaard
-  ... --alles                                           toon alle treffers in plaats van een paar voorbeelden
+  python3 scripts/ah-bonus-vergelijken.py           producten = de leesbare namen uit data/ah-namen.json
+  python3 scripts/ah-bonus-vergelijken.py --alles   toon alle treffers in plaats van een paar voorbeelden
+
+De optie --producten (de samengevoegde producten uit de oude catalogus) is vervallen met die catalogus.
 """
-import getpass
 import importlib.util
 import json
 import re
@@ -57,20 +56,6 @@ def past_op_titel(product_woorden, titel_woorden):
     return bool(product_woorden) and product_woorden <= titel_woorden
 
 
-def producten_uit_database():
-    """normalized_name -> productnaam, uit product_overview (alleen de beheerder krijgt iets terug)."""
-    db = importeren.Supabase(*importeren.lees_config())
-    try:
-        db.login(input("E-mailadres van de beheerder: ").strip(),
-                 getpass.getpass("Wachtwoord (je ziet niets terwijl je typt; sluit af met Enter): "))
-    except RuntimeError as fout:
-        sys.exit(f"Inloggen mislukt: {fout}")
-    overzicht = db.rpc("product_overview")
-    if not overzicht:
-        sys.exit("Geen producten teruggekregen; product_overview werkt alleen voor de beheerder.")
-    return {naam: p["name"] for p in overzicht for naam in p["namen"]}
-
-
 def main():
     alles = "--alles" in sys.argv
     for pad in (BONUS, BONNEN):
@@ -79,11 +64,8 @@ def main():
     week = json.loads(BONUS.read_text())
     bonnen = [b for b in json.loads(BONNEN.read_text()) if b.get("compleet")]
     namen = json.loads(NAMEN.read_text()) if NAMEN.exists() else {}
-    alias = producten_uit_database() if "--producten" in sys.argv else {}
-
     def product(bon_naam):
-        naam = importeren.leesbaar(bon_naam, namen)
-        return alias.get(naam.strip().lower(), naam)
+        return importeren.leesbaar(bon_naam, namen)
 
     # ---------- Wat we kopen ----------
     # per bon-ID en per product: op welke dagen gekocht
@@ -117,7 +99,7 @@ def main():
     print(f"Bonus van {week['van']} tot {week['tot']}: {len(week['aanbiedingen'])} aanbiedingen, "
           f"{sum(len(a['artikelen']) for a in week['aanbiedingen'])} artikelen.")
     print(f"Bonnen: {len(bonnen)} van {alle_dagen[0]} tot {alle_dagen[-1]}, {len(id_dagen)} verschillende bon-ID's, "
-          f"{len(product_dagen)} producten ({'database' if alias else 'namen uit ah-namen.json'}).")
+          f"{len(product_dagen)} producten (namen uit ah-namen.json).")
     print(f"Vaste producten (minstens {VAST} aankoopdagen, laatste binnen {RECENT} dagen): {len(vaste_producten)}.")
     if zonder_id:
         print(f"{zonder_id} bonregels hebben geen product_id.")
