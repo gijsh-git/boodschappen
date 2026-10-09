@@ -1,3 +1,7 @@
+-- LET OP (9 oktober 2026): sinds de overstap naar producttypes rekent term_articles() op types en merken.
+-- De lagen bestaan nog (1 exact, 2 naam, 3 merk, 4 tolerant; laag 5 is vervallen), maar de verwachte
+-- uitkomsten hieronder en de query's op article_names zijn van daarvoor. Zie docs/producttypes-controle.sql.
+--
 -- Controlequeries voor het gelaagd matchen van lijsttermen (migraties gelaagd_matchen en matchen_bijgesteld).
 -- Draai ze één voor één in de SQL Editor: die toont alleen de uitkomst van de laatste opdracht.
 --

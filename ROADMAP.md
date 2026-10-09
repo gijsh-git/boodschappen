@@ -377,6 +377,24 @@ Gebouwd en doorgevoerd op 8 oktober 2026 (migraties `gelaagd_matchen` en `matche
 
 Besluiten staan in `docs/productregels.md` onder "Matchen van lijsttermen". Niet gedaan: `items.normalized_name` gelijktrekken met de nieuwe sleutelvorm (raakt de sleutel van `product_aliases`), en Voor jou.
 
+#### Deel 4 – Producttypes in plaats van samenvoegen
+
+Aanleiding (8 oktober 2026): de catalogus groeit met elke nieuwe naam en elke bonusweek levert een wachtrij aan voorstellen op. Daarvoor in de plaats komt een vaste lijst producttypes (het wisselniveau uit `docs/productregels.md`, met de hoofdcategorie van AH als hoofdgroep) waar artikelen, getypte termen en aankopen automatisch aan gekoppeld worden. Beheer wordt achteraf controleren en corrigeren.
+
+Besluiten: een type is het wisselniveau, niet fijner ("brood", niet "volkorenbrood"); een AI-koppeling telt direct voor label, profiel en Voor jou; een favoriet is een type, een merk plus type, of alleen een merk.
+
+- [x] Fase 1: tabel `product_types`, `scripts/producttypes-voorstellen.py` (voorstel naar `docs/producttypes.csv`) en `scripts/producttypes-laden.py`.
+- [x] Gijs leest de typelijst na en laadt hem (8 oktober 2026: 606 types). "sap", "papier" en "deeg" zitten bewust in geen enkel type: te vaag om te kiezen.
+- [x] Fase 2: `article_types` en de Edge Function `artikelen-classificeren`: nieuwe artikelen krijgen bij het ophalen van de bonus in één ronde een type (titel, merk en categorie als invoer). Eerste ronde over alle artikelen.
+- [x] Fase 3: `scripts/naar-producttypes.py` koppelt de namen van catalogusproducten, de lijstnamen en de artikelen uit de oude catalogus aan een type; `term_synonyms` wordt de ene tabel naam → type. Gedaan op 9 oktober 2026: 2402 van de 2422 artikelen hebben een type, 939 namen zijn gekoppeld (929 uit de catalogus en de lijstnamen, 10 via de AI) en 1274 van de 1281 aankopen hebben een type; "papier", "sap" en "deeg" bewust niet. Tomatensoep en kippensoep zijn opgegaan in soep. Lijstitems en favorieten hoeven niet omgezet: er zijn 4 items (hun type volgt uit de naam) en nog geen favorieten.
+- [x] Fase 4: `purchase_profile`, `regular_products`, `offers_for_me`, `term_articles`, `match_receipt_items` en `add_offer_item` rekenen op types; zelfde signatuur, de app verandert niet. Doorgevoerd op 9 oktober 2026. Vergeleken op alle 623 namen uit de catalogus: 357 hebben deze week een label (was 304); 17 raakten het kwijt, bijna allemaal terecht (een zero-variant of groente uit pot gaf eerder een label bij het gewone product). In Voor jou 55 aanbiedingen (was 45), geen enkele weg. Voor het label gaat een merk vóór een naam: "nivea" is alles van Nivea, "nivea shampoo" alleen de shampoo. Nog te doen: testen in de app met twee browsers.
+- [ ] Fase 5: Edge Function `term-classificeren`, aangeroepen vanuit `handle_unmatched_term()` via `pg_net`: een term zonder treffer krijgt direct een type, opgeslagen als synoniem met bron `ai` en datum. Het label verschijnt zonder goedkeuring.
+- [ ] Fase 6: het scherm Producten wordt een overzicht van de AI-koppelingen om te controleren en te corrigeren; samenvoegen vervalt.
+- [ ] Fase 7: favorieten op type, of merk plus type.
+- [ ] Fase 8: opruimen na een paar weken: `products`, `product_aliases`, `product_merges`, `article_links`, `article_link_rejections`, `article_names` en de scripts eromheen.
+
+Vervangt de open punten van deel 3 (de AI-stap en het blok in het scherm Producten).
+
 ### [ ] Stap 6 – Automatische aankoopimport (alleen eigen accounts)
 
 - [ ] Kassabonnen van Gijs (en eventueel Els) periodiek ophalen via de AH-API
