@@ -305,9 +305,14 @@
         <h1>Koppelingen</h1>
       </header>
       <div class="content">
-        <p class="uitleg">De AI koppelt artikelen en getypte termen zelf aan een type, en alles telt meteen mee. Hier kijk je na wat twijfelachtig is en zet je recht wat fout is.</p>
-        <!-- Wat aandacht vraagt: beoordeelde termen, artikelen met twijfel en wat geen type heeft -->
+        <p class="uitleg">De AI koppelt artikelen en getypte termen zelf aan een type, en alles telt meteen mee. Ontbreekt er een type, dan maakt de AI het aan. Hier kijk je na wat nieuw of twijfelachtig is en zet je recht wat fout is.</p>
+        <!-- Wat aandacht vraagt: nieuwe types van de AI, beoordeelde termen, artikelen met twijfel en wat geen type heeft -->
         <div id="koppel-blokken" class="ap-blokken" hidden>
+          <details id="kp-nieuw-blok" class="ap-blok" hidden>
+            <summary id="kp-nieuw-kop">Nieuwe types</summary>
+            <p class="uitleg">Types die de AI zelf heeft aangemaakt omdat er niets passends was. Ze werken al; kijk of ze kloppen.</p>
+            <div id="kp-nieuw"></div>
+          </details>
           <details id="kp-termen-blok" class="ap-blok" hidden>
             <summary id="kp-termen-kop">Termen</summary>
             <p class="uitleg">Wat iemand typte en nergens voor stond, met het oordeel van de AI. De nieuwste staat bovenaan.</p>

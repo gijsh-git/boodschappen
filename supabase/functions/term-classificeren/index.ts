@@ -34,6 +34,7 @@ De termen zijn kort en slordig: tikfouten, afkortingen, enkelvoud of meervoud, s
 - Geen boodschap, onleesbaar of een notitie ("niet vergeten", "bellen"): het type voor onleesbare invoer als dat bestaat, anders "${GEEN}".
 - variant: het ene woord dat zegt welke smaak of soort binnen het type de term noemt: "tomaat" bij "tomatensoep", "kip" bij "kippensoep", "aardbei" bij "aardbeien yoghurt", "paprika" bij "chips paprika". Enkelvoud, kleine letters, geen merk, en niet wat de naam van het type al zegt. Noemt de term geen smaak of soort ("soep", "chips", "halfvolle melk"), of is het "${GEEN}", dan een lege tekst.
 - voorstel: alleen bij "${GEEN}", als de term wel een gewone boodschap is maar het type in de lijst ontbreekt ("afwasborstel"): de naam die dat type zou hebben, zoals op een boodschappenlijst (kleine letters, zonder merk). Bij een vage term, een losse merknaam of een gekozen type een lege tekst.
+- Bij een voorstel geef je ook voorstel_hoofdgroep (de hoofdgroep waar het type onder hoort, letterlijk een van de koppen uit de lijst), voorstel_eronder (één zin: wat valt eronder, ongeacht merk, met een of twee voorbeelden) en voorstel_niet (wat er net niet bij hoort en bij welk type dat wel hoort, of een lege tekst). Met een hoofdgroep erbij wordt het type meteen aangemaakt. Stel daarom een soort voor waar een koper binnen wisselt, geen merk, smaak of los artikel, en gebruik de naam die het meest voor de hand ligt, in het meervoud als de lijst dat bij zulke types ook doet. Twijfel je of het een eigen type verdient of toch bij een bestaand type hoort, laat voorstel_hoofdgroep dan leeg: het voorstel wacht dan op de beheerder. Zonder voorstel zijn deze drie een lege tekst.
 - zekerheid: "hoog" als de term zonder twijfel dit type is, "middel" als het waarschijnlijk klopt, "laag" bij echte twijfel. Bij "${GEEN}" zegt de zekerheid hoe zeker je bent dat geen type past.
 - reden: één korte zin in het Nederlands.
 
@@ -42,7 +43,7 @@ Geef voor elke term precies één oordeel, met het nummer van de term.`;
 type Soort = { id: string; naam: string; hoofdgroep: string; valt_eronder: string | null; valt_er_niet_onder: string | null };
 // alleen_variant: de naam heeft al een type en krijgt alleen nog een variant
 type Term = { sleutel: string; term: string; alleen_variant?: boolean };
-type Rij = { term: string; type_id: string | null; brand: string | null; variant: string | null; suggested_type: string | null; confidence: string; reason: string };
+type Rij = { term: string; type_id: string | null; brand: string | null; variant: string | null; suggested_type: string | null; suggested_group: string | null; suggested_scope: string | null; suggested_excludes: string | null; confidence: string; reason: string };
 
 function antwoord(inhoud: unknown, status = 200) {
   return new Response(JSON.stringify(inhoud), {
@@ -102,7 +103,7 @@ Deno.serve(async (req) => {
   const vraag = await req.json().catch(() => ({}));
   const varianten = vraag?.varianten === true;
   // nog_varianten: namen met een type die nog op een variant wachten (alleen geteld met varianten)
-  const telling = { beoordeeld: 0, met_type: 0, geen_type: 0, ongeldig: 0, items: 0, varianten: 0, nog_varianten: 0 };
+  const telling = { beoordeeld: 0, met_type: 0, geen_type: 0, ongeldig: 0, items: 0, varianten: 0, nog_varianten: 0, nieuwe_types: 0 };
 
   // Terwijl de AI bezig is kunnen er termen bijkomen (een foto met meerdere onbekende items geeft per item
   // een seintje, maar alleen de eerste aanroep pakt ze op): daarom een paar rondes achter elkaar.
@@ -119,6 +120,8 @@ Deno.serve(async (req) => {
     if (types.length === 0) return antwoord({ fout: "Er zijn nog geen producttypes; laad eerst de typelijst." }, 409);
 
     const perNaam = new Map(types.map((t) => [t.naam, t]));
+    // Een nieuw type komt in een hoofdgroep die al bestaat; wat geen boodschap is krijgt nooit vanzelf een type
+    const hoofdgroepen = [...new Set(types.map((t) => t.hoofdgroep))].filter((g) => g !== "Geen boodschappen");
     const schema = {
       type: "object",
       properties: {
@@ -132,10 +135,13 @@ Deno.serve(async (req) => {
               merk: { type: "string", description: "Het merk dat de term naast de soort noemt, anders leeg" },
               variant: { type: "string", description: "De smaak of soort die de term binnen het type noemt in één woord, anders leeg" },
               voorstel: { type: "string", description: `Alleen bij "${GEEN}": het type dat in de lijst ontbreekt, anders leeg` },
+              voorstel_hoofdgroep: { type: "string", enum: ["", ...hoofdgroepen], description: "Bij een voorstel: de hoofdgroep van het nieuwe type, anders leeg" },
+              voorstel_eronder: { type: "string", description: "Bij een voorstel: wat er onder het nieuwe type valt, anders leeg" },
+              voorstel_niet: { type: "string", description: "Bij een voorstel: wat er net niet onder valt en waar dat hoort, anders leeg" },
               zekerheid: { type: "string", enum: Object.keys(ZEKERHEID) },
               reden: { type: "string" },
             },
-            required: ["term", "type", "merk", "variant", "voorstel", "zekerheid", "reden"],
+            required: ["term", "type", "merk", "variant", "voorstel", "voorstel_hoofdgroep", "voorstel_eronder", "voorstel_niet", "zekerheid", "reden"],
             additionalProperties: false,
           },
         },
@@ -189,6 +195,9 @@ Deno.serve(async (req) => {
         brand: soort ? String(o.merk ?? "").trim() || null : null,
         variant,
         suggested_type: soort ? null : String(o.voorstel ?? "").trim().toLowerCase() || null,
+        suggested_group: soort ? null : String(o.voorstel_hoofdgroep ?? "").trim() || null,
+        suggested_scope: soort ? null : String(o.voorstel_eronder ?? "").trim() || null,
+        suggested_excludes: soort ? null : String(o.voorstel_niet ?? "").trim() || null,
         confidence: ZEKERHEID[o.zekerheid],
         reason: String(o.reden ?? "").trim(),
       });
@@ -205,6 +214,7 @@ Deno.serve(async (req) => {
     telling.met_type += rijen.filter((r) => r.type_id).length;
     telling.geen_type += rijen.filter((r) => !r.type_id).length;
     telling.items += opgeslagen.items ?? 0;
+    telling.nieuwe_types += opgeslagen.nieuwe_types ?? 0;
     telling.varianten += opgeslagen.varianten ?? 0;
     telling.nog_varianten = Math.max(0, telling.nog_varianten - alleenVariant.length);
     // Aanvullen gaat één portie per aanroep: het script vraagt opnieuw tot er niets meer wacht

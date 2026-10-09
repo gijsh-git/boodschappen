@@ -101,7 +101,7 @@ def stuur(url, sleutel, aanbiedingen):
 
 def geef_types(url, sleutel):
     """Laat de artikelen zonder producttype beoordelen, portie voor portie. Geeft terug hoeveel er over zijn."""
-    totaal = {"met_type": 0, "geen_type": 0}
+    totaal = {"met_type": 0, "geen_type": 0, "nieuwe_types": 0}
     haperingen = 0
     nog = None
     while nog != 0:
@@ -115,7 +115,7 @@ def geef_types(url, sleutel):
                 break
             continue
         for soort in totaal:
-            totaal[soort] += uit[soort]
+            totaal[soort] += uit.get(soort, 0)
         nog = uit["nog"]
         if uit["beoordeeld"]:
             print(f"  {uit['beoordeeld']} artikelen beoordeeld, nog {nog}")
@@ -123,6 +123,8 @@ def geef_types(url, sleutel):
         if nog and not uit["beoordeeld"]:
             break
     print(f"Types: {totaal['met_type']} artikelen kregen een type, {totaal['geen_type']} horen bij geen enkel type.")
+    if totaal["nieuwe_types"]:
+        print(f"  {totaal['nieuwe_types']} nieuwe types aangemaakt; kijk ze na in de app onder Koppelingen.")
     # Termen van de lijst die nog op een oordeel wachten (het seintje vanuit de database is een keer mislukt),
     # en namen die al een type hebben maar nog geen variant: portie voor portie, tot er niets meer bijkomt
     for _ in range(RONDES_MAX):

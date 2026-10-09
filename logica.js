@@ -49,7 +49,7 @@ const Logica = (() => {
   //   termen:      [{ sleutel, term, type_id, type, merk, zekerheid, reden, voorstel, op }]
   //   artikelen:   [{ supermarkt, artikel_id, titel, merk, inhoud, categorie, type_id, type, zekerheid, reden }]
   //   zonder_type: [{ supermarkt, artikel_id, titel, merk, inhoud, categorie, zekerheid, reden, voorstel }]
-  //   types:       [{ id, naam, hoofdgroep, valt_eronder, valt_er_niet_onder, telt_mee, artikelen, namen, aankopen }]
+  //   types:       [{ id, naam, hoofdgroep, valt_eronder, valt_er_niet_onder, telt_mee, nieuw, artikelen, namen, aankopen }]
   let koppelingen = null;
   let typeOpen = null; // id van het type dat is opengeklapt
   let typeDetails = {}; // type-id -> { namen, artikelen }, pas opgehaald bij openklappen
@@ -452,6 +452,9 @@ const Logica = (() => {
       return {};
     },
 
+    // De types die de AI zelf heeft aangemaakt en die de beheerder nog niet heeft gezien
+    nieuweTypes() { return ((koppelingen || {}).types || []).filter((t) => t.nieuw); },
+
     // De artikelen om na te kijken, per type: [{ type_id, type, rijen }]
     artikelGroepen() {
       const per = new Map();
@@ -556,6 +559,21 @@ const Logica = (() => {
       if (!velden.naam.trim()) return { fout: "Geef het type een naam." };
       const { error } = await Data.wijzigType(type.id, velden);
       if (error) return { fout: error.message };
+      return this.herlaadKoppelingen();
+    },
+
+    // "Klopt" bij een type van de AI: het blijft zoals het is en verdwijnt uit "Nieuwe types"
+    async typeKlopt(type) {
+      const { error } = await Data.markeerTypeNagekeken(type.id);
+      if (error) return { fout: error.message };
+      return this.herlaadKoppelingen();
+    },
+
+    // Het type had er niet moeten zijn: zijn artikelen en namen blijven zonder type achter
+    async verwijderType(type) {
+      const { error } = await Data.verwijderType(type.id);
+      if (error) return { fout: error.message };
+      if (typeOpen === type.id) typeOpen = null;
       return this.herlaadKoppelingen();
     },
 

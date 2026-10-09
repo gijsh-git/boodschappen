@@ -184,6 +184,10 @@ const Data = (() => {
         p_excludes: velden.valtErNietOnder, p_counts: velden.teltMee,
       });
     },
+    // Een type dat de AI aanmaakte is gezien
+    markeerTypeNagekeken(typeId) { return db.rpc("review_product_type", { p_type: typeId }); },
+    // Zijn artikelen en namen blijven zonder type achter
+    verwijderType(typeId) { return db.rpc("delete_product_type", { p_type: typeId }); },
     // Het type bron gaat op in doel (beide bij naam); niet terug te draaien
     voegTypesSamen(bronNaam, doelNaam) { return db.rpc("merge_product_types", { p_source: bronNaam, p_target: doelNaam }); },
 

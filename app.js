@@ -2912,6 +2912,30 @@ function kpOntbreekGroep(groep) {
   return blok;
 }
 
+// Een type dat de AI zelf aanmaakte: wat het is, en nakijken, openen of verwijderen
+function kpNieuwType(type) {
+  const regel = kpEl("div", "voorstel");
+  regel.append(kpEl("p", "", type.naam),
+    kpEl("p", "bonnen-info", `${type.hoofdgroep} · ${type.artikelen} art.` + (type.valt_eronder ? ` · ${type.valt_eronder}` : "")));
+  const acties = kpEl("div", "voorstel-acties");
+  acties.append(
+    kpKnop("Klopt", (k) => kpDoe(k, () => Logica.typeKlopt(type))),
+    // Openen in de lijst onderaan: daar staan wijzigen, samenvoegen en de artikelen
+    kpKnop("Bekijken", () => {
+      $("producten-zoek").value = type.naam;
+      Logica.openType(type.id);
+      renderKoppelingen();
+      if (!Logica.detailsVan(type.id)) loadTypeDetails(type.id);
+      $("producten-zoek").scrollIntoView({ behavior: "smooth", block: "start" });
+    }),
+    kpKnop("Verwijderen", (k) => {
+      if (!confirm(`"${type.naam}" verwijderen? De artikelen en namen blijven zonder type achter. Hoort het bij een ander type, voeg het dan samen via "Bekijken".`)) return;
+      kpDoe(k, () => Logica.verwijderType(type), `"${type.naam}" is verwijderd.`);
+    }));
+  regel.append(acties);
+  return regel;
+}
+
 // Eén type in de lijst onderaan. Opengeklapt: wijzigen, samenvoegen, en zijn namen en artikelen.
 function kpTypeRij(type) {
   const li = document.createElement("li");
@@ -2974,8 +2998,12 @@ function renderKoppelingen() {
   const termen = alles ? alles.termen : [];
   const groepen = Logica.artikelGroepen();
   const ontbreekt = Logica.ontbrekend();
+  const nieuw = Logica.nieuweTypes();
   const tel = (lijst, per) => lijst.reduce((n, x) => n + per(x), 0);
 
+  $("kp-nieuw").replaceChildren(...nieuw.map(kpNieuwType));
+  $("kp-nieuw-kop").textContent = `Nieuwe types (${nieuw.length})`;
+  $("kp-nieuw-blok").hidden = nieuw.length === 0;
   $("kp-termen").replaceChildren(...termen.map((t) => kpTermRij(t, true)));
   $("kp-artikelen").replaceChildren(...groepen.map(kpArtikelGroep));
   $("kp-zonder").replaceChildren(...ontbreekt.map(kpOntbreekGroep));
@@ -2985,7 +3013,7 @@ function renderKoppelingen() {
   $("kp-termen-blok").hidden = termen.length === 0;
   $("kp-artikelen-blok").hidden = groepen.length === 0;
   $("kp-zonder-blok").hidden = ontbreekt.length === 0;
-  $("koppel-blokken").hidden = termen.length === 0 && groepen.length === 0 && ontbreekt.length === 0;
+  $("koppel-blokken").hidden = nieuw.length === 0 && termen.length === 0 && groepen.length === 0 && ontbreekt.length === 0;
   $("koppel-leeg").hidden = !alles || !$("koppel-blokken").hidden;
 
   const zoek = $("producten-zoek").value.trim();
