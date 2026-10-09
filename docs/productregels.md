@@ -259,7 +259,7 @@ Besluiten (9 oktober 2026), bij de overstap naar producttypes. Ze vervangen besl
 11. Een merk gaat vóór een naam. Wie precies "nivea" typt krijgt het label bij elk artikel van Nivea, ook al hangt de naam "nivea" voor het profiel aan één type. De naam van een type gaat wel vóór een merk ("maggi").
 12. Een merk met een soort erbij, in beide volgordes ("nivea shampoo", "tandpasta oral b"), staat voor de artikelen van dat merk binnen dat type. Heeft het merk daar geen artikelen, dan telt het hele type.
 13. Voor het profiel en de bon geldt de merkregel niet: een aankoop "fanta" telt als sinas.
-14. De titellaag is vervallen. Een term die nergens voor staat komt in `unmatched_terms`; de AI beoordeelt hem (nog te bouwen) en slaat de uitkomst op als naam met bron `ai`.
+14. De titellaag is vervallen. Een term die nergens voor staat komt in `unmatched_terms`; de AI beoordeelt hem direct en slaat de uitkomst op als naam met bron `ai` en de datum. Daar is geen goedkeuring voor nodig: het label verschijnt meteen, en de beheerder corrigeert achteraf. De AI gokt niet: een te vage term of een losse merknaam krijgt geen type.
 15. Een naam die beoordeeld is zonder type ("papier", "sap", "deeg") is bekend en krijgt geen label. Hij wordt niet opnieuw beoordeeld.
 
 De verwachte uitkomsten in `docs/matching-controle.sql` zijn van vóór de types.

@@ -120,6 +120,13 @@ def geef_types(url, sleutel):
         if nog and not uit["beoordeeld"]:
             break
     print(f"Types: {totaal['met_type']} artikelen kregen een type, {totaal['geen_type']} horen bij geen enkel type.")
+    # Termen van de lijst die nog op een oordeel wachten (het seintje vanuit de database is een keer mislukt)
+    try:
+        uit = roep(url, sleutel, "term-classificeren", {}, wachten=300)
+        if uit.get("beoordeeld"):
+            print(f"Termen: {uit['beoordeeld']} open termen van de lijst alsnog beoordeeld.")
+    except RuntimeError as fout:
+        print(f"  open termen beoordelen mislukt: {fout}")
     return nog
 
 

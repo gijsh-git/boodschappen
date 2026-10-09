@@ -1279,7 +1279,10 @@ function subscribe() {
         if (!items.some((i) => i.id === p.new.id)) items.push(p.new);
         loadDeals();
       } else if (p.eventType === "UPDATE") {
+        const oud = items.find((i) => i.id === p.new.id);
         items = items.map((i) => (i.id === p.new.id ? p.new : i));
+        // De AI heeft de term een type gegeven, of de naam is gewijzigd: het label kan nu anders zijn
+        if (oud && (oud.type_id !== p.new.type_id || oud.name !== p.new.name)) loadDeals();
       } else if (p.eventType === "DELETE") {
         // Dit bericht komt van alle lijsten: alleen verder als het item op deze lijst stond
         if (!items.some((i) => i.id === p.old.id)) return;
