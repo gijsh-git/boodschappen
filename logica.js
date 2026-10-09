@@ -34,14 +34,15 @@ const Logica = (() => {
   let aanbiedingen = null; // null = nog niet opgehaald
   let aanbiedingenVraag = 0;
 
-  // ---------- Producten ----------
-  let producten = null;  // alle producten: { id, name, namen, aankopen, telt_mee }; null = nog niet opgehaald
-  let productOpen = null; // id van het product dat is opengeklapt
-  let productHerkomst = {}; // product-id -> de samenvoegingen die nog in dat product zitten
-  let samenvoegBron = null; // product dat je aan het samenvoegen bent; de volgende tik kiest het doel
-  // Artikel → product, niveau 2: { voorstellen: [rij], gekoppeld: [rij] }; null = nog niet opgehaald
-  // rij: { supermarkt, artikel_id, titel, merk, inhoud, categorie, product_id, product, zekerheid, reden, bron }
+  // ---------- Koppelingen ----------
+  // Alleen voor de beheerder. { termen, artikelen, zonder_type, types } uit type_link_overview(); null = nog niet opgehaald
+  //   termen:      [{ sleutel, term, type_id, type, merk, zekerheid, reden, voorstel, op }]
+  //   artikelen:   [{ supermarkt, artikel_id, titel, merk, inhoud, categorie, type_id, type, zekerheid, reden }]
+  //   zonder_type: [{ supermarkt, artikel_id, titel, merk, inhoud, categorie, zekerheid, reden, voorstel }]
+  //   types:       [{ id, naam, hoofdgroep, valt_eronder, valt_er_niet_onder, telt_mee, artikelen, namen, aankopen }]
   let koppelingen = null;
+  let typeOpen = null; // id van het type dat is opengeklapt
+  let typeDetails = {}; // type-id -> { namen, artikelen }, pas opgehaald bij openklappen
   const ZEKERHEID = { high: "hoog", medium: "middel", low: "laag" };
 
   function dagenGeleden(dag) {
@@ -222,126 +223,151 @@ const Logica = (() => {
     // Een late suggestie na het kiezen of opslaan moet niet alsnog openklappen
     stopSuggesties(soort) { suggestieVraag[soort]++; },
 
-    // ---------- Producten ----------
-    // Alleen voor de beheerder. Een product is een verzameling namen (aliassen); samenvoegen verhuist
-    // de namen van het ene product naar het andere.
-    producten() { return producten; },
-    productOpen() { return productOpen; },
-    samenvoegBron() { return samenvoegBron; },
-    // De samenvoegingen die nog in een product zitten, of undefined als ze nog niet zijn opgehaald
-    herkomstVan(productId) { return productHerkomst[productId]; },
+    // ---------- Koppelingen ----------
+    // Alleen voor de beheerder. De AI koppelt artikelen en termen zelf aan een type en alles telt meteen mee;
+    // hier kijkt de beheerder na wat twijfelachtig is en zet hij recht wat fout is.
+    koppelingen() { return koppelingen; },
+    typeOpen() { return typeOpen; },
+    openType(typeId) { typeOpen = typeId; },
+    // De namen en artikelen van een type, of undefined als ze nog niet zijn opgehaald
+    detailsVan(typeId) { return typeDetails[typeId]; },
+    zekerheidNaam(code) { return ZEKERHEID[code] || code; },
 
-    // Bij het openen van het scherm en bij uitloggen: alles opnieuw
-    vergeetProducten() {
-      producten = null;
-      productOpen = null;
-      productHerkomst = {};
-      samenvoegBron = null;
+    // Bij uitloggen en bij het openen van het scherm: opnieuw beginnen
+    vergeetKoppelingen() {
       koppelingen = null;
+      typeOpen = null;
+      typeDetails = {};
     },
 
-    async laadProducten() {
-      const { data, error } = await Data.productOverzicht();
-      if (error) return { fout: error.message };
-      producten = data;
-      return {};
-    },
-
-    // Pas ophalen als je het product openklapt
-    async laadHerkomst(productId) {
-      const { data, error } = await Data.productHerkomst(productId);
-      if (error) return { fout: error.message };
-      productHerkomst[productId] = data;
-      return {};
-    },
-
-    // Welk product openstaat (null = geen). De herkomst wordt daarna opnieuw opgehaald.
-    openProduct(productId) { productOpen = productId; },
-    // Na een wijziging: samenvoegen en losmaken raken meerdere producten tegelijk
-    wisHerkomst() { productHerkomst = {}; },
-
-    // Het product dat je gaat samenvoegen (de volgende tik kiest het doel), of null om te stoppen
-    kiesSamenvoegBron(product) { samenvoegBron = product; },
-
-    // Wat het scherm toont: zonder het product dat je aan het samenvoegen bent, gefilterd op naam of alias
-    gefilterdeProducten(zoekTekst) {
-      const zoek = zoekTekst.trim().toLowerCase();
-      return (producten || []).filter((p) =>
-        (!samenvoegBron || p.id !== samenvoegBron.id) &&
-        (!zoek || p.name.toLowerCase().includes(zoek) || p.namen.some((n) => n.includes(zoek))));
-    },
-
-    async voegSamen(bron, doel) {
-      const { error } = await Data.voegProductenSamen(bron.id, doel.id);
-      if (error) return { fout: error.message };
-      samenvoegBron = null;
-      return {};
-    },
-
-    async maakLos(samenvoeging) {
-      const { error } = await Data.maakSamenvoegenOngedaan(samenvoeging.id);
-      return error ? { fout: error.message } : {};
-    },
-
-    async hernoemProduct(product, naam) {
-      const { data, error } = await Data.hernoemProduct(product.id, naam);
-      if (error) return { fout: error.message };
-      product.name = data.name;
-      return {};
-    },
-
-    // Voor dingen die geen boodschappen zijn (draagtas, plastic zak): buiten het aankoopprofiel houden
-    async zetProductTelt(product, aan) {
-      const { data, error } = await Data.zetProductProfiel(product.id, aan);
-      if (error) return { fout: error.message };
-      product.telt_mee = data.counts_in_profile;
-      return {};
-    },
-
-    // ---------- Artikelen koppelen (niveau 2) ----------
-    // Een script buiten de app stelt per artikel uit de aanbiedingen een product voor; de beheerder keurt goed.
     async laadKoppelingen() {
-      const { data, error } = await Data.artikelKoppelingen();
+      const { data, error } = await Data.koppelingOverzicht();
       if (error) return { fout: error.message };
       koppelingen = data;
       return {};
     },
 
-    // De voorstellen per product: [{ product_id, product, voorstellen: [rij] }], in de volgorde van de database.
-    // twijfel = true geeft de voorstellen met zekerheid laag, anders die met hoog en middel.
-    voorstelGroepen(twijfel) {
-      const groepen = [];
-      const per = {};
-      ((koppelingen && koppelingen.voorstellen) || [])
-        .filter((v) => (v.zekerheid === "low") === twijfel)
-        .forEach((v) => {
-          if (!per[v.product_id]) groepen.push(per[v.product_id] = { product_id: v.product_id, product: v.product, voorstellen: [] });
-          per[v.product_id].voorstellen.push(v);
-        });
-      return groepen;
+    // Pas ophalen als je het type openklapt
+    async laadTypeDetails(typeId) {
+      const { data, error } = await Data.typeDetails(typeId);
+      if (error) return { fout: error.message };
+      typeDetails[typeId] = data;
+      return {};
     },
 
-    // De goedgekeurde artikelen bij één product
-    gekoppeldBij(productId) {
-      return ((koppelingen && koppelingen.gekoppeld) || []).filter((k) => k.product_id === productId);
+    // De artikelen om na te kijken, per type: [{ type_id, type, rijen }]
+    artikelGroepen() {
+      const per = new Map();
+      for (const rij of (koppelingen || {}).artikelen || []) {
+        if (!per.has(rij.type_id)) per.set(rij.type_id, { type_id: rij.type_id, type: rij.type, rijen: [] });
+        per.get(rij.type_id).rijen.push(rij);
+      }
+      return [...per.values()];
     },
 
-    zekerheidNaam(code) { return ZEKERHEID[code] || code; },
-
-    // Eén voorstel of een hele groep goedkeuren. Het product gaat mee, zodat de database alleen goedkeurt
-    // wat hier te zien was.
-    async keurGoed(voorstellen) {
-      const { error } = await Data.keurKoppelingenGoed(
-        voorstellen.map((v) => ({ supermarket: v.supermarkt, article_id: v.artikel_id, product_id: v.product_id })));
-      const uit = await this.laadKoppelingen();
-      return error ? { fout: error.message } : uit;
+    // Wat de AI nergens kwijt kon, per voorgesteld type: [{ voorstel, artikelen, termen }]. De groepen met de
+    // meeste rijen eerst; wat zonder voorstel is (geen gewone boodschap) staat onderaan met voorstel null.
+    ontbrekend() {
+      const per = new Map();
+      const groep = (voorstel) => {
+        const sleutel = zoekvorm(voorstel || "");
+        if (!per.has(sleutel)) per.set(sleutel, { voorstel: voorstel || null, artikelen: [], termen: [] });
+        return per.get(sleutel);
+      };
+      for (const artikel of (koppelingen || {}).zonder_type || []) groep(artikel.voorstel).artikelen.push(artikel);
+      for (const term of (koppelingen || {}).termen || []) {
+        if (!term.type_id && term.voorstel) groep(term.voorstel).termen.push(term);
+      }
+      const aantal = (g) => g.artikelen.length + g.termen.length;
+      return [...per.values()].sort((a, b) => (a.voorstel === null) - (b.voorstel === null) || aantal(b) - aantal(a));
     },
 
-    // Een voorstel afwijzen of een goedgekeurde koppeling losmaken: die combinatie wordt niet meer voorgesteld
-    async wijsAf(rij) {
-      const { error } = await Data.wijsKoppelingAf(rij.supermarkt, rij.artikel_id);
-      const uit = await this.laadKoppelingen();
-      return error ? { fout: error.message } : uit;
-    }
+    // De hoofdgroepen die er zijn, voor de keuzelijst bij een type
+    hoofdgroepen() {
+      return [...new Set(((koppelingen || {}).types || []).map((t) => t.hoofdgroep))].sort((a, b) => a.localeCompare(b, "nl"));
+    },
+
+    // De hoofdgroep waar de artikelen van een groep het vaakst in staan, als voorzet bij "Type aanmaken"
+    hoofdgroepVan(artikelen) {
+      const bestaand = new Set(this.hoofdgroepen());
+      const telling = {};
+      for (const a of artikelen) {
+        const hoofd = (a.categorie || "").includes("/") ? a.categorie.split("/")[0].trim() : "";
+        if (bestaand.has(hoofd)) telling[hoofd] = (telling[hoofd] || 0) + 1;
+      }
+      return Object.keys(telling).sort((a, b) => telling[b] - telling[a])[0] || "";
+    },
+
+    // De types voor de lijst onderaan: de zoektekst staat in de naam of de hoofdgroep
+    gefilterdeTypes(zoekTekst) {
+      const zoek = zoekvorm(zoekTekst);
+      const alle = (koppelingen || {}).types || [];
+      return zoek ? alle.filter((t) => zoekvorm(t.naam).includes(zoek) || zoekvorm(t.hoofdgroep).includes(zoek)) : alle;
+    },
+
+    // De types voor de keuzelijst "Ander type": eerst wat met de zoektekst begint, dan wat hem bevat.
+    // AANTAL: zoveel hooguit; `zonder` is het type dat de rij al heeft.
+    zoekTypes(zoekTekst, zonder) {
+      const zoek = zoekvorm(zoekTekst);
+      if (!zoek) return [];
+      const alle = ((koppelingen || {}).types || []).filter((t) => t.id !== zonder);
+      const begint = alle.filter((t) => zoekvorm(t.naam).startsWith(zoek));
+      const bevat = alle.filter((t) => !zoekvorm(t.naam).startsWith(zoek) && zoekvorm(t.naam).includes(zoek));
+      return [...begint, ...bevat].slice(0, 8);
+    },
+
+    // Na elke wijziging alles opnieuw ophalen: een correctie raakt de tellingen en soms meerdere blokken
+    async herlaadKoppelingen() {
+      typeDetails = {};
+      return this.laadKoppelingen();
+    },
+
+    // "Klopt": de beheerder heeft het oordeel gezien; type en bron blijven wat ze zijn
+    async klopt(termen, artikelen) {
+      const { error } = await Data.markeerNagekeken(
+        termen.map((t) => t.sleutel),
+        artikelen.map((a) => ({ supermarket: a.supermarkt, article_id: a.artikel_id })));
+      if (error) return { fout: error.message };
+      return this.herlaadKoppelingen();
+    },
+
+    // "Ander type" en "Geen type" (typeId null) bij een term. Het merk blijft staan bij een ander type.
+    async zetTermType(term, typeId) {
+      const { error } = await Data.zetTermType(term.term, typeId, typeId ? term.merk : null);
+      if (error) return { fout: error.message };
+      return this.herlaadKoppelingen();
+    },
+
+    // "Ander type" en "Geen type" (typeId null) bij een artikel
+    async zetArtikelType(artikel, typeId) {
+      const { error } = await Data.zetArtikelType(artikel.supermarkt, artikel.artikel_id, typeId);
+      if (error) return { fout: error.message };
+      return this.herlaadKoppelingen();
+    },
+
+    // velden: { naam, hoofdgroep, valtEronder, valtErNietOnder, teltMee }. Geeft { nieuw } terug met wat erbij kwam.
+    async maakType(velden, voorstel) {
+      if (!velden.naam.trim()) return { fout: "Geef het type een naam." };
+      if (!velden.hoofdgroep) return { fout: "Kies een hoofdgroep." };
+      const { data, error } = await Data.maakType(velden, voorstel);
+      if (error) return { fout: error.message };
+      const uit = await this.herlaadKoppelingen();
+      return uit.fout ? uit : { nieuw: data };
+    },
+
+    async wijzigType(type, velden) {
+      if (!velden.naam.trim()) return { fout: "Geef het type een naam." };
+      const { error } = await Data.wijzigType(type.id, velden);
+      if (error) return { fout: error.message };
+      return this.herlaadKoppelingen();
+    },
+
+    // Het type bron gaat op in doel: artikelen, namen en items verhuizen, de naam van de bron blijft werken
+    async voegTypesSamen(bron, doel) {
+      const { error } = await Data.voegTypesSamen(bron.naam, doel.naam);
+      if (error) return { fout: error.message };
+      if (typeOpen === bron.id) typeOpen = doel.id;
+      return this.herlaadKoppelingen();
+    },
   };
 })();

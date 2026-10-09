@@ -138,27 +138,36 @@ const Data = (() => {
     favorietTermen(tekst) { return db.rpc("suggest_favorite_terms", { p_query: tekst }); },
     favorietMerken(tekst) { return db.rpc("suggest_favorite_brands", { p_query: tekst }); },
 
-    // ---------- Producten ----------
-    productOverzicht() { return db.rpc("product_overview"); },
-    // De samenvoegingen die nog in een product zitten
-    productHerkomst(productId) {
-      return db
-        .from("product_merges")
-        .select("id, source_name, aliases")
-        .eq("target_id", productId)
-        .is("undone_at", null)
-        .order("merged_at", { ascending: false });
+    // ---------- Koppelingen ----------
+    // Alleen voor de beheerder; de functies controleren de rol zelf.
+    // Wat de AI heeft gekoppeld en nog niet is nagekeken, wat geen type heeft, en alle types met hun tellingen
+    koppelingOverzicht() { return db.rpc("type_link_overview"); },
+    // De namen en artikelen van één type
+    typeDetails(typeId) { return db.rpc("type_details", { p_type: typeId }); },
+    // sleutels: sleutels van termen; artikelen: [{ supermarket, article_id }]
+    markeerNagekeken(sleutels, artikelen) { return db.rpc("mark_links_reviewed", { p_terms: sleutels, p_articles: artikelen }); },
+    // typeId null is "geen type"; het oordeel is daarna van de beheerder en de AI vervangt het niet meer
+    zetTermType(term, typeId, merk) {
+      return db.rpc("save_term_types", { p_rows: [{ term, type_id: typeId, brand: merk || null }], p_source: "manual" });
     },
-    voegProductenSamen(bronId, doelId) { return db.rpc("merge_products", { p_source: bronId, p_target: doelId }); },
-    maakSamenvoegenOngedaan(samenvoegingId) { return db.rpc("undo_merge", { p_merge: samenvoegingId }); },
-    hernoemProduct(productId, naam) { return db.rpc("rename_product", { p_product: productId, p_name: naam }); },
-    zetProductProfiel(productId, teltMee) { return db.rpc("set_product_profile", { p_product: productId, p_counts: teltMee }); },
-    // Artikel → product, niveau 2: de voorstellen die op de beheerder wachten en de goedgekeurde koppelingen
-    artikelKoppelingen() { return db.rpc("article_link_overview"); },
-    // rijen: [{ supermarket, article_id, product_id }]; geeft het aantal goedgekeurde voorstellen terug
-    keurKoppelingenGoed(rijen) { return db.rpc("approve_article_links", { p_rows: rijen }); },
-    // Een voorstel afwijzen of een goedgekeurde koppeling losmaken; de combinatie komt niet meer terug
-    wijsKoppelingAf(supermarkt, artikelId) { return db.rpc("reject_article_link", { p_supermarket: supermarkt, p_article_id: artikelId }); },
+    zetArtikelType(supermarkt, artikelId, typeId) {
+      return db.rpc("set_article_types", { p_rows: [{ supermarket: supermarkt, article_id: artikelId, type_id: typeId }], p_source: "manual" });
+    },
+    // voorstel: het voorstel van de AI waar het type voor komt (mag leeg); wat precies dat voorstel had hoort er meteen bij
+    maakType(velden, voorstel) {
+      return db.rpc("create_product_type", {
+        p_name: velden.naam, p_main_group: velden.hoofdgroep, p_scope: velden.valtEronder, p_excludes: velden.valtErNietOnder,
+        p_counts: velden.teltMee, p_suggestion: voorstel || null,
+      });
+    },
+    wijzigType(typeId, velden) {
+      return db.rpc("update_product_type", {
+        p_type: typeId, p_name: velden.naam, p_main_group: velden.hoofdgroep, p_scope: velden.valtEronder,
+        p_excludes: velden.valtErNietOnder, p_counts: velden.teltMee,
+      });
+    },
+    // Het type bron gaat op in doel (beide bij naam); niet terug te draaien
+    voegTypesSamen(bronNaam, doelNaam) { return db.rpc("merge_product_types", { p_source: bronNaam, p_target: doelNaam }); },
 
     // ---------- Live volgen ----------
     // Eén kanaal per lijst voor items, leden, de lijst zelf en aankopen. `op` heeft per soort een functie

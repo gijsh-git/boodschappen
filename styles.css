@@ -324,36 +324,43 @@ button.koop:hover::before, button.koop:focus-visible::before { border-color: var
 .bonnen-regel { display: flex; align-items: baseline; gap: 12px; padding: 6px 0; border-top: 1px solid var(--rand); }
 .bonnen-regel span { flex: 1; min-width: 0; }
 
-/* ---------- Producten ---------- */
+/* ---------- Koppelingen ---------- */
 #producten-zoek { display: block; width: 100%; margin: 0 0 8px; }
 /* Er staat geen knop naast de naam: zonder volle breedte past het uitgeklapte blok ernaast in plaats van eronder */
 #producten .bonnen-open { flex-basis: 100%; }
-/* Bezig met samenvoegen: de volgende tik op een product kiest het doel */
-.samenvoeg-balk {
-  display: flex; align-items: center; gap: 12px; margin: 0 0 8px; padding: 4px 14px;
-  border: 1.5px solid var(--oranje-tekst); border-radius: 14px;
-}
-.samenvoeg-balk span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.product-hernoem { margin: 0 0 8px; }
-.product-hernoem input[type=text] { padding: 10px 12px; }
-.product-hernoem button { padding: 10px 14px; }
-.bonnen-regel button.link { padding: 0; font-size: 0.9rem; white-space: nowrap; }
-/* Schuifje "Telt mee in aankoopprofiel" in het opengeklapte product */
+/* Schuifje "Telt mee in aankoopprofiel" in het formulier van een type */
 .product-telt { justify-content: space-between; padding: 6px 0 10px; color: var(--grijs); font-size: 0.9rem; }
 
-/* Voorstellen artikel → product: per product een groep, per artikel goedkeuren of afwijzen */
-#voorstel-blokken { margin: 0 0 12px; }
-#voorstel-blokken .msg { margin: 6px 0; }
-#voorstel-blokken .msg:empty { display: none; }
-#voorstel-blokken .ap-blok[hidden] + .ap-blok { border-top: 0; }
+/* Wat aandacht vraagt: per type of voorstel een groep, per term of artikel een rij met knoppen */
+#koppel-blokken { margin: 0 0 12px; }
+#koppel-msg { margin: 6px 0; }
+#koppel-msg:empty { display: none; }
+#koppel-blokken .ap-blok[hidden] + .ap-blok { border-top: 0; }
 .voorstel-groep { padding: 4px 0 8px; }
 .voorstel-groep + .voorstel-groep { border-top: 1px solid var(--rand); }
-.voorstel-kop { display: flex; align-items: baseline; gap: 12px; }
+.voorstel-kop { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 16px; }
 .voorstel-kop strong { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .voorstel { padding: 6px 0; }
 .voorstel p { margin: 0; overflow-wrap: anywhere; }
-.voorstel-acties { display: flex; gap: 20px; }
+.voorstel-acties { display: flex; flex-wrap: wrap; gap: 0 20px; }
 .voorstel-acties button.link, .voorstel-kop button.link { padding: 4px 0; font-size: 0.9rem; white-space: nowrap; }
+/* De keuzelijst "Ander type": een zoekveld met de passende types eronder */
+.type-kiezer { padding: 6px 0 4px; }
+.type-kiezer input[type=text] { display: block; width: 100%; padding: 10px 12px; }
+.type-kiezer-lijst button.link { display: flex; align-items: baseline; gap: 12px; width: 100%; padding: 8px 0; text-align: left; }
+.type-kiezer-lijst button.link span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.type-kiezer-lijst button.link small { color: var(--grijs); font-weight: 400; }
+.type-kiezer-lijst button.link + button.link { border-top: 1px solid var(--rand); border-radius: 0; }
+/* Naam, hoofdgroep en afbakening van een type */
+.type-formulier { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 10px; }
+.type-formulier input[type=text], .type-formulier select, .type-formulier textarea {
+  width: 100%; padding: 10px 12px; font: inherit; color: var(--tekst); background: var(--vlak);
+  border: 1.5px solid var(--rand); border-radius: 12px;
+}
+.type-formulier textarea { resize: vertical; }
+.type-formulier label { display: flex; align-items: center; gap: 12px; }
+.type-formulier button[type=submit] { align-self: flex-start; padding: 10px 14px; }
+.type-tussenkop { margin: 10px 0 0; font-weight: 700; color: var(--tekst); }
 
 /* ---------- Aankoopprofiel ---------- */
 /* Top 10, supermarkten en maanden: ingeklapt tot je erop tikt */

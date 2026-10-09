@@ -285,14 +285,14 @@
         <section class="profiel-sectie" aria-labelledby="account-kop">
           <h2 id="account-kop" class="sectie-kop">Account</h2>
           <ul class="menu">
-            <li><button type="button" id="producten-knop" class="menu-rij" hidden><svg width="20" height="20" aria-hidden="true"><use href="#icon-tag"/></svg><span>Producten beheren</span><svg class="menu-pijl" width="18" height="18" aria-hidden="true"><use href="#icon-verder"/></svg></button></li>
+            <li><button type="button" id="producten-knop" class="menu-rij" hidden><svg width="20" height="20" aria-hidden="true"><use href="#icon-tag"/></svg><span>Koppelingen beheren</span><svg class="menu-pijl" width="18" height="18" aria-hidden="true"><use href="#icon-verder"/></svg></button></li>
             <li><button type="button" id="logout" class="menu-rij uitloggen"><svg width="20" height="20" aria-hidden="true"><use href="#icon-uitloggen"/></svg><span>Uitloggen</span></button></li>
           </ul>
         </section>
       </div>
     </section>
 
-    <!-- Producten (alleen de beheerder): namen samenvoegen tot één product, losmaken en hernoemen -->
+    <!-- Koppelingen (alleen de beheerder): nakijken en rechtzetten wat de AI aan een type heeft gekoppeld, en de types zelf -->
     <section id="view-producten" data-terug="producten-terug" hidden>
       <header class="top">
         <div class="top-rij terug-rij">
@@ -302,29 +302,31 @@
             <span class="brand-name">BonusBuddy</span>
           </div>
         </div>
-        <h1>Producten</h1>
+        <h1>Koppelingen</h1>
       </header>
       <div class="content">
-        <p class="uitleg">Een product is het niveau waarop je wisselt bij een aanbieding. Voeg merken van hetzelfde soort product samen, net als een andere verpakking, schrijfwijze of tikfout. Varianten waar je niet tussen wisselt blijven apart: halfvolle en volle melk, cola en cola zero.</p>
-        <p id="samenvoeg-balk" class="samenvoeg-balk" hidden>
-          <span id="samenvoeg-tekst"></span>
-          <button type="button" id="samenvoeg-annuleren" class="link">Annuleren</button>
-        </p>
-        <!-- Artikelen uit de aanbiedingen die volgens het script bij een product horen; pas na goedkeuren tellen ze mee -->
-        <div id="voorstel-blokken" class="ap-blokken" hidden>
-          <details id="voorstellen-blok" class="ap-blok" hidden>
-            <summary id="voorstellen-kop">Voorstellen</summary>
-            <p class="uitleg">Artikelen uit de aanbiedingen die bij een product lijken te horen. Na goedkeuren telt een aanbieding op zo'n artikel mee voor dat product.</p>
-            <div id="voorstellen"></div>
+        <p class="uitleg">De AI koppelt artikelen en getypte termen zelf aan een type, en alles telt meteen mee. Hier kijk je na wat twijfelachtig is en zet je recht wat fout is.</p>
+        <!-- Wat aandacht vraagt: beoordeelde termen, artikelen met twijfel en wat geen type heeft -->
+        <div id="koppel-blokken" class="ap-blokken" hidden>
+          <details id="kp-termen-blok" class="ap-blok" hidden>
+            <summary id="kp-termen-kop">Termen</summary>
+            <p class="uitleg">Wat iemand typte en nergens voor stond, met het oordeel van de AI. De nieuwste staat bovenaan.</p>
+            <div id="kp-termen"></div>
           </details>
-          <details id="twijfel-blok" class="ap-blok" hidden>
-            <summary id="twijfel-kop">Twijfelgevallen</summary>
-            <p class="uitleg">Voorstellen waar de zekerheid laag is. Beoordeel ze één voor één.</p>
-            <div id="twijfels"></div>
+          <details id="kp-artikelen-blok" class="ap-blok" hidden>
+            <summary id="kp-artikelen-kop">Artikelen om na te kijken</summary>
+            <p class="uitleg">Artikelen waar de AI niet zeker van was, per type. Wat de AI zeker wist staat hier niet; dat zie je bij het type zelf.</p>
+            <div id="kp-artikelen"></div>
           </details>
-          <p id="voorstellen-msg" class="msg" role="status"></p>
+          <details id="kp-zonder-blok" class="ap-blok" hidden>
+            <summary id="kp-zonder-kop">Geen type</summary>
+            <p class="uitleg">Wat de AI nergens kwijt kon, per type dat volgens de AI ontbreekt. Maak het type aan, kies een bestaand type, of laat het zonder.</p>
+            <div id="kp-zonder"></div>
+          </details>
         </div>
-        <input type="text" id="producten-zoek" placeholder="Zoek een product of naam" autocomplete="off" aria-label="Zoek een product of naam">
+        <p id="koppel-leeg" class="uitleg" hidden>Er is niets om na te kijken.</p>
+        <p id="koppel-msg" class="msg" role="status"></p>
+        <input type="text" id="producten-zoek" placeholder="Zoek een type of hoofdgroep" autocomplete="off" aria-label="Zoek een type of hoofdgroep">
         <p id="producten-telling" class="uitleg"></p>
         <ul id="producten"></ul>
         <p id="producten-msg" class="msg" role="status"></p>

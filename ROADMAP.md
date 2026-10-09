@@ -428,14 +428,14 @@ Client, volgens `ARCHITECTURE.md`: de calls in `data.js`, state en regels in `lo
 Volgorde, elk een eigen commit met een test:
 
 1. Migratie met de leesfuncties en `mark_links_reviewed`; nalopen in de SQL Editor. (Gedaan op 9 oktober 2026, samen met de export en de functies om een type aan te maken en te wijzigen.)
-2. Het scherm alleen-lezen: de vier blokken en de typelijst.
-3. De acties: "Klopt", "Ander type", "Geen type", met de keuzelijst.
-4. "Type aanmaken", hernoemen, samenvoegen en de schakelaar.
+2. Het scherm alleen-lezen: de vier blokken en de typelijst. (Gebouwd op 9 oktober 2026, samen met stap 3 en 4; nog te testen in de browser.)
+3. De acties: "Klopt", "Ander type", "Geen type", met de keuzelijst. (Gebouwd, nog te testen.)
+4. "Type aanmaken", hernoemen, samenvoegen en de schakelaar. (Gebouwd, nog te testen.)
 5. Opruimen van de oude code in de client, `CACHE` bumpen, `CLAUDE.md` bijwerken.
 
 Open keuzes:
 
-- **De typelijst heeft één bron: de database** (besluit 9 oktober 2026). `docs/producttypes-export.csv` is alleen een afdruk, die `scripts/producttypes-exporteren.py` bij elke commit ververst via de git-hook in `.githooks/`. Types toevoegen aan een bestand en opnieuw laden bestaat niet meer; de scripts daarvoor zijn verwijderd. Tot stap 4 van deze fase af is, kan een type alleen via de SQL Editor worden aangemaakt, gewijzigd of samengevoegd.
+- **De typelijst heeft één bron: de database** (besluit 9 oktober 2026). `docs/producttypes-export.csv` is alleen een afdruk, die `scripts/producttypes-exporteren.py` bij elke commit ververst via de git-hook in `.githooks/`. Types toevoegen aan een bestand en opnieuw laden bestaat niet meer; de scripts daarvoor zijn verwijderd. Een type aanmaken, wijzigen of samenvoegen doe je in het scherm Koppelingen.
 - **Merk bij een term corrigeren** ("sensodyne tandpasta" kreeg het verkeerde merk): later, niet in de eerste versie; "Ander type" laat het merk staan, "Geen type" haalt het weg.
 - **Een term die als "geen type" is beoordeeld opnieuw laten beoordelen** na een nieuw type: gebeurt automatisch voor termen waarvan het voorgestelde type gelijk is aan het nieuwe type, anders met de hand.
 

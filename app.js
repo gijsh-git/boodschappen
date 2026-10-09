@@ -26,7 +26,7 @@ let mijnNaam = null;   // weergavenaam; null = nog niet opgehaald of nog niet in
 let naamOpen = false;  // het naam-scherm staat open
 let naamBewerken = false; // naam-scherm is geopend vanuit het profiel (niet de eerste keer)
 let profielOpen = false;  // het profiel-scherm (of het naam- of productenscherm daarbinnen) staat open
-let beheerder = false; // je bent beheerder: je mag producten samenvoegen, losmaken en hernoemen
+let beheerder = false; // je bent beheerder: je mag de koppelingen en de types beheren
 let aankoopprofiel = null; // het antwoord van purchase_profile; null = nog niet opgehaald
 let profielPeriode = "3m"; // gekozen periode van het aankoopprofiel: 4w, 3m, 12m of alles
 let profielLijst = "";  // id van de lijst waarop het aankoopprofiel is gefilterd; leeg = alle lijsten
@@ -787,7 +787,7 @@ async function logout() {
   aankopen = null;
   namen = {};
   beheerder = false;
-  Logica.vergeetProducten();
+  Logica.vergeetKoppelingen();
   aankoopprofiel = null;
   profielLijst = "";
   profielVraag++;
@@ -2505,333 +2505,294 @@ $("bonnen-terug").addEventListener("click", () => {
   loadAankopen();
 });
 
-// ---------- Producten ----------
+// ---------- Koppelingen ----------
 // Alleen voor de beheerder; state en acties staan in logica.js. Het scherm hoort bij het profiel:
-// profielOpen blijft aan, zodat route() er niet van wegspringt.
-function toonProducten() {
-  Logica.vergeetProducten();
+// profielOpen blijft aan, zodat route() het niet wegklapt als de app terugkomt op de voorgrond.
+function toonKoppelingen() {
+  Logica.vergeetKoppelingen();
   $("producten-zoek").value = "";
   say("producten-msg", "Bezig...");
-  say("voorstellen-msg", "");
-  renderProducten();
+  say("koppel-msg", "");
+  renderKoppelingen();
   show("producten");
-  loadProducten();
   loadKoppelingen();
 }
 
-// De voorstellen artikel → product en de goedgekeurde koppelingen
 async function loadKoppelingen() {
   const uit = await Logica.laadKoppelingen();
   if (!profielOpen) return;
-  if (uit.fout) say("voorstellen-msg", uit.fout);
-  renderProducten();
+  say("producten-msg", uit.fout || "");
+  renderKoppelingen();
 }
 
-async function loadProducten() {
-  const uit = await Logica.laadProducten();
+// De namen en artikelen van een type; pas ophalen als je het type openklapt
+async function loadTypeDetails(typeId) {
+  const uit = await Logica.laadTypeDetails(typeId);
   if (!profielOpen) return;
   if (uit.fout) return say("producten-msg", uit.fout);
-  say("producten-msg", "");
-  renderProducten();
+  renderKoppelingen();
 }
 
-// De samenvoegingen die nog in een product zitten; pas ophalen als je het product openklapt
-async function loadHerkomst(productId) {
-  const uit = await Logica.laadHerkomst(productId);
-  if (!profielOpen) return;
-  if (uit.fout) return say("producten-msg", uit.fout);
-  renderProducten();
+function kpEl(soort, klasse, tekst) {
+  const el = document.createElement(soort);
+  if (klasse) el.className = klasse;
+  if (tekst != null) el.textContent = tekst;
+  return el;
 }
 
-function productRij(product) {
-  const li = document.createElement("li");
-  const samenvoegBron = Logica.samenvoegBron();
-  const open = !samenvoegBron && Logica.productOpen() === product.id;
-
-  const knop = document.createElement("button");
+// Een tekstknop in een rij. Tijdens de actie staan alle knoppen van die rij uit.
+function kpKnop(tekst, actie) {
+  const knop = kpEl("button", "link", tekst);
   knop.type = "button";
-  knop.className = "bonnen-open";
-  if (!samenvoegBron) knop.setAttribute("aria-expanded", open);
-  const kop = document.createElement("div");
-  kop.className = "bonnen-kop";
-  const naam = document.createElement("span");
-  naam.textContent = product.name;
-  const aantal = document.createElement("small");
-  aantal.textContent = product.aankopen + "×";
-  kop.append(naam, aantal);
-  knop.append(kop);
-  const andere = product.namen.filter((n) => n !== product.name.toLowerCase());
-  if (andere.length > 0) {
-    const info = document.createElement("p");
-    info.className = "bonnen-info";
-    info.textContent = "Ook: " + andere.join(", ");
-    knop.append(info);
+  knop.addEventListener("click", () => actie(knop));
+  return knop;
+}
+
+// Voert een actie uit Logica uit, toont de fout of de melding en tekent het scherm opnieuw
+async function kpDoe(knop, actie, melding) {
+  const knoppen = knop ? [...knop.parentElement.querySelectorAll("button")] : [];
+  knoppen.forEach((k) => { k.disabled = true; });
+  say("koppel-msg", "Bezig...");
+  const uit = await actie();
+  if (!profielOpen) return;
+  say("koppel-msg", uit.fout || (typeof melding === "function" ? melding(uit) : melding) || "");
+  if (uit.fout) knoppen.forEach((k) => { k.disabled = false; });
+  renderKoppelingen();
+  // Het opengeklapte type heeft na een wijziging andere namen en artikelen
+  if (!uit.fout && Logica.typeOpen()) loadTypeDetails(Logica.typeOpen());
+}
+
+// De keuzelijst "Ander type": een zoekveld met daaronder de types die passen. Eén tegelijk open.
+// `zonder` is het type dat de rij al heeft; `kies` krijgt het gekozen type.
+function kpKiezer(anker, zonder, kies) {
+  const open = anker.querySelector(".type-kiezer");
+  document.querySelectorAll(".type-kiezer").forEach((k) => k.remove());
+  if (open) return;
+  const blok = kpEl("div", "type-kiezer");
+  const veld = kpEl("input");
+  veld.type = "text";
+  veld.placeholder = "Zoek een type";
+  veld.autocomplete = "off";
+  veld.setAttribute("aria-label", "Zoek een type");
+  const lijst = kpEl("div", "type-kiezer-lijst");
+  const toon = () => {
+    const types = Logica.zoekTypes(veld.value, zonder);
+    lijst.replaceChildren(...types.map((t) => {
+      const knop = kpEl("button", "link");
+      knop.type = "button";
+      knop.append(kpEl("span", "", t.naam), kpEl("small", "", t.hoofdgroep));
+      knop.addEventListener("click", () => kies(t, knop));
+      return knop;
+    }));
+    if (veld.value.trim() && types.length === 0) lijst.append(kpEl("p", "bonnen-info", "Geen type gevonden."));
+  };
+  veld.addEventListener("input", toon);
+  blok.append(veld, lijst);
+  anker.append(blok);
+  veld.focus();
+}
+
+function kpArtikelInfo(artikel) {
+  return [artikel.merk, artikel.inhoud, artikel.categorie].filter(Boolean).join(" · ");
+}
+
+function kpOordeel(rij) {
+  return (rij.zekerheid ? `Zekerheid ${Logica.zekerheidNaam(rij.zekerheid)}` : "") + (rij.zekerheid && rij.reden ? " · " : "") + (rij.reden || "");
+}
+
+// Eén term die de AI heeft beoordeeld: wat er getypt is, waar het voor staat en waarom
+function kpTermRij(term, metKlopt) {
+  const rij = kpEl("div", "voorstel");
+  const staatVoor = term.type ? term.type + (term.merk ? ` van ${term.merk}` : "") : "geen type";
+  rij.append(kpEl("p", "", `${term.term} → ${staatVoor}`));
+  const info = [kpOordeel(term), term.op ? datumKort(term.op) : ""].filter(Boolean).join(" · ");
+  if (info) rij.append(kpEl("p", "bonnen-info", info));
+  const acties = kpEl("div", "voorstel-acties");
+  if (metKlopt) acties.append(kpKnop("Klopt", (k) => kpDoe(k, () => Logica.klopt([term], []))));
+  acties.append(kpKnop("Ander type", () => kpKiezer(rij, term.type_id, (t, k) =>
+    kpDoe(k, () => Logica.zetTermType(term, t.id), `"${term.term}" staat nu voor ${t.naam}.`))));
+  if (term.type_id) acties.append(kpKnop("Geen type", (k) => kpDoe(k, () => Logica.zetTermType(term, null))));
+  rij.append(acties);
+  return rij;
+}
+
+// Eén artikel. `klopt` zet de knop "Klopt" erbij; `geenType` de knop "Geen type" (alleen als het een type heeft).
+function kpArtikelRij(artikel, typeId, { klopt = false, geenType = false, oordeel = true } = {}) {
+  const rij = kpEl("div", "voorstel");
+  rij.append(kpEl("p", "", artikel.titel));
+  if (kpArtikelInfo(artikel)) rij.append(kpEl("p", "bonnen-info", kpArtikelInfo(artikel)));
+  if (oordeel && kpOordeel(artikel)) rij.append(kpEl("p", "bonnen-info", kpOordeel(artikel)));
+  const acties = kpEl("div", "voorstel-acties");
+  if (klopt) acties.append(kpKnop("Klopt", (k) => kpDoe(k, () => Logica.klopt([], [artikel]))));
+  acties.append(kpKnop("Ander type", () => kpKiezer(rij, typeId, (t, k) =>
+    kpDoe(k, () => Logica.zetArtikelType(artikel, t.id), `"${artikel.titel}" hoort nu bij ${t.naam}.`))));
+  if (geenType) acties.append(kpKnop("Geen type", (k) => kpDoe(k, () => Logica.zetArtikelType(artikel, null))));
+  rij.append(acties);
+  return rij;
+}
+
+// De artikelen om na te kijken bij één type
+function kpArtikelGroep(groep) {
+  const blok = kpEl("div", "voorstel-groep");
+  const kop = kpEl("div", "voorstel-kop");
+  kop.append(kpEl("strong", "", groep.type));
+  kop.append(kpKnop(groep.rijen.length > 1 ? `Alles klopt (${groep.rijen.length})` : "Klopt", (k) => {
+    if (groep.rijen.length > 1 && !confirm(`Kloppen alle ${groep.rijen.length} artikelen bij "${groep.type}"?`)) return;
+    kpDoe(k, () => Logica.klopt([], groep.rijen));
+  }));
+  blok.append(kop, ...groep.rijen.map((a) => kpArtikelRij(a, groep.type_id, { geenType: true })));
+  return blok;
+}
+
+// Naam, hoofdgroep, afbakening en de vlag van een type: voor een nieuw type en voor een bestaand
+function kpTypeFormulier(begin, knopTekst, bewaar) {
+  const form = kpEl("form", "type-formulier");
+  const veld = (soort, waarde, label, max) => {
+    const el = kpEl(soort);
+    if (soort === "input") el.type = "text";
+    el.value = waarde || "";
+    if (max) el.maxLength = max;
+    el.setAttribute("aria-label", label);
+    el.placeholder = label;
+    return el;
+  };
+  const naam = veld("input", begin.naam, "Naam van het type", 80);
+  const hoofdgroep = kpEl("select");
+  hoofdgroep.setAttribute("aria-label", "Hoofdgroep");
+  hoofdgroep.append(new Option("Kies een hoofdgroep", ""), ...Logica.hoofdgroepen().map((g) => new Option(g, g)));
+  hoofdgroep.value = begin.hoofdgroep || "";
+  const eronder = veld("textarea", begin.valtEronder, "Wat valt eronder?");
+  const nietEronder = veld("textarea", begin.valtErNietOnder, "Wat valt er niet onder, en waar hoort dat wel?");
+  eronder.rows = nietEronder.rows = 2;
+  const label = kpEl("label", "product-telt");
+  const telt = kpEl("input", "schakelaar");
+  telt.type = "checkbox";
+  telt.setAttribute("role", "switch");
+  telt.checked = begin.teltMee !== false;
+  label.append(kpEl("span", "", "Telt mee in aankoopprofiel"), telt);
+  const opslaan = kpEl("button", "", knopTekst);
+  opslaan.type = "submit";
+  form.append(naam, hoofdgroep, eronder, nietEronder, label, opslaan);
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    bewaar({ naam: naam.value.trim(), hoofdgroep: hoofdgroep.value, valtEronder: eronder.value.trim(),
+             valtErNietOnder: nietEronder.value.trim(), teltMee: telt.checked }, opslaan);
+  });
+  return form;
+}
+
+// Wat de AI nergens kwijt kon, bij één voorgesteld type (of zonder voorstel: geen gewone boodschap)
+function kpOntbreekGroep(groep) {
+  const blok = kpEl("div", "voorstel-groep");
+  const kop = kpEl("div", "voorstel-kop");
+  const aantal = groep.artikelen.length + groep.termen.length;
+  kop.append(kpEl("strong", "", groep.voorstel ? `${groep.voorstel} (${aantal})` : `Zonder voorstel (${aantal})`));
+  if (groep.voorstel) {
+    kop.append(kpKnop("Type aanmaken", () => {
+      const open = blok.querySelector(".type-formulier");
+      if (open) return open.remove();
+      kop.after(kpTypeFormulier(
+        { naam: groep.voorstel, hoofdgroep: Logica.hoofdgroepVan(groep.artikelen) }, "Type aanmaken",
+        (velden, knop) => kpDoe(knop, () => Logica.maakType(velden, groep.voorstel), (uit) =>
+          `Het type "${uit.nieuw.naam}" is aangemaakt: ${uit.nieuw.artikelen} artikelen en ${uit.nieuw.termen} termen horen erbij.`)));
+    }));
   }
-  if (product.telt_mee === false) {
-    const info = document.createElement("p");
-    info.className = "bonnen-info";
-    info.textContent = "Telt niet mee in het aankoopprofiel";
-    knop.append(info);
-  }
+  // Klopt het dat hier geen type bij hoort, dan verdwijnt de groep uit de lijst
+  kop.append(kpKnop(groep.voorstel ? "Geen type nodig" : "Klopt", (k) => {
+    if (aantal > 1 && !confirm(`Blijven deze ${aantal} zonder type?`)) return;
+    kpDoe(k, () => Logica.klopt(groep.termen, groep.artikelen));
+  }));
+  blok.append(kop, ...groep.artikelen.map((a) => kpArtikelRij(a, null)), ...groep.termen.map((t) => kpTermRij(t, false)));
+  return blok;
+}
+
+// Eén type in de lijst onderaan. Opengeklapt: wijzigen, samenvoegen, en zijn namen en artikelen.
+function kpTypeRij(type) {
+  const li = document.createElement("li");
+  const open = Logica.typeOpen() === type.id;
+  const knop = kpEl("button", "bonnen-open");
+  knop.type = "button";
+  knop.setAttribute("aria-expanded", open);
+  const kop = kpEl("div", "bonnen-kop");
+  kop.append(kpEl("span", "", type.naam), kpEl("small", "", `${type.artikelen} art. · ${type.aankopen}×`));
+  knop.append(kop, kpEl("p", "bonnen-info", type.hoofdgroep + (type.telt_mee ? "" : " · telt niet mee in het aankoopprofiel")));
   knop.addEventListener("click", () => {
-    if (samenvoegBron) return voegSamen(samenvoegBron, product);
-    Logica.openProduct(open ? null : product.id);
-    renderProducten();
-    if (!open) loadHerkomst(product.id);
+    Logica.openType(open ? null : type.id);
+    renderKoppelingen();
+    if (!open && !Logica.detailsVan(type.id)) loadTypeDetails(type.id);
   });
   li.append(knop);
   if (!open) return li;
 
-  const blok = document.createElement("div");
-  blok.className = "bonnen-regels";
+  const blok = kpEl("div", "bonnen-regels");
+  blok.append(kpTypeFormulier(
+    { naam: type.naam, hoofdgroep: type.hoofdgroep, valtEronder: type.valt_eronder, valtErNietOnder: type.valt_er_niet_onder, teltMee: type.telt_mee },
+    "Opslaan", (velden, k) => kpDoe(k, () => Logica.wijzigType(type, velden), "Opgeslagen.")));
 
-  const form = document.createElement("form");
-  form.className = "product-hernoem";
-  const veld = document.createElement("input");
-  veld.type = "text";
-  veld.value = product.name;
-  veld.maxLength = 80;
-  veld.setAttribute("aria-label", "Naam van het product");
-  const opslaan = document.createElement("button");
-  opslaan.type = "submit";
-  opslaan.textContent = "Hernoemen";
-  form.append(veld, opslaan);
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    hernoemProduct(product, veld.value.trim());
-  });
-  blok.append(form);
-
-  // Voor dingen die geen boodschappen zijn (draagtas, plastic zak): buiten het aankoopprofiel houden
-  const label = document.createElement("label");
-  label.className = "product-telt";
-  const tekst = document.createElement("span");
-  tekst.textContent = "Telt mee in aankoopprofiel";
-  const box = document.createElement("input");
-  box.type = "checkbox";
-  box.className = "schakelaar";
-  box.setAttribute("role", "switch");
-  box.checked = product.telt_mee !== false;
-  box.addEventListener("change", () => setProductTelt(product, box.checked));
-  label.append(tekst, box);
-  blok.append(label);
-
-  // Per samenvoeging de namen die erbij kwamen; losmaken zet het oude product precies terug
-  const herkomst = Logica.herkomstVan(product.id);
-  if (!herkomst) {
-    const p = document.createElement("p");
-    p.textContent = "Bezig...";
-    blok.append(p);
-  } else {
-    blok.append(...herkomst.map((m) => {
-      const rij = document.createElement("div");
-      rij.className = "bonnen-regel";
-      const tekst = document.createElement("span");
-      tekst.textContent = "Samengevoegd: " + (m.aliases.length > 0 ? m.aliases.join(", ") : m.source_name);
-      const los = document.createElement("button");
-      los.type = "button";
-      los.className = "link";
-      los.textContent = "Losmaken";
-      los.addEventListener("click", () => maakLos(product, m));
-      rij.append(tekst, los);
-      return rij;
-    }));
-  }
-
-  // Artikelen uit de aanbiedingen die na goedkeuren bij dit product horen; losmaken telt als afwijzen
-  blok.append(...Logica.gekoppeldBij(product.id).map((k) => {
-    const rij = document.createElement("div");
-    rij.className = "bonnen-regel";
-    const tekst = document.createElement("span");
-    tekst.textContent = "Artikel: " + [k.titel, k.inhoud].filter(Boolean).join(", ");
-    const los = document.createElement("button");
-    los.type = "button";
-    los.className = "link";
-    los.textContent = "Losmaken";
-    los.addEventListener("click", () => {
-      if (!confirm(`"${k.titel}" losmaken van "${product.name}"? Het wordt daarna niet meer bij dit product voorgesteld.`)) return;
-      los.disabled = true;
-      wijsVoorstelAf(k);
-    });
-    rij.append(tekst, los);
-    return rij;
-  }));
-
-  const samen = document.createElement("button");
-  samen.type = "button";
-  samen.className = "link";
-  samen.textContent = "Samenvoegen met…";
-  samen.addEventListener("click", () => {
-    Logica.kiesSamenvoegBron(product);
-    say("producten-msg", "");
-    renderProducten();
-  });
+  // Samenvoegen: dit type gaat op in een ander. Dat is niet terug te draaien.
+  const samen = kpEl("div", "voorstel");
+  const acties = kpEl("div", "voorstel-acties");
+  acties.append(kpKnop("Samenvoegen met een ander type", () => kpKiezer(samen, type.id, (doel, k) => {
+    if (!confirm(`"${type.naam}" laten opgaan in "${doel.naam}"? Alle artikelen en namen verhuizen mee en "${type.naam}" blijft werken als naam van "${doel.naam}". Dit kun je niet terugdraaien.`)) return;
+    kpDoe(k, () => Logica.voegTypesSamen(type, doel), `"${type.naam}" is opgegaan in "${doel.naam}".`);
+  })));
+  samen.append(acties);
   blok.append(samen);
 
+  const details = Logica.detailsVan(type.id);
+  if (!details) {
+    blok.append(kpEl("p", "", "Bezig..."));
+  } else {
+    blok.append(kpEl("p", "type-tussenkop", `Namen (${details.namen.length})`));
+    blok.append(...details.namen.map((n) => {
+      const regel = kpEl("div", "voorstel");
+      const bron = n.bron === "ai" ? "AI" : n.bron === "manual" ? "zelf gezet" : "catalogus";
+      regel.append(kpEl("p", "", n.term + (n.merk ? ` (merk ${n.merk})` : "")), kpEl("p", "bonnen-info", bron + (n.nagekeken ? " · nagekeken" : "")));
+      const a = kpEl("div", "voorstel-acties");
+      const term = { term: n.term, sleutel: n.sleutel, merk: n.merk, type_id: type.id };
+      a.append(
+        kpKnop("Ander type", () => kpKiezer(regel, type.id, (t, k) => kpDoe(k, () => Logica.zetTermType(term, t.id), `"${n.term}" staat nu voor ${t.naam}.`))),
+        kpKnop("Geen type", (k) => kpDoe(k, () => Logica.zetTermType(term, null))));
+      regel.append(a);
+      return regel;
+    }));
+    blok.append(kpEl("p", "type-tussenkop", `Artikelen (${details.artikelen.length})`));
+    blok.append(...details.artikelen.map((a) => kpArtikelRij(a, type.id, { geenType: true, oordeel: false })));
+  }
   li.append(blok);
   return li;
 }
 
-// Eén voorstel: het artikel, waarom het bij het product zou horen, en goedkeuren of afwijzen
-function voorstelRij(voorstel) {
-  const rij = document.createElement("div");
-  rij.className = "voorstel";
-  const titel = document.createElement("p");
-  titel.textContent = voorstel.titel;
-  const artikel = document.createElement("p");
-  artikel.className = "bonnen-info";
-  artikel.textContent = [voorstel.merk, voorstel.inhoud, voorstel.categorie].filter(Boolean).join(" · ");
-  const reden = document.createElement("p");
-  reden.className = "bonnen-info";
-  reden.textContent = `Zekerheid ${Logica.zekerheidNaam(voorstel.zekerheid)}` + (voorstel.reden ? ` · ${voorstel.reden}` : "");
+function renderKoppelingen() {
+  const alles = Logica.koppelingen();
+  const termen = alles ? alles.termen : [];
+  const groepen = Logica.artikelGroepen();
+  const ontbreekt = Logica.ontbrekend();
+  const tel = (lijst, per) => lijst.reduce((n, x) => n + per(x), 0);
 
-  const acties = document.createElement("div");
-  acties.className = "voorstel-acties";
-  const goed = document.createElement("button");
-  goed.type = "button";
-  goed.className = "link";
-  goed.textContent = "Goedkeuren";
-  const af = document.createElement("button");
-  af.type = "button";
-  af.className = "link";
-  af.textContent = "Afwijzen";
-  goed.addEventListener("click", () => {
-    goed.disabled = af.disabled = true;
-    keurVoorstellenGoed([voorstel]);
-  });
-  af.addEventListener("click", () => {
-    goed.disabled = af.disabled = true;
-    wijsVoorstelAf(voorstel);
-  });
-  acties.append(goed, af);
-  rij.append(titel, artikel, reden, acties);
-  return rij;
-}
+  $("kp-termen").replaceChildren(...termen.map((t) => kpTermRij(t, true)));
+  $("kp-artikelen").replaceChildren(...groepen.map(kpArtikelGroep));
+  $("kp-zonder").replaceChildren(...ontbreekt.map(kpOntbreekGroep));
+  $("kp-termen-kop").textContent = `Termen (${termen.length})`;
+  $("kp-artikelen-kop").textContent = `Artikelen om na te kijken (${tel(groepen, (g) => g.rijen.length)})`;
+  $("kp-zonder-kop").textContent = `Geen type (${tel(ontbreekt, (g) => g.artikelen.length + g.termen.length)})`;
+  $("kp-termen-blok").hidden = termen.length === 0;
+  $("kp-artikelen-blok").hidden = groepen.length === 0;
+  $("kp-zonder-blok").hidden = ontbreekt.length === 0;
+  $("koppel-blokken").hidden = termen.length === 0 && groepen.length === 0 && ontbreekt.length === 0;
+  $("koppel-leeg").hidden = !alles || !$("koppel-blokken").hidden;
 
-// De voorstellen bij één product. "Alles goedkeuren" alleen buiten de twijfelgevallen.
-function voorstelGroep(groep, twijfel) {
-  const blok = document.createElement("div");
-  blok.className = "voorstel-groep";
-  const kop = document.createElement("div");
-  kop.className = "voorstel-kop";
-  const naam = document.createElement("strong");
-  naam.textContent = groep.product;
-  kop.append(naam);
-  if (!twijfel) {
-    const alles = document.createElement("button");
-    alles.type = "button";
-    alles.className = "link";
-    alles.textContent = "Alles goedkeuren";
-    alles.addEventListener("click", () => {
-      const n = groep.voorstellen.length;
-      if (n > 1 && !confirm(`Alle ${n} voorstellen bij "${groep.product}" goedkeuren?`)) return;
-      alles.disabled = true;
-      keurVoorstellenGoed(groep.voorstellen);
-    });
-    kop.append(alles);
-  }
-  blok.append(kop, ...groep.voorstellen.map(voorstelRij));
-  return blok;
-}
-
-function renderVoorstellen() {
-  const voorstellen = Logica.voorstelGroepen(false);
-  const twijfels = Logica.voorstelGroepen(true);
-  const tel = (groepen) => groepen.reduce((n, g) => n + g.voorstellen.length, 0);
-  $("voorstellen").replaceChildren(...voorstellen.map((g) => voorstelGroep(g, false)));
-  $("twijfels").replaceChildren(...twijfels.map((g) => voorstelGroep(g, true)));
-  $("voorstellen-kop").textContent = `Voorstellen (${tel(voorstellen)})`;
-  $("twijfel-kop").textContent = `Twijfelgevallen (${tel(twijfels)})`;
-  $("voorstellen-blok").hidden = voorstellen.length === 0;
-  $("twijfel-blok").hidden = twijfels.length === 0;
-  // Tijdens het samenvoegen staat alleen de keuze van het doel in beeld
-  $("voorstel-blokken").hidden = !!Logica.samenvoegBron() || (voorstellen.length === 0 && twijfels.length === 0 && !$("voorstellen-msg").textContent);
-}
-
-async function keurVoorstellenGoed(voorstellen) {
-  say("voorstellen-msg", "Bezig...");
-  const uit = await Logica.keurGoed(voorstellen);
-  if (!profielOpen) return;
-  say("voorstellen-msg", uit.fout || "");
-  renderProducten();
-}
-
-async function wijsVoorstelAf(rij) {
-  say("voorstellen-msg", "Bezig...");
-  const uit = await Logica.wijsAf(rij);
-  if (!profielOpen) return;
-  say("voorstellen-msg", uit.fout || "");
-  renderProducten();
-}
-
-function renderProducten() {
-  renderVoorstellen();
   const zoek = $("producten-zoek").value.trim();
-  const producten = Logica.producten();
-  const alle = producten || [];
-  const samenvoegBron = Logica.samenvoegBron();
-  const lijst = Logica.gefilterdeProducten(zoek);
-  $("producten").replaceChildren(...lijst.map(productRij));
-  $("samenvoeg-balk").hidden = !samenvoegBron;
-  if (samenvoegBron) $("samenvoeg-tekst").textContent = `Kies het product waar "${samenvoegBron.name}" bij hoort.`;
-  $("producten-telling").textContent = !producten ? ""
-    : lijst.length === 0 ? "Geen producten gevonden."
-    : zoek || samenvoegBron ? `${lijst.length} van ${alle.length} producten` : `${alle.length} producten`;
+  const types = Logica.gefilterdeTypes(zoek);
+  const totaal = alles ? alles.types.length : 0;
+  $("producten").replaceChildren(...types.map(kpTypeRij));
+  $("producten-telling").textContent = !alles ? ""
+    : types.length === 0 ? "Geen types gevonden."
+    : zoek ? `${types.length} van ${totaal} types` : `${totaal} types`;
 }
 
-// Na een wijziging alles opnieuw ophalen: samenvoegen en losmaken raken meerdere producten tegelijk
-async function herlaadProducten(openId) {
-  Logica.openProduct(openId);
-  Logica.wisHerkomst();
-  loadKoppelingen();
-  await loadProducten();
-  if (openId) loadHerkomst(openId);
-}
-
-async function voegSamen(bron, doel) {
-  if (!confirm(`"${bron.name}" samenvoegen met "${doel.name}"? Alles wat als "${bron.name}" is gekocht telt daarna als "${doel.name}". Je kunt dit weer losmaken.`)) return;
-  say("producten-msg", "Bezig...");
-  const uit = await Logica.voegSamen(bron, doel);
-  if (!profielOpen) return;
-  if (uit.fout) return say("producten-msg", uit.fout);
-  $("producten-zoek").value = "";
-  herlaadProducten(doel.id);
-}
-
-async function maakLos(product, samenvoeging) {
-  if (!confirm(`"${samenvoeging.source_name}" weer losmaken van "${product.name}"?`)) return;
-  say("producten-msg", "Bezig...");
-  const uit = await Logica.maakLos(samenvoeging);
-  if (!profielOpen) return;
-  if (uit.fout) return say("producten-msg", uit.fout);
-  herlaadProducten(product.id);
-}
-
-async function hernoemProduct(product, naam) {
-  if (!naam) return say("producten-msg", "Vul een naam in.");
-  if (naam === product.name) return;
-  say("producten-msg", "Bezig...");
-  const uit = await Logica.hernoemProduct(product, naam);
-  if (!profielOpen) return;
-  if (uit.fout) return say("producten-msg", uit.fout);
-  say("producten-msg", "");
-  renderProducten();
-}
-
-async function setProductTelt(product, aan) {
-  say("producten-msg", "Bezig...");
-  const uit = await Logica.zetProductTelt(product, aan);
-  if (!profielOpen) return;
-  say("producten-msg", uit.fout || "");
-  renderProducten();
-}
-
-$("producten-knop").addEventListener("click", toonProducten);
-$("producten-zoek").addEventListener("input", renderProducten);
-$("samenvoeg-annuleren").addEventListener("click", () => {
-  Logica.kiesSamenvoegBron(null);
-  renderProducten();
-});
+$("producten-knop").addEventListener("click", toonKoppelingen);
+$("producten-zoek").addEventListener("input", renderKoppelingen);
 $("producten-terug").addEventListener("click", toonProfiel);
 
 // ---------- Terugvegen ----------

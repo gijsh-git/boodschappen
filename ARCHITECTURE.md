@@ -4,7 +4,7 @@ Dit document zegt hoe de code **hoort** te zijn opgebouwd. Hoe het systeem nu we
 
 ## Huidig
 
-Alle Supabase-calls staan in `data.js`; `app.js` (ruim 2500 regels) bevat geen `db.` meer. State, logica en rendering lopen in `app.js` nog door elkaar. `logica.js` bestaat sinds de favorieten en bevat die, Voor jou, de aanbiedingen bij de lijst en het scherm Producten; de rest van de logica staat nog in `app.js`. Rekenwerk en beveiliging zitten in de database (RPC's, RLS), en dat blijft zo.
+Alle Supabase-calls staan in `data.js`; `app.js` (ruim 2500 regels) bevat geen `db.` meer. State, logica en rendering lopen in `app.js` nog door elkaar. `logica.js` bestaat sinds de favorieten en bevat die, Voor jou, de aanbiedingen bij de lijst en het scherm Koppelingen; de rest van de logica staat nog in `app.js`. Rekenwerk en beveiliging zitten in de database (RPC's, RLS), en dat blijft zo.
 
 ## Gewenst: drie lagen
 
