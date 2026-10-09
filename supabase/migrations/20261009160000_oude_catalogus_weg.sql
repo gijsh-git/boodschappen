@@ -230,6 +230,8 @@ alter table public.items drop column product_id;
 alter table public.term_synonyms drop column target;
 
 -- ---------- Tabellen ----------
+-- De leespolicy van products kijkt in product_aliases; die moet eerst weg
+drop policy "beheerder en lijstleden zien producten" on public.products;
 drop table public.article_link_rejections;
 drop table public.article_links;
 drop table public.article_names;
