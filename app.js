@@ -396,6 +396,11 @@ function totDatum(dag) {
   return new Date(dag).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" }).replace(".", "");
 }
 
+// Alleen de dag van de week, voor op de lijst: "zo"
+function totDag(dag) {
+  return new Date(dag).toLocaleDateString("nl-NL", { weekday: "short" }).replace(".", "");
+}
+
 // Waarom de aanbieding hier staat: je favoriet, of een product dat jullie vaak kopen
 function aanbodReden(aanbieding) {
   const favoriet = aanbieding.favorieten[0];
@@ -1180,6 +1185,9 @@ async function loadItems() {
   loadLeden();
   controleerArchief();
   const lijstId = currentList.id;
+  // Eerst: een gekozen aanbieding die is verlopen gaat van het item af
+  await Logica.zetVerlopenKeuzesTerug(lijstId);
+  if (!currentList || currentList.id !== lijstId) return;
   const { data, error } = await Data.items(lijstId);
   // Intussen van lijst gewisseld (of uitgelogd)? Dan dit antwoord negeren.
   if (!currentList || currentList.id !== lijstId) return;
@@ -1253,16 +1261,114 @@ function bonusDetailRij(detail) {
   naam.textContent = detail.titel;
   const sub = document.createElement("span");
   sub.className = "item-sub";
-  sub.textContent = [item && "Voor " + item.name, Logica.winkelNaam(detail.supermarkt), "t/m " + totDatum(detail.geldig_tot)].filter(Boolean).join(" · ");
+  sub.textContent = [item && "Voor " + (item.original_name || item.name), Logica.winkelNaam(detail.supermarkt), "t/m " + totDatum(detail.geldig_tot)].filter(Boolean).join(" · ");
   tekst.append(korting, naam, sub);
-  if (detail.artikelen.length > 0) {
+  // Bij een gekozen aanbieding de gekozen artikelen, anders de artikelen waar het item voor staat
+  const gekozen = detail.gekozen && item && item.offer_choice ? item.offer_choice.artikelen || [] : [];
+  if (gekozen.length > 0 || detail.artikelen.length > 0) {
     const welke = document.createElement("span");
     welke.className = "item-sub";
-    welke.append(...artikelenRegel(detail));
+    if (gekozen.length > 0) welke.textContent = "Gekozen: " + gekozen.map((a) => a.titel).join(", ");
+    else welke.append(...artikelenRegel(detail));
     tekst.append(welke);
   }
+  if (item) tekst.append(keuzeBlok(detail, item));
   li.append(tekst);
   return li;
+}
+
+// Onder een aanbieding in het paneel: de knop om hem te kiezen, of (na "Kiezen") de artikelen om aan te vinken.
+// Een item dat vanuit Voor jou op de lijst staat ís de aanbieding al en heeft geen knop.
+function keuzeBlok(detail, item) {
+  const blok = document.createElement("div");
+  blok.className = "keuze";
+  const open = Logica.keuzeOpen();
+  if (!open || open.itemId !== item.id || open.aanbiedingId !== detail.id) {
+    const acties = document.createElement("div");
+    acties.className = "keuze-acties";
+    if (detail.gekozen) {
+      acties.append(keuzeKnop("Keuze wissen", "link", () => wisKeuze(item)));
+    } else if (!item.offer_id) {
+      acties.append(keuzeKnop("Kiezen", "wit", () => openKeuze(detail)));
+    }
+    blok.append(acties);
+    return blok;
+  }
+  if (!open.opties) {
+    blok.append(kpEl("p", "item-sub", "Bezig..."));
+    return blok;
+  }
+  const zichtbaar = Logica.keuzeZichtbaar();
+  const lijst = document.createElement("div");
+  lijst.className = "keuze-lijst";
+  zichtbaar.forEach((optie) => {
+    const rij = document.createElement("label");
+    const box = document.createElement("input");
+    box.type = "checkbox";
+    box.checked = open.aan.has(optie.artikel_id);
+    box.addEventListener("change", () => Logica.zetKeuzeArtikel(optie.artikel_id, box.checked));
+    const titel = document.createElement("span");
+    titel.textContent = optie.titel;
+    if (optie.zelfde) titel.className = "zelfde-variant";
+    rij.append(box, titel);
+    lijst.append(rij);
+  });
+  blok.append(lijst);
+  const meer = open.opties.length - zichtbaar.length;
+  if (meer > 0) {
+    blok.append(keuzeKnop(`Toon ook de ${meer} andere artikelen`, "link", () => { Logica.toonAlleKeuzes(); renderBonusDetails(); }));
+  }
+  blok.append(kpEl("p", "item-sub", "Elk aangevinkt artikel komt apart op de lijst. Niets aangevinkt? Dan de aanbieding als geheel."));
+  const acties = document.createElement("div");
+  acties.className = "keuze-acties";
+  acties.append(
+    keuzeKnop("Zet op de lijst", "", bevestigKeuze),
+    keuzeKnop("Annuleren", "link", () => { Logica.sluitKeuze(); renderBonusDetails(); }));
+  blok.append(acties);
+  return blok;
+}
+
+function keuzeKnop(tekst, soort, actie) {
+  const knop = document.createElement("button");
+  knop.type = "button";
+  if (soort) knop.className = soort;
+  knop.textContent = tekst;
+  knop.addEventListener("click", actie);
+  return knop;
+}
+
+async function openKeuze(detail) {
+  say("bonus-msg", "");
+  const wacht = Logica.openKeuze(detail.item_id, detail.id);
+  renderBonusDetails();
+  const antwoord = await wacht;
+  if (!antwoord) return;
+  say("bonus-msg", antwoord.fout || "");
+  renderBonusDetails();
+}
+
+// Na kiezen of wissen: het item is veranderd en er kunnen items bij of af zijn (één per gekozen artikel),
+// dus de lijst en de labels opnieuw ophalen
+function neemItemOver(antwoord) {
+  if (antwoord.fout) return say("bonus-msg", antwoord.fout);
+  const nieuw = antwoord.item;
+  if (!currentList || !nieuw || nieuw.list_id !== currentList.id) return;
+  items = items.map((i) => (i.id === nieuw.id ? nieuw : i));
+  render();
+  loadItems();
+}
+
+async function bevestigKeuze() {
+  say("bonus-msg", "");
+  const antwoord = await Logica.bevestigKeuze();
+  // Gekozen: het paneel klapt dicht, zodat je de lijst met de keuze erop ziet
+  if (!antwoord.fout) toonBonusPaneel(false);
+  neemItemOver(antwoord);
+}
+
+async function wisKeuze(item) {
+  say("bonus-msg", "");
+  neemItemOver(await Logica.wisKeuze(item.id));
 }
 
 function renderBonusDetails() {
@@ -1383,24 +1489,32 @@ function itemRow(item) {
   naam.className = "item-naam";
   naam.textContent = item.name;
   tekst.append(naam);
+  // Een gekozen aanbieding: vooraan waar het voor was; de korting staat rechts in het label
+  const keuze = Logica.keuzeVan(item);
   const wie = namen[item.added_by];
   const sub = document.createElement("span");
   sub.className = "item-sub";
-  sub.textContent = [item.quantity, wie && "door " + wie, datumKort(item.created_at)].filter(Boolean).join(" · ");
+  sub.textContent = [keuze && "voor " + keuze.voor, item.quantity, wie && "door " + wie, datumKort(item.created_at)].filter(Boolean).join(" · ");
   sub.title = "Toegevoegd op " + datumTijd(item.created_at);
   tekst.append(sub);
   voor.append(koopKnop, tekst);
 
-  if (Logica.dealsVan(item.id)) {
+  if (keuze || Logica.dealsVan(item.id)) {
     const bonus = document.createElement("div");
     bonus.className = "item-deal";
     const label = document.createElement("span");
     label.className = "bonus-label";
-    label.textContent = "Bonus";
-    const winkels = document.createElement("span");
-    winkels.className = "item-sub";
-    winkels.textContent = Logica.dealWinkels(Logica.dealsVan(item.id)).join(", ");
-    bonus.append(label, winkels);
+    const onder = document.createElement("span");
+    onder.className = "item-sub";
+    if (keuze) {
+      // Gekozen: de korting zelf en tot wanneer, uit de keuze op het item
+      label.textContent = keuze.korting || "Bonus";
+      if (keuze.geldigTot) onder.textContent = "t/m " + totDag(keuze.geldigTot);
+    } else {
+      label.textContent = "Bonus";
+      onder.textContent = Logica.dealWinkels(Logica.dealsVan(item.id)).join(", ");
+    }
+    bonus.append(label, onder);
     voor.append(bonus);
   }
 

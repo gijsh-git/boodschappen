@@ -466,14 +466,130 @@ Uitgangspunten:
 
 #### Deel 2 – Een aanbieding kiezen
 
-- [ ] Per aanbieding een knop om hem te kiezen. Die opent de artikelen van de aanbieding; artikelen met dezelfde variant als de oorspronkelijke term staan al aangevinkt. Je kunt er één of meer bij of af klikken. Niets aangevinkt is de aanbieding als geheel.
-- [ ] De keuze vervangt het item op de lijst; er komt geen tweede rij. Dit wijkt bewust af van "Voor jou", waar `add_offer_item` altijd een aparte rij maakt.
-- [ ] De oorspronkelijke invoer blijft bewaard in een eigen veld op het item (bijvoorbeeld `items.original_name`), niet alleen in de weergave.
-- [ ] Weergave: bovenaan de gekozen variant (bij één), anders de titel van de aanbieding met de varianten eronder. Daaronder: "voor: tomatensoep · 2 voor 5,99 · t/m zo".
-- [ ] Meerdere varianten zijn één item. Bij swipen of een bon worden het losse aankopen.
-- [ ] Bij "2 voor", "2e halve prijs" en "1+1 gratis" een hint "2 nodig voor de korting". De hoeveelheid wordt niet automatisch aangepast.
-- [ ] Verloopt de aanbieding terwijl het item nog op de lijst staat, dan valt het item terug naar de oorspronkelijke invoer; aanbieding en varianten gaan eraf. Let op: `offer_id` wordt nu pas na 28 dagen leeggemaakt (`save_offers`), dus het terugvallen op `valid_to` is nieuw.
-- [ ] Geldt voor de hele lijst en is via Realtime direct zichtbaar voor alle leden.
+- [x] Per aanbieding een knop om hem te kiezen. Die opent de artikelen van de aanbieding; artikelen met dezelfde variant als de oorspronkelijke term staan al aangevinkt. Je kunt er één of meer bij of af klikken. Niets aangevinkt is de aanbieding als geheel. Bij een grote aanbieding ("Alle Conimex") staan eerst alleen de artikelen waar de term voor staat, de rest achter "Toon ook de n andere artikelen".
+- [x] De keuze vervangt het item op de lijst. Dit wijkt bewust af van "Voor jou", waar `add_offer_item` altijd een aparte rij naast het bestaande item maakt.
+- [x] De oorspronkelijke invoer blijft bewaard in een eigen veld op het item (bijvoorbeeld `items.original_name`), niet alleen in de weergave.
+- [x] Elk aangevinkt artikel is een eigen item (besluit 9 oktober 2026, na de eerste test; eerst was het één item met de varianten eronder, dat gaf een te volle rij op de telefoon). Het item zelf wordt het eerste artikel, voor elk volgend artikel komt er een rij bij. Swipen is dus per artikel één aankoop.
+- [x] Weergave, even compact als een gewoon item: de naam van het artikel, eronder "voor tomatensoep · door Gijs · vandaag", en rechts in het oranje label de korting zelf ("2 voor 5.99") met "t/m zo".
+- [–] Een aparte hint "2 nodig voor de korting" is vervallen: het label zegt het al. De hoeveelheid wordt niet automatisch aangepast.
+- [x] Verloopt de aanbieding terwijl het item nog op de lijst staat, dan valt het item terug naar de oorspronkelijke invoer; aanbieding en varianten gaan eraf. Van meerdere items uit één keuze blijft er één over. Let op: `offer_id` wordt nu pas na 28 dagen leeggemaakt (`save_offers`), dus het terugvallen op `valid_to` is nieuw.
+- [x] Geldt voor de hele lijst en is via Realtime direct zichtbaar voor alle leden.
+- Gebouwd op 9 oktober 2026 (migraties `aanbieding_kiezen` en `keuze_losse_items`). Het veld is `items.original_name`, de keuze zelf staat als momentopname in `items.offer_choice`, en `items.choice_group` houdt de items uit één keuze bij elkaar. Erbij gekomen: "Keuze wissen" in het paneel (er blijft één item over met wat er stond) en ongedaan maken na swipen zet het item met zijn keuze terug. Een item dat vanuit "Voor jou" op de lijst staat heeft geen knop "Kiezen".
+
+#### Deel 3 – Gelaagd matchen van lijsttermen
+
+Aanleiding (8 oktober 2026): het label kwam alleen bij exacte gelijkheid. "proteinedrank", "chocolade", "tandpasta" en "shampoo" werkten; "proteine drank" (de stemmer werkt per woord, dus een spatie geeft een ander resultaat), "proteinedrink", "chocola", "tandenpasta" en de merken "nivea", "parodontax" en "sensodyne" (lijstnamen zijn merkloos, en geen route keek naar `articles.brand`) niet.
+
+Gebouwd en doorgevoerd op 8 oktober 2026 (migraties `gelaagd_matchen` en `matchen_bijgesteld`):
+
+- [x] Eén functie `term_articles()` die zegt voor welke artikelen een term staat, in vijf lagen: exact (product, of lijstnaam zonder spaties en leestekens of na stamming), synoniem, merk, tolerant (pg_trgm, grens in `settings`), titel. `offers_for_list()` en `offer_details_for_list()` gebruiken die functie; hun signatuur en de app veranderen niet.
+- [x] `term_synonyms`: term → naam, met bron (`manual` of `ai`) en datum. Beheer voorlopig in de SQL Editor.
+- [x] `unmatched_terms`: termen die bij het toevoegen nergens op matchten, bijgehouden door `handle_unmatched_term()` vanuit een trigger op `items`.
+- [x] Nagelopen met `docs/matching-controle.sql` op alle 605 ooit getypte namen: 539 exact, 7 via het merk, 7 tolerant (chocola, tandenpasta, kokoswatet, margaringe, paradontax; twijfelachtig: "kruiden" bij kipkruiden en kruidenmix), 1 via de titel, 51 zonder treffer. Bijgesteld na die proef: de sleutelvorm geldt ook voor productnamen ("proteine drank" is "proteinedrank", een naam van eiwitdrank), en de titellaag geldt alleen vanaf twee woorden.
+- [ ] In de app een paar weken volgen; de grens voor tolerant bijstellen als er verkeerde labels komen. ("margerine" en "adnijvie" zijn intussen namen van een type.)
+- [x] AI-stap: gebouwd in deel 4, fase 5, als Edge Function `term-classificeren` in plaats van een script; de uitkomst is een naam van een type met bron `ai`.
+- [x] Een blok voor de termen: het blok "Termen" in het scherm Koppelingen (deel 4, fase 6).
+
+Besluiten staan in `docs/productregels.md` onder "Matchen van lijsttermen". Niet gedaan: `items.normalized_name` gelijktrekken met de nieuwe sleutelvorm (raakt de sleutel van `product_aliases`), en Voor jou.
+
+#### Deel 4 – Producttypes in plaats van samenvoegen
+
+Aanleiding (8 oktober 2026): de catalogus groeit met elke nieuwe naam en elke bonusweek levert een wachtrij aan voorstellen op. Daarvoor in de plaats komt een vaste lijst producttypes (het wisselniveau uit `docs/productregels.md`, met de hoofdcategorie van AH als hoofdgroep) waar artikelen, getypte termen en aankopen automatisch aan gekoppeld worden. Beheer wordt achteraf controleren en corrigeren.
+
+Besluiten: een type is het wisselniveau, niet fijner ("brood", niet "volkorenbrood"); een AI-koppeling telt direct voor label, profiel en Voor jou; een favoriet is een type, een merk plus type, of alleen een merk.
+
+- [x] Fase 1 (de scripts van fase 1 en 3 waren eenmalig en zijn op 9 oktober 2026 verwijderd; ze staan in de git-historie): tabel `product_types`, `scripts/producttypes-voorstellen.py` (voorstel naar `docs/producttypes.csv`) en `scripts/producttypes-laden.py`.
+- [x] Gijs leest de typelijst na en laadt hem (8 oktober 2026: 606 types). "sap", "papier" en "deeg" zitten bewust in geen enkel type: te vaag om te kiezen.
+- [x] Fase 2: `article_types` en de Edge Function `artikelen-classificeren`: nieuwe artikelen krijgen bij het ophalen van de bonus in één ronde een type (titel, merk en categorie als invoer). Eerste ronde over alle artikelen.
+- [x] Fase 3: `scripts/naar-producttypes.py` koppelt de namen van catalogusproducten, de lijstnamen en de artikelen uit de oude catalogus aan een type; `term_synonyms` wordt de ene tabel naam → type. Gedaan op 9 oktober 2026: 2402 van de 2422 artikelen hebben een type, 939 namen zijn gekoppeld (929 uit de catalogus en de lijstnamen, 10 via de AI) en 1274 van de 1281 aankopen hebben een type; "papier", "sap" en "deeg" bewust niet. Tomatensoep en kippensoep zijn opgegaan in soep. Lijstitems en favorieten hoeven niet omgezet: er zijn 4 items (hun type volgt uit de naam) en nog geen favorieten.
+- [x] Fase 4: `purchase_profile`, `regular_products`, `offers_for_me`, `term_articles`, `match_receipt_items` en `add_offer_item` rekenen op types; zelfde signatuur, de app verandert niet. Doorgevoerd op 9 oktober 2026. Vergeleken op alle 623 namen uit de catalogus: 357 hebben deze week een label (was 304); 17 raakten het kwijt, bijna allemaal terecht (een zero-variant of groente uit pot gaf eerder een label bij het gewone product). In Voor jou 55 aanbiedingen (was 45), geen enkele weg. Voor het label gaat een merk vóór een naam: "nivea" is alles van Nivea, "nivea shampoo" alleen de shampoo. Nog te doen: testen in de app met twee browsers.
+- [x] Fase 5: Edge Function `term-classificeren`, aangeroepen vanuit `handle_unmatched_term()` via `pg_net`: een term zonder treffer krijgt direct een type, opgeslagen als synoniem met bron `ai` en datum. Het label verschijnt zonder goedkeuring. Gebouwd op 9 oktober 2026 en getest via het afhandelpunt: "wc eend" werd toiletreiniger, "bananenn" bananen en "afwasborstel" kreeg geen type, binnen 8 seconden. Ook een aankoop met een onbekende naam gaat langs dit punt. Nog te doen: in de app zien dat het label bij beide deelnemers verschijnt.
+- [x] Fase 6: het scherm Producten wordt een overzicht van de AI-koppelingen om te controleren en te corrigeren; samenvoegen vervalt.
+- [x] Fase 7: favorieten op type, of merk plus type. Doorgevoerd op 9 oktober 2026, alleen in de database: `offers_for_me()` bepaalt bij het zoeken waar de term van een favoriet voor staat, en de suggesties komen uit de typelijst. Getest met proef-favorieten die zijn teruggedraaid: "tandpasta" raakt drie aanbiedingen (ook Sensodyne), "shampoo" van Nivea alleen de twee shampoos, "Lindt" alles van het merk, "tomatensoep" alle soep, en een term die nergens voor staat ("glutenvrij") zoekt nog op woorden in de titel. Nog te doen: een echte favoriet toevoegen in de app.
+- [x] Fase 8: opruimen. Gedaan op 9 oktober 2026, eerder dan gepland omdat Gijs dat wilde: `products`, `product_aliases`, `product_merges`, `article_links`, `article_link_rejections` en `article_names` zijn weg, met hun functies, de trigger `ensure_product()`, de kolommen `items.product_id` en `term_synonyms.target` en de scripts eromheen. De inhoud van de tabellen staat in `data/backup/20261009-oude-catalogus.json` (niet in git). Terug naar het oude model kan niet meer met een migratie. Wat hierboven over de catalogus, samenvoegen, voorstellen en lijstnamen staat (stap 3a, stap 5 deel 1 tot en met 3) beschrijft hoe het was.
+
+Vervangt de open punten van deel 3 (de AI-stap en het blok in het scherm Producten).
+
+##### Fase 6 uitgewerkt: het scherm Koppelingen
+
+Uitgeschreven op 9 oktober 2026, nog niet gebouwd.
+
+Doel: de beheerder ziet wat de AI heeft gekoppeld, corrigeert wat fout is en ziet welke types ontbreken. Niets wacht op goedkeuring: alles telt al mee, het scherm is er om achteraf bij te sturen.
+
+Uitgangspunt in cijfers (9 oktober 2026): 1716 artikelen met een oordeel van de AI dat nog niet is nagekeken (1563 zekerheid hoog, 131 middel, 2 laag, 20 zonder type), en 19 termen via de AI (10 zonder type). Alles nakijken is geen werk voor een telefoon, dus het scherm vraagt alleen aandacht voor wat twijfelachtig is. Zekerheid hoog is wel in te zien, maar staat niet als taak klaar.
+
+Het scherm (zelfde plek: Profiel > "Koppelingen beheren", view `producten`, alleen voor de beheerder), van boven naar beneden:
+
+1. **Termen** (`<details>`, open als er iets in staat): wat mensen typten en de AI beoordeelde, nieuwste eerst. Per rij de term, het type of "geen type", het merk als dat erbij hoort, de zekerheid, de reden en de datum. Knoppen: "Klopt", "Ander type", en bij een type ook "Geen type".
+2. **Artikelen om na te kijken**: de oordelen met zekerheid middel en laag, gegroepeerd per type. Per groep "Alles klopt"; per artikel de titel, het merk, de categorie, de reden, en "Ander type" of "Geen type".
+3. **Geen type**: artikelen waar de AI niets bij vond, gegroepeerd op het type dat volgens de AI ontbreekt, met het aantal artikelen. Per groep "Type aanmaken" (naam, hoofdgroep en afbakening invullen; de artikelen worden daarna opnieuw beoordeeld) of "Geen boodschap" (blijft zonder type en verdwijnt uit de lijst). Per artikel ook "Ander type".
+4. **Types**: zoekveld en de lijst van alle types met het aantal artikelen, namen en aankopen. Een type openklappen toont de afbakening, de schakelaar "telt niet mee in profiel", en zijn namen en artikelen (ook die met zekerheid hoog), elk met "Ander type". Hernoemen en de afbakening wijzigen kan hier ook.
+
+"Ander type" opent één keuzelijst met een zoekveld over alle types, gegroepeerd per hoofdgroep; die wordt overal hergebruikt.
+
+Wat verdwijnt: de samenvoegbalk, de blokken "Voorstellen" en "Twijfelgevallen", de oude productlijst, en in de code alles rond `product_overview`, `merge_products`, `undo_merge`, `article_link_overview`, `approve_article_links` en `reject_article_link`. De databasefuncties zelf blijven tot fase 8.
+
+Database (één migratie, alles alleen voor de beheerder):
+
+- `type_link_overview()`: in één keer de termen, de artikelen om na te kijken, de artikelen zonder type en de types met hun tellingen.
+- `type_details(p_type)`: de namen en artikelen van één type, pas bij openklappen.
+- `mark_links_reviewed(p_terms, p_articles)`: "Klopt" en "Alles klopt"; zet alleen `reviewed_at`.
+- Bestaand en hergebruikt: `save_term_types(…, 'manual')` en `set_article_types(…, 'manual')` voor "Ander type" en "Geen type", `save_product_types()` voor een nieuw of gewijzigd type, `reset_untyped_articles()` daarna.
+- Nieuw voor termen: de AI onthoudt bij "geen type" welk type ontbreekt (`term_synonyms.suggested_type`, zoals bij artikelen), zodat "afwasborstel" in blok 3 terechtkomt naast de artikelen.
+- Hernoemen van een type: `rename_product_type(p_type, p_name)`; de oude naam blijft werken als naam van het type.
+
+Client, volgens `ARCHITECTURE.md`: de calls in `data.js`, state en regels in `logica.js` (vervangen het deel "Producten"), `app.js` rendert alleen. De logica van dit scherm staat al in `logica.js`, dus er is geen aparte verhuiscommit nodig.
+
+Volgorde, elk een eigen commit met een test:
+
+1. Migratie met de leesfuncties en `mark_links_reviewed`; nalopen in de SQL Editor. (Gedaan op 9 oktober 2026, samen met de export en de functies om een type aan te maken en te wijzigen.)
+2. Het scherm alleen-lezen: de vier blokken en de typelijst. (Gebouwd op 9 oktober 2026, samen met stap 3 en 4; nog te testen in de browser.)
+3. De acties: "Klopt", "Ander type", "Geen type", met de keuzelijst. (Gebouwd, nog te testen.)
+4. "Type aanmaken", hernoemen, samenvoegen en de schakelaar. (Gebouwd, nog te testen.)
+5. Opruimen van de oude code in de client, `CACHE` bumpen, `CLAUDE.md` bijwerken.
+
+Open keuzes:
+
+- **De typelijst heeft één bron: de database** (besluit 9 oktober 2026). `docs/producttypes-export.csv` is alleen een afdruk, die `scripts/producttypes-exporteren.py` bij elke commit ververst via de git-hook in `.githooks/`. Types toevoegen aan een bestand en opnieuw laden bestaat niet meer; de scripts daarvoor zijn verwijderd. Een type aanmaken, wijzigen of samenvoegen doe je in het scherm Koppelingen.
+- **Merk bij een term corrigeren** ("sensodyne tandpasta" kreeg het verkeerde merk): later, niet in de eerste versie; "Ander type" laat het merk staan, "Geen type" haalt het weg.
+- **Een term die als "geen type" is beoordeeld opnieuw laten beoordelen** na een nieuw type: gebeurt automatisch voor termen waarvan het voorgestelde type gelijk is aan het nieuwe type, anders met de hand.
+
+### [–] Stap 6 – Automatische aankoopimport (vervallen)
+
+Vervallen op 9 oktober 2026. De historie is één keer opgehaald (stap 2a); daarna komen bonnen binnen via "Bon scannen". Een periodieke koppeling met de AH-API is kwetsbaar, vraagt opgeslagen inloggegevens en is in de publieke fase niet bruikbaar. Een geswipet item is ook een aankoop (`buy_item`), dus stap 8 heeft ook zonder bon data.
+
+### [ ] Stap 7 – Aanbiedingen kiezen en wegklikken
+
+Vastgesteld op 9 oktober 2026. Vervangt de oude stap 7 "Persoonlijke laag". "Voorkeur per variant" vervalt: merkfavorieten dekken dat grotendeels. "Niet voor mij" komt terug als wegklikken (deel 3).
+
+Waar: het bonuspaneel van de lijst (`bonus-paneel`), waar per item de aanbiedingen staan ("Voor tomatensoep").
+
+Uitgangspunten:
+
+- De matching blijft op type (het wisselniveau, `docs/productregels.md`). Dat bij "tomatensoep" ook Conimex laksa verschijnt is een gevolg van die keuze, geen fout. Het type wordt niet smaller gemaakt; binnen het type wordt gerangschikt (deel 1).
+- Wegklikken is voor wat je deze week niet wilt, niet om slechte matching op te vangen.
+- Toevoegen en wegklikken bij een item gelden voor de hele lijst. Wegklikken in "Voor jou" geldt per persoon.
+
+#### Deel 1 – Volgorde binnen het type
+
+- [x] Plat kenmerk `variant` naast het type, bijvoorbeeld "tomaat", "kip", "groente". Geen tweede laag onder de types en geen beheer.
+- [x] De AI vult het in bij dezelfde aanroep die nu het type bepaalt: bij artikelen in `artikelen-classificeren`, bij termen in `term-classificeren`.
+- [x] Bij een item eerst de aanbiedingen met een artikel met dezelfde variant als de term, daarna de rest. De variant bepaalt alleen de volgorde en sluit nooit iets uit; een fout kost een lagere plek, geen gemiste aanbieding.
+- [x] Binnen een aanbieding staan de artikelen met dezelfde variant bovenaan en zijn ze gemarkeerd.
+- Gebouwd op 9 oktober 2026 (migratie `variant`). De variant is vrije tekst van één woord en wordt vergeleken op de Nederlandse stam ("tomaat" is "tomaten"). Bestaande artikelen en namen zijn aangevuld met `scripts/ah-bonus-opslaan.py --types`; de wekelijkse ronde vult nieuwe aan. In het paneel staan de aanbiedingen nu per item bij elkaar.
+- Waarom niet op woorden in de titel: "tomatensoep" vindt "AH Verse soep Chinese tomaat" dan niet (samengesteld woord, andere spelling).
+
+#### Deel 2 – Een aanbieding kiezen
+
+- [x] Per aanbieding een knop om hem te kiezen. Die opent de artikelen van de aanbieding; artikelen met dezelfde variant als de oorspronkelijke term staan al aangevinkt. Je kunt er één of meer bij of af klikken. Niets aangevinkt is de aanbieding als geheel. Bij een grote aanbieding ("Alle Conimex") staan eerst alleen de artikelen waar de term voor staat, de rest achter "Toon ook de n andere artikelen".
+- [x] De keuze vervangt het item op de lijst. Dit wijkt bewust af van "Voor jou", waar `add_offer_item` altijd een aparte rij naast het bestaande item maakt.
+- [x] De oorspronkelijke invoer blijft bewaard in een eigen veld op het item (bijvoorbeeld `items.original_name`), niet alleen in de weergave.
+- [x] Elk aangevinkt artikel is een eigen item (besluit 9 oktober 2026, na de eerste test; eerst was het één item met de varianten eronder, dat gaf een te volle rij op de telefoon). Het item zelf wordt het eerste artikel, voor elk volgend artikel komt er een rij bij. Swipen is dus per artikel één aankoop.
+- [x] Weergave, even compact als een gewoon item: de naam van het artikel, eronder "voor tomatensoep · door Gijs · vandaag", en rechts in het oranje label de korting zelf ("2 voor 5.99") met "t/m zo".
+- [–] Een aparte hint "2 nodig voor de korting" is vervallen: het label zegt het al. De hoeveelheid wordt niet automatisch aangepast.
+- [x] Verloopt de aanbieding terwijl het item nog op de lijst staat, dan valt het item terug naar de oorspronkelijke invoer; aanbieding en varianten gaan eraf. Van meerdere items uit één keuze blijft er één over. Let op: `offer_id` wordt nu pas na 28 dagen leeggemaakt (`save_offers`), dus het terugvallen op `valid_to` is nieuw.
+- [x] Geldt voor de hele lijst en is via Realtime direct zichtbaar voor alle leden.
+- Gebouwd op 9 oktober 2026 (migratie `aanbieding_kiezen`). Het veld is `items.original_name`, de keuze zelf staat als momentopname in `items.offer_choice`. Erbij gekomen: "Keuze wissen" en "Artikelen wijzigen" in het paneel; bij een grote aanbieding ("Alle Conimex") staan eerst alleen de artikelen waar de term voor staat, de rest achter "Toon ook de n andere artikelen"; ongedaan maken na swipen zet het item met zijn keuze terug. Een item dat vanuit "Voor jou" op de lijst staat heeft geen knop "Kiezen".
 
 #### Deel 3 – Wegklikken
 
@@ -496,7 +612,7 @@ Besloten op 9 oktober 2026:
 Klaar als:
 
 - bij "tomatensoep" de aanbiedingen met tomatensoep bovenaan staan en Conimex laksa lager, maar zichtbaar;
-- Unox kiezen "tomatensoep" vervangt door "Unox Chinese tomatensoep" met "voor: tomatensoep · 2 voor 5,99 · t/m zo", en Els dat meteen ziet;
+- Unox kiezen "tomatensoep" vervangt door "Unox Chinese tomatensoep" met "voor tomatensoep" eronder en "2 voor 5.99 · t/m zo" in het label, en Els dat meteen ziet;
 - het item na de looptijd weer "tomatensoep" heet;
 - Conimex wegklikken het voor ons allebei verbergt, met "weggeklikt door Gijs", en het terug te halen is;
 - elke keuze in de nieuwe tabel staat.

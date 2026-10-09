@@ -515,6 +515,15 @@ button.fav-kies {
 .aanbod-rij .bonus-label { display: inline-block; margin-bottom: 6px; }
 /* Artikelen met dezelfde variant als het item op de lijst */
 .zelfde-variant { color: var(--tekst); font-weight: 700; }
+/* Een aanbieding kiezen bij een item: de knoppen, en na "Kiezen" de artikelen om aan te vinken */
+.keuze-acties { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin-top: 6px; }
+.keuze-acties:empty { display: none; }
+.keuze-acties button.wit { padding: 8px 16px; }
+.keuze-lijst { display: grid; margin: 8px 0 4px; }
+.keuze-lijst label { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; }
+.keuze-lijst label + label { border-top: 1px solid var(--rand); }
+.keuze-lijst input[type=checkbox] { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--oranje); }
+.keuze p.item-sub { margin: 4px 0; }
 button.plus { display: grid; place-items: center; flex: none; width: 48px; height: 48px; padding: 0; border-radius: 14px; }
 
 /* ---------- Terugvegen ---------- */

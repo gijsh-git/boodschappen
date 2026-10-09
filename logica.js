@@ -20,11 +20,15 @@ const Logica = (() => {
   let deals = {};      // item-id -> [{ supermarkt, aantal }]: actuele aanbiedingen per item
   let dealsVraag = 0;  // volgnummer, zodat een laat antwoord een nieuwer antwoord niet overschrijft
   // Wat er precies in de aanbieding is, per item en aanbieding; null = nog niet opgehaald:
-  // { item_id, id, supermarkt, titel, korting, geldig_tot, artikelen: [titel], artikelen_totaal, artikelen_zelfde }
+  // { item_id, id, supermarkt, titel, korting, geldig_tot, artikelen: [titel], artikelen_totaal, artikelen_zelfde, gekozen }
   // In de volgorde van de database: per item, en daarbinnen eerst de aanbiedingen met dezelfde variant als het item.
   let dealDetails = null;
   let dealDetailsVraag = 0;
   const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting van de supermarkt
+  // De aanbieding die je in het paneel aan het kiezen bent, of null:
+  // { itemId, aanbiedingId, opties: [{ artikel_id, titel, zelfde, past, gekozen }] of null (nog bezig),
+  //   aan: Set van aangevinkte artikel-id's, alles: ook de artikelen tonen waar het item niet voor staat }
+  let keuze = null;
 
   // ---------- Voor jou ----------
   let voorjou = null;  // vaste producten uit het aankoopprofiel: { naam, dagen, om_de, laatste }; null = nog niet opgehaald
@@ -76,6 +80,73 @@ const Logica = (() => {
       dealsVraag++;
       dealDetails = null;
       dealDetailsVraag++;
+      keuze = null;
+    },
+
+    // ---------- Een aanbieding kiezen ----------
+    // De gekozen aanbieding bij een item, of null bij een gewoon item: { voor, korting, geldigTot }
+    keuzeVan(item) {
+      const k = item.offer_choice;
+      if (!item.original_name || !k) return null;
+      // de bron schrijft "2 VOOR 5.99"
+      return { voor: item.original_name, korting: (k.korting || "").toLowerCase(), geldigTot: k.geldig_tot };
+    },
+
+    keuzeOpen() { return keuze; },
+
+    // Opent de artikelen van een aanbieding bij een item. Aangevinkt staan de artikelen met dezelfde variant
+    // als de term. Geeft null als je intussen iets anders opende.
+    async openKeuze(itemId, aanbiedingId) {
+      const mijn = keuze = { itemId, aanbiedingId, opties: null, aan: new Set(), alles: false };
+      const { data, error } = await Data.keuzeOpties(itemId, aanbiedingId);
+      if (keuze !== mijn) return null;
+      if (error) { keuze = null; return { fout: error.message }; }
+      mijn.opties = data;
+      data.forEach((o) => { if (o.zelfde) mijn.aan.add(o.artikel_id); });
+      // Staat het item voor geen enkel artikel van de aanbieding (gekozen via Voor jou), dan meteen alles
+      mijn.alles = !data.some((o) => o.past || o.zelfde);
+      return {};
+    },
+
+    sluitKeuze() { keuze = null; },
+
+    zetKeuzeArtikel(artikelId, aan) {
+      if (!keuze) return;
+      if (aan) keuze.aan.add(artikelId); else keuze.aan.delete(artikelId);
+    },
+
+    // De artikelen die je ziet: waar het item voor staat, en met "toon alles" de hele aanbieding
+    keuzeZichtbaar() {
+      if (!keuze || !keuze.opties) return [];
+      return keuze.opties.filter((o) => keuze.alles || o.past || o.zelfde || o.gekozen || keuze.aan.has(o.artikel_id));
+    },
+
+    toonAlleKeuzes() { if (keuze) keuze.alles = true; },
+
+    // Zet de keuze op de lijst: het item wordt het eerste aangevinkte artikel, voor elk volgend artikel komt
+    // er een item bij. Geeft { item } (het gewijzigde item) of { fout }.
+    async bevestigKeuze() {
+      if (!keuze || !keuze.opties) return { fout: "Er is niets om te kiezen." };
+      const mijn = keuze;
+      const { data, error } = await Data.kiesAanbieding(mijn.itemId, mijn.aanbiedingId, [...mijn.aan]);
+      if (error) return { fout: error.message };
+      if (keuze === mijn) keuze = null;
+      return { item: data };
+    },
+
+    // Haalt de keuze weg, ook bij de andere items uit dezelfde keuze: er blijft één item over met wat er stond.
+    // Geeft { item } of { fout }.
+    async wisKeuze(itemId) {
+      const { data, error } = await Data.wisKeuze(itemId);
+      if (error) return { fout: error.message };
+      if (keuze && keuze.itemId === itemId) keuze = null;
+      return { item: data };
+    },
+
+    // Bij het laden van de lijst: items waarvan de gekozen aanbieding is verlopen vallen terug op wat er
+    // stond. Een fout hier mag het laden niet tegenhouden.
+    async zetVerlopenKeuzesTerug(lijstId) {
+      try { await Data.zetVerlopenKeuzesTerug(lijstId); } catch {}
     },
 
     // De aanbiedingen bij de items van de lijst, voor het paneel onder de groene balk

@@ -53,14 +53,26 @@ const Data = (() => {
     // Zet een aanbieding uit "Voor jou" op de lijst: de database bepaalt de naam (de titel), het artikel en
     // het type, en geeft het nieuwe item terug
     zetAanbiedingOpLijst(lijstId, aanbiedingId) { return db.rpc("add_offer_item", { p_list: lijstId, p_offer: aanbiedingId }); },
-    // Zet een verwijderd item terug met zijn oorspronkelijke id, maker, tijd, aanbieding, artikel en type
+    // Zet een verwijderd item terug met zijn oorspronkelijke id, maker, tijd, aanbieding, artikel, type en keuze
     zetItemTerug(item) {
       return db.from("items").insert({
         id: item.id, list_id: item.list_id, name: item.name, quantity: item.quantity,
         added_by: item.added_by, created_at: item.created_at, offer_id: item.offer_id,
-        article_supermarket: item.article_supermarket, article_id: item.article_id, type_id: item.type_id
+        article_supermarket: item.article_supermarket, article_id: item.article_id, type_id: item.type_id,
+        original_name: item.original_name, offer_choice: item.offer_choice
       });
     },
+    // De artikelen van een aanbieding waaruit je bij een item kunt kiezen: [{ artikel_id, titel, zelfde, past, gekozen }]
+    keuzeOpties(itemId, aanbiedingId) { return db.rpc("offer_choice_options", { p_item: itemId, p_offer: aanbiedingId }); },
+    // Kiest een aanbieding bij een item (met de aangevinkte artikelen; leeg is de aanbieding als geheel): het
+    // item wordt vervangen en onthoudt wat er stond. Geeft het gewijzigde item terug.
+    kiesAanbieding(itemId, aanbiedingId, artikelIds) {
+      return db.rpc("choose_offer", { p_item: itemId, p_offer: aanbiedingId, p_articles: artikelIds });
+    },
+    // Haalt de keuze weg: het item heet weer wat er oorspronkelijk stond. Geeft het gewijzigde item terug.
+    wisKeuze(itemId) { return db.rpc("clear_offer_choice", { p_item: itemId }); },
+    // Zet items waarvan de gekozen aanbieding is verlopen terug naar de oorspronkelijke invoer; geeft het aantal
+    zetVerlopenKeuzesTerug(lijstId) { return db.rpc("reset_expired_choices", { p_list: lijstId }); },
     verwijderItem(itemId) { return db.from("items").delete().eq("id", itemId); },
     // Gekocht: de database haalt het item weg en bewaart de aankoop (als de lijst meetelt); geeft het aankoop-id of null
     koopItem(itemId) { return db.rpc("buy_item", { p_item: itemId }); },
