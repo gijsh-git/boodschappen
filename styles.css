@@ -538,7 +538,7 @@ button.fav-kies {
 .tip-info { margin: 6px 0 16px; color: var(--grijs); }
 .tip-knoppen { display: flex; flex-wrap: wrap; gap: 10px; }
 .tip-knoppen button { display: flex; align-items: center; gap: 8px; }
-#voorjou-lijst:not(:empty), #aanbod-lijst:not(:empty), #bonus-details:not(:empty), #bonus-weg-lijst:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
+#voorjou-lijst:not(:empty), #aanbod-lijst:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
 .voorjou-rij { flex-wrap: nowrap; gap: 12px; min-height: 68px; padding: 8px 8px 8px 16px; border: 0; border-radius: 16px; background: var(--vlak); }
 #aanbod-lijst:not(:empty) { margin-bottom: 20px; }
 .aanbod-rij { padding-top: 12px; padding-bottom: 12px; }
@@ -548,7 +548,6 @@ button.fav-kies {
 /* Een aanbieding kiezen bij een item: de knoppen, en na "Kiezen" de artikelen om aan te vinken */
 .keuze-acties { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin-top: 6px; }
 .keuze-acties:empty { display: none; }
-.keuze-acties button.wit { padding: 8px 16px; }
 .keuze-lijst { display: grid; margin: 8px 0 4px; }
 .keuze-rij { display: flex; align-items: center; gap: 10px; }
 .keuze-rij + .keuze-rij { border-top: 1px solid var(--rand); }
@@ -564,7 +563,32 @@ button.fav-kies {
 .bonus-weg { margin-top: 10px; }
 .bonus-weg summary { padding: 8px 4px; color: var(--grijs); font-weight: 600; cursor: pointer; }
 #bonus-weg-lijst { margin-top: 6px; }
-#bonus-weg-lijst .item-naam { font-weight: 600; }
+/* De aanbiedingen in het bonuspaneel: rijen in één vlak met een lijn ertussen, net als de lijst */
+#bonus-details:not(:empty), #bonus-weg-lijst:not(:empty) { padding: 0 12px; }
+.bonus-rij { display: block; padding: 7px 0; }
+/* De titel met rechts de korting; bij een aanbieding die je kunt kiezen is dit een knop die de artikelen uitklapt */
+.bonus-kop {
+  display: flex; align-items: flex-start; gap: 8px; width: 100%; padding: 0; border-radius: 0;
+  background: none; color: inherit; font-weight: inherit; text-align: left;
+}
+.bonus-tekst { flex: 1; min-width: 0; }
+.bonus-kop .item-naam { font-weight: 600; font-size: 0.98rem; }
+.bonus-kop .item-sub, .bonus-paneel .keuze p.item-sub { font-size: 0.8rem; line-height: 1.3; }
+.bonus-kop .bonus-label { flex: none; max-width: 45%; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; }
+/* De keuze op één regel, met "Wissen" rechts */
+.bonus-gekozen { display: flex; align-items: center; gap: 8px; margin-top: 2px; font-size: 0.8rem; line-height: 1.3; }
+.bonus-gekozen span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bonus-kop button.link, .bonus-gekozen button.link { flex: none; margin: -6px 0; padding: 6px 0 6px 12px; font-size: 0.8rem; }
+/* Uitgeklapt: lagere vinkrijen en kleinere knoppen dan elders */
+.bonus-paneel .keuze-lijst { margin: 4px 0 0; }
+.bonus-paneel .keuze-rij label { padding: 4px 0; font-size: 0.9rem; line-height: 1.3; }
+.bonus-paneel .keuze-lijst input[type=checkbox] { width: 20px; height: 20px; }
+.bonus-paneel .keuze-aantal button.wit { width: 30px; height: 30px; }
+.bonus-paneel .keuze > button.link { padding: 4px 0; font-size: 0.85rem; }
+.bonus-paneel .keuze p.item-sub { margin: 2px 0; }
+.bonus-paneel .keuze-acties { margin-top: 4px; font-size: 0.9rem; }
+.bonus-paneel .keuze-acties button:not(.link) { padding: 8px 14px; }
+.bonus-paneel .keuze-acties .keuze-weg { margin-left: auto; }
 button.plus { display: grid; place-items: center; flex: none; width: 48px; height: 48px; padding: 0; border-radius: 14px; }
 
 /* ---------- Terugvegen ---------- */

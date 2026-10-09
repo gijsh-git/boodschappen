@@ -539,6 +539,7 @@ Ontwerp in `compacte-lijst.md` (9 oktober 2026): op een telefoon pasten er 3 ite
 - [x] Items als rijen met een lijn in plaats van kaarten: aantal in oranje vóór de titel (alleen boven 1, of met eenheid), titel hooguit twee regels, één metaregel ("voor soep · t/m zo"), kleinere pill.
 - [x] Geen kruisje meer; verwijderen is naar links vegen.
 - Gebouwd op 9 oktober 2026. De open punten zijn zo beslist: de lijstnaam opent een lijstmenu (Mijn lijsten, Deelnemers, Iemand uitnodigen); een tik op een item klapt "toegevoegd door Els · vandaag" uit; de initiaal van een ander staat onder het bonuslabel; de kop klapt niet in bij scrollen. De hint "2 nodig voor de korting", bij stap 7 vervallen, staat nu in de metaregel. Bij een item met alleen het label "Bonus" staat de supermarkt niet meer op de rij, wel in de chip.
+- [x] Bonuspaneel (deel 5, toegevoegd op 9 oktober 2026): aanbiedingen als rijen met het label rechts naast de titel en één metaregel, zonder "Albert Heijn" en zonder de artikelen; de keuze met "Wissen" op één regel; uitgeklapt lagere vinkrijen, "+ 19 andere artikelen", "Niets aangevinkt = hele aanbieding" en "Zet op de lijst (2)". Zo beslist: de knop "Kiezen" is weg, een tik op de rij klapt de artikelen uit; "Niet deze week" staat rechts in de uitgeklapte aanbieding; de supermarkt komt in de metaregel terug zodra er aanbiedingen van meer dan één supermarkt in het paneel staan.
 
 ### [ ] Stap 8 – Binnenkort weer nodig
 

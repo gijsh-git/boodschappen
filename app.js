@@ -1250,45 +1250,17 @@ async function loadBonusDetails() {
   renderBonusDetails();
 }
 
-// De artikelen in een aanbieding; bij een grote groep de eerste paar en hoeveel er nog meer zijn. De artikelen
-// met dezelfde variant als het item ("tomaat" bij tomatensoep) staan vooraan en zijn vet.
-function artikelenRegel(detail) {
-  const meer = detail.artikelen_totaal - detail.artikelen.length;
-  const delen = [];
-  detail.artikelen.forEach((titel, i) => {
-    if (i > 0) delen.push(", ");
-    if (i < Logica.zelfdeVariant(detail)) {
-      const zelfde = document.createElement("strong");
-      zelfde.className = "zelfde-variant";
-      zelfde.textContent = titel;
-      delen.push(zelfde);
-    } else {
-      delen.push(titel);
-    }
-  });
-  if (meer > 0) delen.push(` en nog ${meer} ${meer === 1 ? "ander artikel" : "andere artikelen"}`);
-  return delen;
-}
-
 // Een weggeklikte aanbieding in het blok onderaan het paneel: wat, voor welk item, door wie, en terughalen
 function wegRij(detail) {
   const item = items.find((i) => i.id === detail.item_id);
-  const li = document.createElement("li");
-  li.className = "voorjou-rij aanbod-rij";
-  const tekst = document.createElement("div");
-  tekst.className = "item-tekst";
-  const naam = document.createElement("span");
-  naam.className = "item-naam";
-  naam.textContent = detail.titel;
-  const sub = document.createElement("span");
-  sub.className = "item-sub";
+  const li = kpEl("li", "bonus-rij");
+  const kop = kpEl("div", "bonus-kop");
+  const tekst = kpEl("span", "bonus-tekst");
   const wie = namen[detail.weggeklikt_door];
-  sub.textContent = [detail.korting, item && "voor " + item.name, wie ? "weggeklikt door " + wie : "weggeklikt"].filter(Boolean).join(" · ");
-  const acties = document.createElement("div");
-  acties.className = "keuze-acties";
-  acties.append(keuzeKnop("Terughalen", "link", () => haalTerug(detail)));
-  tekst.append(naam, sub, acties);
-  li.append(tekst);
+  const sub = [(detail.korting || "").toLowerCase(), item && "voor " + item.name, wie ? "weggeklikt door " + wie : "weggeklikt"].filter(Boolean).join(" · ");
+  tekst.append(kpEl("span", "item-naam", detail.titel), kpEl("span", "item-sub", sub));
+  kop.append(tekst, keuzeKnop("Terughalen", "link", () => haalTerug(detail)));
+  li.append(kop);
   return li;
 }
 
@@ -1307,55 +1279,45 @@ async function haalTerug(detail) {
   loadDeals();
 }
 
-// Eén aanbieding bij één item: de korting, de aanbieding, voor welk item, waar en tot wanneer, en de artikelen
+// Eén aanbieding bij één item, als rij: de titel met rechts de korting, eronder voor welk item en tot wanneer.
+// Een tik op de rij klapt de artikelen uit om te kiezen; bij een gekozen aanbieding staat de keuze eronder.
 function bonusDetailRij(detail) {
   const item = items.find((i) => i.id === detail.item_id);
-  const li = document.createElement("li");
-  li.className = "voorjou-rij aanbod-rij";
-  const tekst = document.createElement("div");
-  tekst.className = "item-tekst";
-  const korting = document.createElement("span");
-  korting.className = "bonus-label";
-  korting.textContent = detail.korting || "Bonus";
-  const naam = document.createElement("span");
-  naam.className = "item-naam";
-  naam.textContent = detail.titel;
-  const sub = document.createElement("span");
-  sub.className = "item-sub";
-  sub.textContent = [item && "Voor " + (item.original_name || item.name), Logica.winkelNaam(detail.supermarkt), "t/m " + totDatum(detail.geldig_tot)].filter(Boolean).join(" · ");
-  tekst.append(korting, naam, sub);
-  // Bij een gekozen aanbieding de gekozen artikelen, anders de artikelen waar het item voor staat
-  const gekozen = detail.gekozen && item && item.offer_choice ? item.offer_choice.artikelen || [] : [];
-  if (gekozen.length > 0 || detail.artikelen.length > 0) {
-    const welke = document.createElement("span");
-    welke.className = "item-sub";
-    if (gekozen.length > 0) welke.textContent = "Gekozen: " + gekozen.map((a) => a.titel).join(", ");
-    else welke.append(...artikelenRegel(detail));
-    tekst.append(welke);
+  const regel = Logica.paneelRegel(detail, item);
+  const open = Logica.keuzeOpen();
+  const uit = !!open && !!item && open.itemId === item.id && open.aanbiedingId === detail.id;
+  const kiesbaar = !!item && !regel.gekozen;
+  const li = kpEl("li", "bonus-rij");
+  const kop = kpEl(kiesbaar ? "button" : "div", "bonus-kop");
+  if (kiesbaar) {
+    kop.type = "button";
+    kop.setAttribute("aria-expanded", uit);
+    kop.addEventListener("click", () => {
+      if (!uit) return openKeuze(detail);
+      Logica.sluitKeuze();
+      renderBonusDetails();
+    });
   }
-  if (item) tekst.append(keuzeBlok(detail, item));
-  li.append(tekst);
+  const tekst = kpEl("span", "bonus-tekst");
+  const meta = [regel.voor && "voor " + regel.voor, regel.winkel, "t/m " + totDag(detail.geldig_tot)].filter(Boolean).join(" · ");
+  tekst.append(kpEl("span", "item-naam", detail.titel), kpEl("span", "item-sub", meta));
+  kop.append(tekst, kpEl("span", "bonus-label", regel.label));
+  li.append(kop);
+  if (regel.gekozen) {
+    const keuze = kpEl("div", "bonus-gekozen");
+    keuze.append(kpEl("span", "", "✓ " + regel.gekozen), keuzeKnop("Wissen", "link", () => wisKeuze(item)));
+    li.append(keuze);
+  }
+  if (uit) li.append(keuzeBlok(detail, item));
   return li;
 }
 
-// Onder een aanbieding in het paneel: de knop om hem te kiezen, of (na "Kiezen") de artikelen om aan te vinken.
-// Een item dat vanuit Voor jou op de lijst staat ís de aanbieding al: wel kiezen, niet wegklikken.
+// Onder een uitgeklapte aanbieding: de artikelen om aan te vinken, en de knoppen. Een item dat vanuit Voor jou
+// op de lijst staat ís de aanbieding al: wel kiezen, niet wegklikken.
 function keuzeBlok(detail, item) {
   const blok = document.createElement("div");
   blok.className = "keuze";
   const open = Logica.keuzeOpen();
-  if (!open || open.itemId !== item.id || open.aanbiedingId !== detail.id) {
-    const acties = document.createElement("div");
-    acties.className = "keuze-acties";
-    if (detail.gekozen) {
-      acties.append(keuzeKnop("Keuze wissen", "link", () => wisKeuze(item)));
-    } else {
-      acties.append(keuzeKnop("Kiezen", "wit", () => openKeuze(detail)));
-      if (Logica.kanWegklikken(detail, item)) acties.append(keuzeKnop("Niet deze week", "link", () => klikWeg(detail)));
-    }
-    blok.append(acties);
-    return blok;
-  }
   if (!open.opties) {
     blok.append(kpEl("p", "item-sub", "Bezig..."));
     return blok;
@@ -1383,14 +1345,16 @@ function keuzeBlok(detail, item) {
   blok.append(lijst);
   const meer = open.opties.length - zichtbaar.length;
   if (meer > 0) {
-    blok.append(keuzeKnop(`Toon ook de ${meer} andere artikelen`, "link", () => { Logica.toonAlleKeuzes(); renderBonusDetails(); }));
+    blok.append(keuzeKnop(`+ ${meer} ${meer === 1 ? "ander artikel" : "andere artikelen"}`, "link", () => { Logica.toonAlleKeuzes(); renderBonusDetails(); }));
   }
-  blok.append(kpEl("p", "item-sub", "Elk aangevinkt artikel komt apart op de lijst, met het aantal erbij. Niets aangevinkt? Dan de aanbieding als geheel."));
+  blok.append(kpEl("p", "item-sub", "Niets aangevinkt = hele aanbieding"));
+  const aangevinkt = Logica.keuzeAangevinkt();
   const acties = document.createElement("div");
   acties.className = "keuze-acties";
   acties.append(
-    keuzeKnop("Zet op de lijst", "", bevestigKeuze),
+    keuzeKnop(aangevinkt ? `Zet op de lijst (${aangevinkt})` : "Zet op de lijst", "", bevestigKeuze),
     keuzeKnop("Annuleren", "link", () => { Logica.sluitKeuze(); renderBonusDetails(); }));
+  if (Logica.kanWegklikken(detail, item)) acties.append(keuzeKnop("Niet deze week", "link keuze-weg", () => klikWeg(detail)));
   blok.append(acties);
   return blok;
 }

@@ -226,6 +226,9 @@ const Logica = (() => {
 
     keuzeZichtbaar() { return zichtbareKeuzes(); },
 
+    // Hoeveel artikelen er zijn aangevinkt, voor op de knop "Zet op de lijst (2)"
+    keuzeAangevinkt() { return keuze ? keuze.aan.size : 0; },
+
     toonAlleKeuzes() { if (keuze) keuze.alles = true; },
 
     // Zet de keuze op de lijst: het item wordt het eerste aangevinkte artikel, voor elk volgend artikel komt
@@ -268,8 +271,21 @@ const Logica = (() => {
       return {};
     },
 
-    // Hoeveel van de genoemde artikelen dezelfde variant hebben als het item; die staan vooraan in `artikelen`
-    zelfdeVariant(detail) { return Math.min(detail.artikelen_zelfde || 0, detail.artikelen.length); },
+    // Wat er in het paneel op de rij van een aanbieding staat:
+    // { label: de korting of "Bonus", voor: de term op de lijst of null, winkel: de supermarkt als er meer dan één
+    //   in het paneel staat (anders staat hij al in de chip), gekozen: het gekozen artikel, "Hele aanbieding" of null }
+    paneelRegel(detail, item) {
+      const term = item ? item.original_name || item.name : null;
+      // Staat de aanbieding zelf op de lijst (vanuit Voor jou), dan is de term de titel: niet dubbel tonen
+      const zelfde = term && zoekvorm(term) === zoekvorm(this.aanbiedingNaam(detail));
+      const artikel = item && item.offer_choice ? (item.offer_choice.artikelen || [])[0] : null;
+      return {
+        label: (detail.korting || "").toLowerCase() || "Bonus", // de bron schrijft "2 VOOR 5.99"
+        voor: term && !zelfde ? term : null,
+        winkel: this.dealWinkels(dealDetails || []).length > 1 ? detail.supermarkt : null,
+        gekozen: detail.gekozen ? (artikel ? artikel.titel : "Hele aanbieding") : null
+      };
+    },
 
     winkelNaam(supermarkt) { return WINKELS[supermarkt] || supermarkt; },
 
