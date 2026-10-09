@@ -147,38 +147,49 @@ code {
 }
 
 /* ---------- Kop van de lijst ---------- */
-.lijst-top .top-rij { gap: 12px; margin-bottom: 0; }
-.lijst-top h1 { min-width: 0; }
-/* De naam van de lijst is de knop naar "Mijn lijsten" */
+/* Laag gehouden, zodat er zoveel mogelijk items in beeld passen */
+.lijst-top { padding: calc(12px + env(safe-area-inset-top)) 16px 14px; border-radius: 0 0 22px 22px; }
+.lijst-top .top-rij { gap: 12px; margin-bottom: 8px; }
+.lijst-top .brand { gap: 6px; }
+.lijst-top .brand-icon { width: 22px; height: 22px; border-radius: 7px; }
+.lijst-top .brand-name { font-size: 0.9rem; }
+/* De lijstnaam met rechts de bonuschip; past de chip er niet naast, dan komt hij eronder */
+.titel-rij { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.lijst-menu-anker { position: relative; min-width: 0; }
+.lijst-top h1 { min-width: 0; font-size: 1.35rem; }
+/* De naam van de lijst is de knop naar het lijstmenu */
 .titel-knop {
-  display: flex; align-items: center; gap: 6px; max-width: 100%; padding: 0; background: none; color: #fff;
+  display: flex; align-items: center; gap: 4px; max-width: 100%; padding: 4px 0; background: none; color: #fff;
   font: inherit; letter-spacing: inherit; text-align: left;
 }
 .titel-knop span { min-width: 0; overflow-wrap: anywhere; }
 .titel-knop svg { flex: none; }
+/* Het lijstmenu klapt onder de naam uit, over de inhoud heen */
+.lijst-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 7; display: grid; min-width: 220px; padding: 6px;
+  border-radius: 14px; background: var(--vlak); border: 1.5px solid var(--rand); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+}
+.lijst-menu button { padding: 12px; border-radius: 10px; background: none; color: var(--tekst); font-weight: 600; text-align: left; }
+.lijst-menu button:hover, .lijst-menu button:focus-visible { background: var(--bg); }
 /* Rondjes met de eerste letter van elke deelnemer, half over elkaar */
 .avatars { display: flex; padding: 0; background: none; border-radius: 999px; }
 .avatars span {
-  display: grid; place-items: center; width: 42px; height: 42px; margin-left: -12px; border-radius: 50%;
-  border: 2px solid #fff; background: #fff; color: var(--donker); font-weight: 700; font-size: 1rem;
+  display: grid; place-items: center; width: 32px; height: 32px; margin-left: -9px; border-radius: 50%;
+  border: 2px solid #fff; background: #fff; color: var(--donker); font-weight: 700; font-size: 0.85rem;
 }
 .avatars span:first-child { margin-left: 0; background: var(--donker); color: #fff; }
-.top-knop.hoekig { width: 52px; height: 52px; border-radius: 16px; }
-/* Groene balk in de oranje kop: producten op de lijst die in de aanbieding zijn */
+/* Groene chip in de oranje kop: producten op de lijst die in de aanbieding zijn */
 .bonus-balk {
-  display: flex; align-items: center; gap: 14px; margin: 18px 0 0; padding: 10px 16px 10px 10px; border-radius: 16px;
-  background: #176837; color: #fff; font-size: 0.95rem;
-  width: 100%; border: 0; font-weight: 400; text-align: left; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; flex: none; max-width: 100%; padding: 6px 12px; border-radius: 999px;
+  background: #176837; color: #fff; font-size: 0.85rem; font-weight: 700; white-space: nowrap; cursor: pointer;
 }
-/* Wat er in de aanbieding is; opent via de groene balk */
+.bonus-balk svg { flex: none; color: #bdf5cf; }
+.bonus-balk span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* Wat er in de aanbieding is; opent via de groene chip */
 .bonus-paneel { margin-bottom: 16px; }
 .bonus-paneel .kopje { margin-top: 4px; }
 .bonus-paneel .msg { margin: 6px 4px 0; }
-.bonus-icoon { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: 14px; background: #bdf5cf; color: #176837; }
-.bonus-tekst { display: flex; flex-direction: column; min-width: 0; }
-.bonus-balk strong { font-family: var(--kop); font-size: 1.25rem; line-height: 1.2; color: #fff; }
-.bonus-balk em { color: #bdf5cf; font-style: normal; }
-/* Deelnemers en de code om te delen; opent via de rondjes of de uitnodigknop */
+/* Deelnemers en de link om te delen; opent via de rondjes of het lijstmenu */
 .leden-paneel { margin-bottom: 16px; }
 .leden-paneel .kopje { margin-top: 4px; }
 .leden-paneel .uitleg { margin: 10px 4px 8px; }
@@ -191,9 +202,18 @@ code {
 /* Ruimte voor de onderbalk */
 body:has(.tabbalk:not([hidden])) .content { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
 .uitleg { margin: 0 0 8px; color: var(--grijs); font-size: 0.95rem; }
-#add-form button { display: grid; place-items: center; flex: none; width: 56px; padding: 0; border-radius: 16px; }
+#add-form { margin-top: 0; }
+#add-form > button { display: grid; place-items: center; flex: none; width: 52px; padding: 0; border-radius: 16px; }
+#add-form input.qty { flex: 0 0 68px; padding-left: 6px; padding-right: 6px; text-align: center; }
+/* Het naamveld met rechts erin het camera-icoon: de lijst vullen vanuit een foto */
+.naam-veld { position: relative; flex: 1; min-width: 0; display: flex; }
+.naam-veld input { padding-left: 12px; padding-right: 42px; }
+.veld-knop {
+  position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 42px; height: 100%; padding: 0;
+  background: none; color: var(--grijs);
+}
 
-/* Knop "Foto toevoegen" onder het invoerveld */
+/* Knop "Bon scannen" boven de aankopen */
 .foto-knop { display: flex; align-items: center; gap: 8px; margin: -4px 0 8px; }
 
 ul { list-style: none; margin: 0; padding: 0; }
@@ -209,28 +229,38 @@ button.del { background: none; color: var(--grijs); padding: 8px 12px; font-size
 .veeg-uitleg span { flex: 1; }
 
 /* ---------- Rij die je opzij kunt vegen ---------- */
-/* Elk item is een eigen kaart; de lijst zelf heeft geen rand of vlak */
-#items:not(:empty) { display: grid; gap: 10px; padding: 0; background: none; border: 0; border-radius: 0; }
-.item { display: block; position: relative; overflow: hidden; border: 0; border-radius: 16px; }
+/* De items staan als rijen in één vlak, met een lijn ertussen */
+#items:not(:empty) { padding: 0; overflow: hidden; }
+.item { display: block; position: relative; overflow: hidden; }
 .item-voor {
-  position: relative; display: flex; align-items: center; gap: 12px; min-height: 68px; padding: 8px 14px 8px 8px;
+  position: relative; display: flex; align-items: center; gap: 2px; min-height: 44px; padding: 0 12px 0 2px;
   background: var(--vlak); touch-action: pan-y; user-select: none; -webkit-user-select: none;
   transition: transform 0.18s ease-out;
 }
 .item-tekst { flex: 1; min-width: 0; }
 .item-naam { display: block; font-weight: 700; font-size: 1.05rem; line-height: 1.25; overflow-wrap: anywhere; }
 .item-sub { display: block; color: var(--grijs); font-size: 0.9rem; }
+/* Het aantal staat vóór de titel in een eigen kolom; titel en metaregel springen eronder in */
+.item-voor .item-tekst { display: flex; gap: 6px; padding: 5px 0; line-height: 1.25; }
+.item-aantal { flex: none; color: var(--oranje-tekst); font-weight: 800; font-size: 0.98rem; white-space: nowrap; }
+.item-inhoud { flex: 1; min-width: 0; }
+/* De titel is hooguit twee regels; wat er niet past wordt afgekapt */
+.item-voor .item-naam {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+  font-weight: 600; font-size: 0.98rem;
+}
+.item-voor .item-sub { font-size: 0.8rem; line-height: 1.3; }
 /* Rondje links: tik = gekocht. De knop is groter dan het rondje, zodat je hem makkelijk raakt */
 button.koop { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border-radius: 50%; background: none; }
-button.koop::before { content: ""; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--grijs); opacity: 0.55; }
+button.koop::before { content: ""; width: 23px; height: 23px; border-radius: 50%; border: 2px solid var(--grijs); opacity: 0.55; }
 button.koop:hover::before, button.koop:focus-visible::before { border-color: var(--groen); opacity: 1; }
-/* Rechts: het bonuslabel met eronder de supermarkt */
-.item-deal { flex: none; max-width: 45%; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; text-align: right; }
+/* Rechts: het bonuslabel, en de initiaal van wie het item toevoegde als dat een ander was */
+.item-rechts { flex: none; max-width: 45%; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; padding: 5px 0 5px 8px; }
 .bonus-label { padding: 3px 10px; border-radius: 10px; background: var(--oranje); color: #fff; font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
-.item-voor .del { margin-right: -8px; }
-/* Op een aanraakscherm veeg je naar links; het kruisje is er alleen voor muis en toetsenbord */
-@media (hover: none) and (pointer: coarse) {
-  .item-voor .del { display: none; }
+.item-rechts .bonus-label { padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; }
+.item-door {
+  display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--rand); color: var(--tekst); font-weight: 700; font-size: 0.72rem;
 }
 /* Onder de lijst: door naar de aankopen */
 .rij-knop {

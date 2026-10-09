@@ -65,6 +65,8 @@ let bonVraag = 0;      // volgnummer van de stapel, zodat een antwoord na leegma
 let stapelBezig = false; // "Alles zonder bijzonderheden opslaan" loopt
 let slepen = 0;        // aantal rijen dat nu wordt versleept (of nog uitschuift)
 let renderWacht = false;  // er is een render() overgeslagen tijdens het slepen
+let laatsteVeeg = 0;   // tijdstip waarop de laatste veeg eindigde, om de klik erna te negeren
+let itemOpen = null;   // id van het item waarbij is uitgeklapt wie het toevoegde
 let ongedaan = null;   // laatste actie die nog terug te draaien is: { item, aankoopId }
 let ongedaanTimer = null;
 let zicht = null;      // het scherm dat nu in beeld is
@@ -78,6 +80,7 @@ function show(view) {
   for (const knop of $("tabbalk").children) {
     if (knop.dataset.tab === TABS[view]) knop.setAttribute("aria-current", "page"); else knop.removeAttribute("aria-current");
   }
+  toonLijstMenu(false);
   // Een ander scherm begint bovenaan
   if (view !== zicht) window.scrollTo(0, 0);
   zicht = view;
@@ -1008,7 +1011,17 @@ async function setTeltMee(lijst, aan) {
   }
 }
 
-$("lijsten-knop").addEventListener("click", toonLijsten);
+// Het lijstmenu achter de lijstnaam: naar "Mijn lijsten", de deelnemers en (maker en beheerders) uitnodigen
+function toonLijstMenu(open) {
+  $("lijst-menu").hidden = !open;
+  $("lijsten-knop").setAttribute("aria-expanded", open);
+}
+$("lijsten-knop").addEventListener("click", () => toonLijstMenu($("lijst-menu").hidden));
+$("menu-lijsten").addEventListener("click", toonLijsten);
+$("menu-leden").addEventListener("click", () => toonLedenPaneel(true));
+// Een keuze, een tik ernaast of Escape sluit het menu
+document.addEventListener("click", (e) => { if (!e.target.closest("#lijsten-knop")) toonLijstMenu(false); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") toonLijstMenu(false); });
 
 // ---------- Lijst maken / aansluiten ----------
 $("create-form").addEventListener("submit", async (e) => {
@@ -1041,7 +1054,7 @@ async function openList(list) {
   if (!lijsten.some((l) => l.id === list.id)) lijsten.push(list);
   try { localStorage.setItem(LIJST_SLEUTEL, list.id); } catch {}
   // Bij wisselen niet kort de items van de vorige lijst laten zien
-  if (gewisseld) { leegStapel(); items = []; leden = []; Logica.vergeetDeals(); aankopen = null; toonBonusPaneel(false); toonLedenPaneel(false); $("uitnodig-blok").hidden = true; say("leden-msg", ""); verbergOngedaan(); say("status", ""); render(); }
+  if (gewisseld) { leegStapel(); items = []; itemOpen = null; leden = []; Logica.vergeetDeals(); aankopen = null; toonBonusPaneel(false); toonLedenPaneel(false); $("uitnodig-blok").hidden = true; say("leden-msg", ""); verbergOngedaan(); say("status", ""); render(); }
   $("list-title").textContent = list.name;
   show("list");
   await loadItems();
@@ -1130,7 +1143,7 @@ function toonLedenPaneel(open) {
 $("leden-knop").addEventListener("click", () => toonLedenPaneel($("leden-paneel").hidden));
 
 // ---------- Uitnodigen ----------
-// De knop met het plusje maakt een link voor één persoon (7 dagen geldig) en zet hem in het paneel;
+// "Iemand uitnodigen" in het lijstmenu maakt een link voor één persoon (7 dagen geldig) en zet hem in het paneel;
 // "Delen" opent het deelmenu van de telefoon, of kopieert de link als dat er niet is.
 $("uitnodig-delen").textContent = navigator.share ? "Delen" : "Kopiëren";
 $("uitnodig-knop").addEventListener("click", async () => {
@@ -1218,7 +1231,7 @@ async function loadDeals() {
   if (!$("bonus-paneel").hidden) loadBonusDetails();
 }
 
-// Het paneel onder de groene balk: wat er precies in de aanbieding is bij de items op de lijst
+// Het paneel onder de groene chip: wat er precies in de aanbieding is bij de items op de lijst
 function toonBonusPaneel(open) {
   $("bonus-paneel").hidden = !open;
   $("bonus-balk").setAttribute("aria-expanded", open);
@@ -1455,22 +1468,17 @@ function renderBonusDetails() {
   $("bonus-weg-lijst").replaceChildren(...weg.map(wegRij));
 }
 
-// Groene balk in de kop: hoeveel producten op de lijst in de aanbieding zijn, en waar. Tikken klapt de aanbiedingen uit.
+// Groene chip in de kop: hoeveel producten op de lijst in de aanbieding zijn, en waar. Tikken klapt de aanbiedingen uit.
 function renderBonus() {
   const metDeal = items.filter((i) => Logica.dealsVan(i.id));
-  // Is alles weggeklikt, dan blijft de balk staan: in het paneel haal je het terug
+  // Is alles weggeklikt, dan blijft de chip staan: in het paneel haal je het terug
   const weg = Logica.aantalWeggeklikt(items);
   $("bonus-balk").hidden = metDeal.length === 0 && weg === 0;
   if (metDeal.length === 0 && weg === 0) return toonBonusPaneel(false);
   renderBonusDetails();
-  $("bonus-aantal").textContent = metDeal.length === 1 ? "1 product in de bonus" : `${metDeal.length} producten in de bonus`;
-  if (metDeal.length === 0) {
-    $("bonus-winkels").replaceChildren(weg === 1 ? "1 aanbieding weggeklikt" : `${weg} aanbiedingen weggeklikt`);
-    return;
-  }
-  const winkels = document.createElement("em");
-  winkels.textContent = Logica.dealWinkels(metDeal.flatMap((i) => Logica.dealsVan(i.id))).join(" en ");
-  $("bonus-winkels").replaceChildren("Bij ", winkels);
+  if (metDeal.length === 0) return say("bonus-aantal", weg === 1 ? "1 aanbieding weggeklikt" : `${weg} aanbiedingen weggeklikt`);
+  const winkels = Logica.dealWinkels(metDeal.flatMap((i) => Logica.dealsVan(i.id))).join(" en ");
+  say("bonus-aantal", `${metDeal.length} in de bonus bij ${winkels}`);
 }
 
 function subscribe() {
@@ -1567,51 +1575,71 @@ function itemRow(item) {
   koopKnop.setAttribute("aria-label", "Gekocht");
   koopKnop.addEventListener("click", () => koop(item));
 
-  // Naam, met eronder het aantal, wie het heeft toegevoegd en wanneer
+  // Het aantal vóór de titel, met eronder één metaregel: waar het voor was en tot wanneer de aanbieding loopt
+  const regel = Logica.itemRegel(item);
   const tekst = document.createElement("div");
   tekst.className = "item-tekst";
+  if (regel.aantal) {
+    const aantal = document.createElement("span");
+    aantal.className = "item-aantal";
+    aantal.textContent = regel.aantal;
+    tekst.append(aantal);
+  }
+  const inhoud = document.createElement("div");
+  inhoud.className = "item-inhoud";
   const naam = document.createElement("span");
   naam.className = "item-naam";
   naam.textContent = item.name;
-  tekst.append(naam);
-  // Een gekozen aanbieding: vooraan waar het voor was; de korting staat rechts in het label
-  const keuze = Logica.keuzeVan(item);
+  inhoud.append(naam);
+  const meta = [
+    regel.voor && "voor " + regel.voor,
+    regel.geldigTot && "t/m " + totDag(regel.geldigTot),
+    regel.nodig && regel.nodig + " nodig voor de korting"
+  ].filter(Boolean).join(" · ");
+  if (meta) {
+    const sub = document.createElement("span");
+    sub.className = "item-sub";
+    sub.textContent = meta;
+    inhoud.append(sub);
+  }
+  // Een tik op de tekst klapt uit wie het item toevoegde en wanneer
   const wie = namen[item.added_by];
-  const sub = document.createElement("span");
-  sub.className = "item-sub";
-  sub.textContent = [keuze && "voor " + keuze.voor, item.quantity, wie && "door " + wie, datumKort(item.created_at)].filter(Boolean).join(" · ");
-  sub.title = "Toegevoegd op " + datumTijd(item.created_at);
-  tekst.append(sub);
+  if (itemOpen === item.id) {
+    const door = document.createElement("span");
+    door.className = "item-sub";
+    door.textContent = ["toegevoegd" + (wie ? " door " + wie : ""), datumKort(item.created_at)].join(" · ");
+    door.title = "Toegevoegd op " + datumTijd(item.created_at);
+    inhoud.append(door);
+  }
+  tekst.append(inhoud);
+  tekst.addEventListener("click", () => {
+    // De klik die op het loslaten na vegen volgt telt niet
+    if (Date.now() - laatsteVeeg < 400) return;
+    itemOpen = itemOpen === item.id ? null : item.id;
+    render();
+  });
   voor.append(koopKnop, tekst);
 
-  if (keuze || Logica.dealsVan(item.id)) {
-    const bonus = document.createElement("div");
-    bonus.className = "item-deal";
-    const label = document.createElement("span");
-    label.className = "bonus-label";
-    const onder = document.createElement("span");
-    onder.className = "item-sub";
-    // Gekozen, of de aanbieding zelf op de lijst (vanuit Voor jou): de korting en tot wanneer, uit de keuze
-    // op het item of uit de database
-    const vast = keuze || Logica.eigenAanbieding(item.id);
-    if (vast) {
-      label.textContent = vast.korting || "Bonus";
-      if (vast.geldigTot) onder.textContent = "t/m " + totDag(vast.geldigTot);
-    } else {
-      label.textContent = "Bonus";
-      onder.textContent = Logica.dealWinkels(Logica.dealsVan(item.id)).join(", ");
+  // Rechts het bonuslabel, met eronder de initiaal van wie het toevoegde als dat een ander was
+  const ander = item.added_by && item.added_by !== userId;
+  if (regel.label || ander) {
+    const rechts = document.createElement("div");
+    rechts.className = "item-rechts";
+    if (regel.label) {
+      const label = document.createElement("span");
+      label.className = "bonus-label";
+      label.textContent = regel.label;
+      rechts.append(label);
     }
-    bonus.append(label, onder);
-    voor.append(bonus);
+    if (ander) {
+      const door = document.createElement("span");
+      door.className = "item-door";
+      door.textContent = initiaal(wie);
+      door.title = "Toegevoegd door " + (wie || "iemand zonder naam");
+      rechts.append(door);
+    }
+    voor.append(rechts);
   }
-
-  // Verwijderen zonder vegen, voor muis en toetsenbord
-  const del = document.createElement("button");
-  del.className = "del";
-  del.textContent = "×";
-  del.setAttribute("aria-label", "Verwijderen");
-  del.addEventListener("click", () => remove(item));
-  voor.append(del);
 
   li.append(achter, voor);
   maakSwipebaar(li, voor, item);
@@ -1662,6 +1690,7 @@ function maakSwipebaar(li, voor, item) {
     bezig = false;
     if (!vast) return;
     vast = false;
+    laatsteVeeg = Date.now();
     const doen = !afgebroken && Math.abs(dx) > drempel();
     const rechts = dx > 0;
     voor.style.transition = "";

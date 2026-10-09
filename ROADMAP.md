@@ -484,7 +484,7 @@ Uitgangspunten:
 
 #### Deel 2 – Een aanbieding kiezen
 
-- [x] Per aanbieding een knop om hem te kiezen. Die opent de artikelen van de aanbieding; artikelen met dezelfde variant als de oorspronkelijke term staan al aangevinkt. Je kunt er één of meer bij of af klikken. Niets aangevinkt is de aanbieding als geheel. Bij een grote aanbieding ("Alle Conimex") staan eerst alleen de artikelen waar de term voor staat, de rest achter "Toon ook de n andere artikelen".
+- [x] Per aanbieding een knop om hem te kiezen. Die opent de artikelen van de aanbieding; artikelen met dezelfde variant als de oorspronkelijke term staan al aangevinkt. Je kunt er één of meer bij of af klikken. Niets aangevinkt is de aanbieding als geheel. Bij een grote aanbieding ("Alle Conimex") staan eerst alleen de artikelen waar de term voor staat, en nooit meer dan vijf; de rest achter "Toon ook de n andere artikelen".
 - [x] De keuze vervangt het item op de lijst. Dit wijkt bewust af van "Voor jou", waar `add_offer_item` altijd een aparte rij naast het bestaande item maakt.
 - [x] De oorspronkelijke invoer blijft bewaard in een eigen veld op het item (bijvoorbeeld `items.original_name`), niet alleen in de weergave.
 - [x] Elk aangevinkt artikel is een eigen item (besluit 9 oktober 2026, na de eerste test; eerst was het één item met de varianten eronder, dat gaf een te volle rij op de telefoon). Het item zelf wordt het eerste artikel, voor elk volgend artikel komt er een rij bij. Swipen is dus per artikel één aankoop.
@@ -529,6 +529,16 @@ Waarom: bij een item als "tomatensoep" staan nu veel soepaanbiedingen door elkaa
 Hoe het moet werken: zoals beschreven in de delen 1 tot en met 4 van stap 7. Doe de delen in die volgorde en stop na elk deel voor een test en een commit.
 Grenzen: de matching op type blijft zoals hij is; de variant bepaalt alleen de volgorde. "Voor jou" blijft werken zoals nu, op het wegklikken na. Supabase-calls in data.js, logica in logica.js (ARCHITECTURE.md). Elke databasewijziging is een nieuw migratiebestand in supabase/migrations/. Gewijzigde Edge Functions opnieuw deployen. Leg de open punten uit stap 7 aan mij voor in het plan.
 ```
+
+### [x] Compacte lijst
+
+Ontwerp in `compacte-lijst.md` (9 oktober 2026): op een telefoon pasten er 3 items op het scherm, het doel was 8 tot 10.
+
+- [x] Kop ongeveer de helft lager; de groene banner is een chip op één regel ("3 in de bonus bij AH").
+- [x] Camera-icoon in het invoerveld; de regel "Foto toevoegen" is weg en het aantal-veld is smaller.
+- [x] Items als rijen met een lijn in plaats van kaarten: aantal in oranje vóór de titel (alleen boven 1, of met eenheid), titel hooguit twee regels, één metaregel ("voor soep · t/m zo"), kleinere pill.
+- [x] Geen kruisje meer; verwijderen is naar links vegen.
+- Gebouwd op 9 oktober 2026. De open punten zijn zo beslist: de lijstnaam opent een lijstmenu (Mijn lijsten, Deelnemers, Iemand uitnodigen); een tik op een item klapt "toegevoegd door Els · vandaag" uit; de initiaal van een ander staat onder het bonuslabel; de kop klapt niet in bij scrollen. De hint "2 nodig voor de korting", bij stap 7 vervallen, staat nu in de metaregel. Bij een item met alleen het label "Bonus" staat de supermarkt niet meer op de rij, wel in de chip.
 
 ### [ ] Stap 8 – Binnenkort weer nodig
 

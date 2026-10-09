@@ -30,9 +30,10 @@ const Logica = (() => {
   // De aanbieding die je in het paneel aan het kiezen bent, of null:
   // { itemId, aanbiedingId, opties: [{ artikel_id, titel, zelfde, past, gekozen }] of null (nog bezig),
   //   aan: Set van aangevinkte artikel-id's, aantal: Map van artikel-id naar aantal (ontbreekt = 1),
-  //   alles: ook de artikelen tonen waar het item niet voor staat }
+  //   alles: de hele aanbieding tonen in plaats van de eerste KEUZE_TOON }
   let keuze = null;
   const KEUZE_MAX = 99; // hoogste aantal per artikel
+  const KEUZE_TOON = 5; // zoveel artikelen zie je voordat je de rest uitvouwt
 
   // ---------- Voor jou ----------
   let voorjou = null;  // vaste producten uit het aankoopprofiel: { naam, dagen, om_de, laatste }; null = nog niet opgehaald
@@ -54,12 +55,69 @@ const Logica = (() => {
   let typeDetails = {}; // type-id -> { namen, artikelen }, pas opgehaald bij openklappen
   const ZEKERHEID = { high: "hoog", medium: "middel", low: "laag" };
 
+  // De artikelen die je bij het kiezen ziet: de eerste KEUZE_TOON waar het item voor staat (de database zet
+  // dezelfde variant vooraan), en na uitvouwen de hele aanbieding. Staat het item voor geen enkel artikel
+  // (gekozen via Voor jou), dan de eerste KEUZE_TOON van de aanbieding.
+  function zichtbareKeuzes() {
+    if (!keuze || !keuze.opties) return [];
+    if (keuze.alles) return keuze.opties;
+    const passend = keuze.opties.filter((o) => o.past || o.zelfde || o.gekozen);
+    return (passend.length ? passend : keuze.opties).slice(0, KEUZE_TOON);
+  }
+
+  // ---------- Een item op de lijst ----------
+  // Het aantal zoals het vóór de titel staat: een kaal getal wordt "2×" en één stuks tonen we niet;
+  // met een eenheid ("500 g", "2 pak") blijft het zoals het is getypt
+  function aantalTekst(hoeveelheid) {
+    const tekst = netjes(hoeveelheid);
+    const kaal = tekst.match(/^(\d+)\s*[x×]?$/i);
+    if (!kaal) return tekst;
+    return Number(kaal[1]) > 1 ? Number(kaal[1]) + "×" : "";
+  }
+
+  // Hoeveel stuks er op de lijst staan: 1 zonder aantal, null als er een eenheid bij staat (niet te tellen)
+  function aantalStuks(hoeveelheid) {
+    const tekst = netjes(hoeveelheid);
+    if (!tekst) return 1;
+    const kaal = tekst.match(/^(\d+)\s*[x×]?$/i);
+    return kaal ? Number(kaal[1]) : null;
+  }
+
+  // Hoeveel je er moet kopen voor de korting: "2 voor 3.99" en "2e halve prijs" 2, "1+1 gratis" 2,
+  // "2+1 gratis" 3; null bij een korting die al bij één stuk geldt
+  function nodigVoorKorting(korting) {
+    const tekst = (korting || "").toLowerCase();
+    const voor = tekst.match(/^(\d+)\s*voor\b/) || tekst.match(/^(\d+)e\s+(?:halve prijs|gratis)/);
+    if (voor) return Number(voor[1]) > 1 ? Number(voor[1]) : null;
+    const gratis = tekst.match(/^(\d+)\s*\+\s*(\d+)\s*gratis/);
+    return gratis ? Number(gratis[1]) + Number(gratis[2]) : null;
+  }
+
   function dagenGeleden(dag) {
     return Math.floor((Date.now() - new Date(dag).getTime()) / 864e5);
   }
 
   return {
     zoekvorm,
+
+    // ---------- Een item op de lijst ----------
+    // Wat er op de rij van een item staat:
+    // { aantal: "2×" of "500 g" of "", voor: de oorspronkelijke term of null, label: de korting, "Bonus" of null,
+    //   geldigTot: laatste dag van de aanbieding of null, nodig: stuks voor de korting als er nu minder staan, anders null }
+    itemRegel(item) {
+      // Gekozen, of de aanbieding zelf op de lijst (vanuit Voor jou): de korting en tot wanneer
+      const keuze = this.keuzeVan(item);
+      const vast = keuze || this.eigenAanbieding(item.id);
+      const nodig = vast ? nodigVoorKorting(vast.korting) : null;
+      const stuks = aantalStuks(item.quantity);
+      return {
+        aantal: aantalTekst(item.quantity),
+        voor: keuze ? keuze.voor : null,
+        label: vast ? vast.korting || "Bonus" : deals[item.id] ? "Bonus" : null,
+        geldigTot: vast ? vast.geldigTot : null,
+        nodig: nodig && stuks !== null && stuks < nodig ? nodig : null
+      };
+    },
 
     // ---------- Aanbiedingen bij de lijst ----------
     // De aanbiedingen bij één item, of undefined als er geen zijn
@@ -140,16 +198,15 @@ const Logica = (() => {
     keuzeOpen() { return keuze; },
 
     // Opent de artikelen van een aanbieding bij een item. Aangevinkt staan de artikelen met dezelfde variant
-    // als de term. Geeft null als je intussen iets anders opende.
+    // als de term, voor zover je ze ziet: wat nog ingeklapt is komt nooit ongezien op de lijst.
+    // Geeft null als je intussen iets anders opende.
     async openKeuze(itemId, aanbiedingId) {
       const mijn = keuze = { itemId, aanbiedingId, opties: null, aan: new Set(), aantal: new Map(), alles: false };
       const { data, error } = await Data.keuzeOpties(itemId, aanbiedingId);
       if (keuze !== mijn) return null;
       if (error) { keuze = null; return { fout: error.message }; }
       mijn.opties = data;
-      data.forEach((o) => { if (o.zelfde) mijn.aan.add(o.artikel_id); });
-      // Staat het item voor geen enkel artikel van de aanbieding (gekozen via Voor jou), dan meteen alles
-      mijn.alles = !data.some((o) => o.past || o.zelfde);
+      zichtbareKeuzes().forEach((o) => { if (o.zelfde) mijn.aan.add(o.artikel_id); });
       return {};
     },
 
@@ -167,11 +224,7 @@ const Logica = (() => {
       if (keuze) keuze.aantal.set(artikelId, Math.min(Math.max(Math.round(aantal) || 1, 1), KEUZE_MAX));
     },
 
-    // De artikelen die je ziet: waar het item voor staat, en met "toon alles" de hele aanbieding
-    keuzeZichtbaar() {
-      if (!keuze || !keuze.opties) return [];
-      return keuze.opties.filter((o) => keuze.alles || o.past || o.zelfde || o.gekozen || keuze.aan.has(o.artikel_id));
-    },
+    keuzeZichtbaar() { return zichtbareKeuzes(); },
 
     toonAlleKeuzes() { if (keuze) keuze.alles = true; },
 
@@ -202,7 +255,7 @@ const Logica = (() => {
       try { await Data.zetVerlopenKeuzesTerug(lijstId); } catch {}
     },
 
-    // De aanbiedingen bij de items van de lijst, voor het paneel onder de groene balk
+    // De aanbiedingen bij de items van de lijst, voor het paneel onder de groene chip
     dealDetails() { return dealDetails; },
 
     // Geeft null als er intussen een nieuwere vraag is gesteld of de lijst is losgelaten
@@ -220,9 +273,9 @@ const Logica = (() => {
 
     winkelNaam(supermarkt) { return WINKELS[supermarkt] || supermarkt; },
 
-    // De supermarkten met een aanbieding voluit, bijv. ["Albert Heijn", "PLUS"]
+    // De supermarkten met een aanbieding, kort zoals in de database, bijv. ["AH", "PLUS"]
     dealWinkels(lijst) {
-      return [...new Set(lijst.map((d) => WINKELS[d.supermarkt] || d.supermarkt))].sort((a, b) => a.localeCompare(b));
+      return [...new Set(lijst.map((d) => d.supermarkt))].sort((a, b) => a.localeCompare(b));
     },
 
     // ---------- Voor jou ----------
