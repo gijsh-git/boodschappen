@@ -1,4 +1,5 @@
-# Haalt de AH-bonus van de lopende week op en zet die in de database (roadmap stap 3).
+# Haalt de AH-bonus van de lopende week op en zet die in de database (roadmap stap 3). Nieuwe artikelen
+# krijgen daarna een producttype via de Edge Function artikelen-classificeren (zelfde sleutel).
 # De bonusweek loopt van maandag tot en met zondag. Donderdag draait het nog eens: dat vangt een mislukte
 # maandag op en neemt wijzigingen van AH mee. Opnieuw draaien voegt niets dubbel toe.
 # Nodig: de secret AANBIEDINGEN_SLEUTEL (Settings > Secrets and variables > Actions), met dezelfde waarde als
@@ -20,7 +21,7 @@ concurrency: ah-bonus
 jobs:
   ophalen:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5

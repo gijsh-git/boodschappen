@@ -5,9 +5,14 @@ Stuurt de week naar de Edge Function aanbiedingen-opslaan, die de databasefuncti
 dus opnieuw draaien met dezelfde week voegt niets dubbel toe. Het hq_id van AH gaat mee als article_id,
 hetzelfde nummer als op de kassabon. Verlopen aanbiedingen ruimt de functie zelf op.
 
+Daarna krijgen de artikelen die nog geen producttype hebben er een: de Edge Function artikelen-classificeren
+laat de AI ze in porties beoordelen (titel, merk en categorie als invoer). Per week zijn dat alleen de nieuwe
+artikelen; een artikel wordt één keer beoordeeld.
+
 Gebruik, vanuit de hoofdmap van het project:
   python3 scripts/ah-bonus-opslaan.py           proef: telt wat er zou gebeuren, schrijft niets
-  python3 scripts/ah-bonus-opslaan.py --echt    slaat de week op
+  python3 scripts/ah-bonus-opslaan.py --echt    slaat de week op en geeft nieuwe artikelen een type
+  python3 scripts/ah-bonus-opslaan.py --types   slaat niets op, geeft alleen artikelen zonder type een type
 
 Voor --echt is AANBIEDINGEN_SLEUTEL nodig: dezelfde waarde als de secret met die naam in Supabase. Met
 die sleutel kun je alleen aanbiedingen opslaan; de service role key komt Supabase niet uit. Zet hem in
@@ -29,6 +34,8 @@ _spec.loader.exec_module(importeren)
 BONUS = importeren.HOOFDMAP / "data" / "ah-bonus.json"
 # Een week met minder aanbiedingen dan dit is vrijwel zeker een mislukte ophaalronde
 MINSTENS = 20
+# Zo vaak mag het geven van types haperen voordat het script ermee stopt
+HAPERINGEN_MAX = 3
 
 
 def tekst(waarde):
@@ -64,13 +71,13 @@ def maak_aanbieding(a):
     }
 
 
-def stuur(url, sleutel, aanbiedingen):
-    """Stuurt de aanbiedingen naar de Edge Function en geeft de telling van save_offers terug."""
-    body = json.dumps({"supermarkt": importeren.SUPERMARKT, "aanbiedingen": aanbiedingen}).encode()
+def roep(url, sleutel, functie, inhoud, wachten=120):
+    """Roept een Edge Function aan met de eigen sleutel en geeft het antwoord terug."""
+    body = json.dumps(inhoud).encode()
     kop = {"Content-Type": "application/json", "x-aanbiedingen-sleutel": sleutel}
-    verzoek = urllib.request.Request(url + "/functions/v1/aanbiedingen-opslaan", data=body, headers=kop)
+    verzoek = urllib.request.Request(url + "/functions/v1/" + functie, data=body, headers=kop)
     try:
-        with urllib.request.urlopen(verzoek, timeout=120) as antwoord:
+        with urllib.request.urlopen(verzoek, timeout=wachten) as antwoord:
             return json.loads(antwoord.read().decode())
     except urllib.error.HTTPError as fout:
         tekst = fout.read().decode()
@@ -80,12 +87,52 @@ def stuur(url, sleutel, aanbiedingen):
         except (ValueError, AttributeError):
             melding = tekst
         raise RuntimeError(f"{fout.code}: {melding}") from None
-    except urllib.error.URLError as fout:
-        raise RuntimeError(str(fout.reason)) from None
+    except (urllib.error.URLError, TimeoutError) as fout:
+        raise RuntimeError(str(getattr(fout, "reason", fout))) from None
+
+
+def stuur(url, sleutel, aanbiedingen):
+    """Stuurt de aanbiedingen naar de Edge Function en geeft de telling van save_offers terug."""
+    return roep(url, sleutel, "aanbiedingen-opslaan", {"supermarkt": importeren.SUPERMARKT, "aanbiedingen": aanbiedingen})
+
+
+def geef_types(url, sleutel):
+    """Laat de artikelen zonder producttype beoordelen, portie voor portie. Geeft terug hoeveel er over zijn."""
+    totaal = {"met_type": 0, "geen_type": 0}
+    haperingen = 0
+    nog = None
+    while nog != 0:
+        try:
+            uit = roep(url, sleutel, "artikelen-classificeren", {}, wachten=300)
+        except RuntimeError as fout:
+            # Een enkele hapering (te druk, time-out) mag; daarna stoppen we
+            haperingen += 1
+            print(f"  types geven hapert: {fout}")
+            if haperingen >= HAPERINGEN_MAX:
+                break
+            continue
+        for soort in totaal:
+            totaal[soort] += uit[soort]
+        nog = uit["nog"]
+        if uit["beoordeeld"]:
+            print(f"  {uit['beoordeeld']} artikelen beoordeeld, nog {nog}")
+        # Wat overblijft krijgt geen bruikbaar oordeel: niet eindeloos opnieuw vragen
+        if nog and not uit["beoordeeld"]:
+            break
+    print(f"Types: {totaal['met_type']} artikelen kregen een type, {totaal['geen_type']} horen bij geen enkel type.")
+    return nog
 
 
 def main():
     echt = "--echt" in sys.argv
+    if "--types" in sys.argv:
+        sleutel = os.environ.get("AANBIEDINGEN_SLEUTEL", "").strip()
+        if not sleutel:
+            sys.exit("AANBIEDINGEN_SLEUTEL is niet gezet.")
+        nog = geef_types(importeren.lees_config()[0], sleutel)
+        if nog != 0:
+            sys.exit(f"Niet alle artikelen hebben een oordeel (nog {nog if nog is not None else 'onbekend'}); draai het opnieuw.")
+        return
     if not BONUS.exists():
         sys.exit(f"{BONUS} bestaat niet; haal de bonus eerst op (zie scripts/ah-bonus).")
     week = json.loads(BONUS.read_text())
@@ -119,9 +166,12 @@ def main():
     print(f"Opgeslagen: {uit['aanbiedingen']} aanbiedingen met {uit['artikelen_in_aanbiedingen']} artikelen, "
           f"waarvan {uit['nieuwe_artikelen']} nieuw in de artikeltabel (nu {uit['artikelen_totaal']}). "
           f"{uit['opgeruimd']} verlopen aanbiedingen opgeruimd.")
+    nog = geef_types(url, sleutel)
     if mislukt:
         # Wel opgeslagen wat er was, maar de taak moet als mislukt opvallen
         sys.exit(f"{len(mislukt)} groepen zijn zonder artikelen opgeslagen; draai het ophalen opnieuw.")
+    if nog != 0:
+        sys.exit(f"Niet alle artikelen hebben een type-oordeel (nog {nog if nog is not None else 'onbekend'}); de aanbiedingen zijn wel opgeslagen.")
 
 
 if __name__ == "__main__":
