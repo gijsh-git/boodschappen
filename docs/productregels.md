@@ -192,11 +192,45 @@ Twee producten, beide zonder merk in de naam, zodat elk merk eronder valt (Verst
 
 "specerijmengsel": specerijmengsels met een eigen smaak, zoals de world spice blends (garam masala, za'atar, ras el hanout, cajun, furikake). Besluit (9 oktober 2026): dit blijft een eigen product naast "kruidenmix", ook al zet de supermarkt ze vaak in dezelfde categorie.
 
+"sausmix": heet het product een saus, dan is het geen kruidenmix maar "sausmix": mix voor macaronisaus, roomsaus, lasagnesaus, kaassaus (mac & cheese). Besluit (10 oktober 2026): de naam van het product beslist, niet het schap. Een mix voor een gerecht of een vleessoort blijft "kruidenmix".
+
 "kruiden": losse kruiden en specerijen: peperkorrels, paprikapoeder. Bestaat er voor een kruid een eigen product (oregano, basilicum, bieslook, nootmuskaat), dan hoort het artikel daar.
 
 ### halvarine
 
 Halvarine, margarine en plantaardige smeersels voor op brood, ongeacht merk: blue band, bona. "smeerbare boter" is boter en apart.
+
+### soepmix
+
+Droge mix in een zakje om zelf soep van te koken. Besluit (10 oktober 2026): "soepbasis" en "soepmix" zijn hetzelfde type en heten "soepmix".
+
+### frituursnacks
+
+Diepvriessnacks voor de frituur of airfryer, ongeacht merk: viandel, bamischijf, kipkorn, snackhamburger, kipburger en mixpacks. Besluit (10 oktober 2026): dit is een eigen type, niet "borrelhapjes" en niet "hamburgers". Frikandellen, kroketten, bitterballen en kaassoufflés houden hun eigen type.
+
+### tapas
+
+Gekoelde hapjes uit het tapasschap: gehaktballetjes, gemarineerde garnalen, gekookte worst als borrelhapje, gevulde pepers. Besluit (10 oktober 2026): het schap en het gebruik beslissen, niet het vlees of de vis erin. Diepvries borrelhapjes voor de oven blijven "borrelhapjes".
+
+### pap
+
+Kant-en-klare pap uit de koeling: rijstepap, griesmeelpap, havermoutpap, gortepap. Besluit (10 oktober 2026): een eigen type, niet "pudding". Havermout om zelf te koken en babypap zijn andere types.
+
+### pudding
+
+Puddingen en kant-en-klare toetjes in bakjes. Besluit (10 oktober 2026): hoekjesyoghurt (Almhof Hoekje en vergelijkbaar) is een toetje en hoort hier, niet bij "yoghurt".
+
+### fruitbiscuit
+
+Biscuits met een fruitvulling, ongeacht merk of smaak. Besluit (10 oktober 2026): een eigen type, niet "koekjes".
+
+### babyhapjes en knijpfruit
+
+Twee types. Besluit (10 oktober 2026): de verpakking beslist. Babyvoeding in een potje is "babyhapjes", ook als het fruit is; alleen knijpzakjes zijn "knijpfruit".
+
+### fruitdrank
+
+Frisse fruitdranken met suiker, ongeacht merk. Besluit (10 oktober 2026): het type heette "dubbelfrisss" en heet nu naar de soort; "dubbelfrisss" blijft een naam van het type. De variant zonder suiker of met 1 kcal is apart.
 
 ### sperziebonen, spinazie en boerenkool
 
@@ -211,7 +245,7 @@ Besluiten die zijn gebleven uit de tijd van de voorstellen (7 en 8 oktober 2026)
 1. Dezelfde toets als overal: zou je bij een aanbieding dit artikel kopen in plaats van wat je gewoonlijk koopt?
 2. Een woord uit de typenaam in de titel is geen bewijs. Pompoensoep en desembrood met pompoen horen niet bij "pompoen".
 3. De categorie van de supermarkt helpt, maar is geen bewijs. AH zet multipacks speciaalbier soms onder "Pils blik" en fanta exotic onder "Sinas". Wat de titel zegt, gaat voor.
-4. Een variant waar je niet tussen wisselt (zero, light, 0.0, decaf, alcoholvrij) krijgt zijn eigen type. Bestaat dat type niet, dan is het "geen type", niet de gewone variant.
+4. Een variant waar je niet tussen wisselt (zero, light, 0.0, decaf, alcoholvrij) krijgt zijn eigen type. Bestaat dat type niet, dan is het "geen type", niet de gewone variant. Bevestigd op 10 oktober 2026: dit blijft streng en geldt ook voor suikervrij en "zonder toegevoegde suiker" (Cruesli Zero Sugar is geen "granola", ontbijtkoek zonder toegevoegde suiker geen "ontbijtkoek").
 5. Een apparaat, handvat, starterset of cadeaupakket hoort bij geen enkel type.
 
 Besluiten (9 oktober 2026):
@@ -242,6 +276,10 @@ Wie op Voor jou een aanbieding op de lijst zet, krijgt de titel van die aanbiedi
 2. Hebben alle artikelen in de aanbieding hetzelfde type en stond de titel nog nergens voor, dan wordt de titel een naam van dat type. Zo telt de aankoop later in het profiel onder het type.
 3. Horen de artikelen bij meerdere types ("Alle AH Bakkersbrood" met brood en stokbrood), dan krijgt het item geen type; het label blijft werken via de aanbieding zelf.
 4. Staat er al een item van hetzelfde type op de lijst, dan komt het nieuwe er los bij.
+
+## Correcties van 10 oktober 2026
+
+Na de eerste week van PLUS stonden er 376 artikelen met zekerheid middel of laag om na te kijken. De besluiten van die dag staan hierboven bij de types. Ze zijn doorgevoerd met het eenmalige script `scripts/koppelingen-correcties`, dat dezelfde functies aanroept als het scherm Koppelingen: tien nieuwe types (frituursnacks, pap, fruitbiscuit, hondenvoer, kattensnacks, harissa, pijnboompitten, truffelolie, tropische frisdrank, zaden en pitten), soepbasis in soepmix, dubbelfrisss hernoemd tot fruitdrank, de afbakening van twaalf bestaande types bijgewerkt, 49 artikelen naar een ander type en de overige 333 als nagekeken gemarkeerd. Hondenvoer en kattensnacks staan in een nieuwe hoofdgroep "Huisdier". In een tweede ronde (`-ronde 2`) zijn dertien fruitpotjes van Olvarit van knijpfruit naar babyhapjes gegaan en hoort de naam "sesamzaad" bij zaden en pitten in plaats van bij kruiden.
 
 ## Werkwijze
 
