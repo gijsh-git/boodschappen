@@ -553,14 +553,107 @@ Uitwerken als er genoeg aankoopdata is.
 
 ### [ ] Stap 9 – Meerdere supermarkten
 
-Pas oppakken als er een tweede bron van aanbiedingen is.
+Uitgewerkt op 10 oktober 2026. De eerste extra winkel is PLUS. Er wordt niets gebouwd voordat deel 0 klaar is en de open punten beslist zijn.
 
-- [ ] Tweede supermarkt als extra bron van artikelen en aanbiedingen; matching en profiel blijven gelijk
-- [ ] Aanbiedingen vergelijken op prijs per kilo of liter, ook tussen kortingsvormen (1+1 gratis tegen 25% korting)
-- [ ] Per gebruiker of huishouden vastleggen welke winkels ze bezoeken, of dat afleiden uit de bonnen
-- [ ] Volgorde van opties: prijs, eigen winkel, merkvoorkeur uit de persoonlijke laag
+Uitgangspunten:
 
-Klaar als: iemand die kwark op de lijst zet zowel een AH- als een Jumbo-aanbieding op kwark ziet, met de beste voor die persoon bovenaan.
+- De database is al ingericht op meerdere winkels: `articles`, `offers` en `offer_articles` hebben een sleutel op `supermarket`, `save_offers` neemt de winkel als parameter, de matching werkt met `upper(supermarket)` en `WINKELS` in `logica.js` kent PLUS al. Het werk zit in het ophalen, in wat de gebruiker te zien krijgt en in het vergelijken.
+- Matching en profiel blijven op type. Een winkel is een extra bron van artikelen, geen nieuwe laag. Het aankoopprofiel weet niet bij welke winkel iets gekocht is, en dat blijft zo.
+- Een winkel die het huishouden niet bezoekt mag de lijst niet vullen. Zonder keuze per persoon geeft elke nieuwe winkel alleen meer ruis.
+- Een nieuwe winkel komt eerst in de database en pas daarna in de app. Zo staat er een week PLUS-data zonder dat de labels voor Els veranderen.
+- Vergelijken tussen winkels gebeurt op type en op prijs per eenheid, niet op hetzelfde artikel. Er is geen koppeling tussen een AH-artikel en een PLUS-artikel.
+- Onafhankelijkheid (`IDEEEN.md`): de volgorde komt uit prijs en voorkeur, nooit uit betaalde plekken.
+
+#### Deel 0 – Verkennen
+
+- [ ] Eén PLUS-week ophalen naar `data/plus-aanbiedingen.json`, zonder database. Het script leest alleen. Bron voor de proef: de interne JSON-calls van plus.nl (OutSystems); die zijn kwetsbaar en niet bedoeld voor de publieke fase.
+- [ ] Hetzelfde ophalen één keer vanaf GitHub draaien (een handmatige workflow die alleen ophaalt en telt). Blokkeert plus.nl de servers van GitHub, dan komt de week niet vanzelf binnen en is er een andere opzet nodig (bijvoorbeeld lokaal draaien). Dat moet bekend zijn vóór deel 1.
+- [ ] Verslag in `docs/verkenning-plus.md`, zoals bij AH: aantal aanbiedingen, welke nummers er zijn (webshopnummer, EAN), groepen, kortingsteksten, looptijd (waarschijnlijk zondag tot en met zaterdag), categorieën, lokale aanbiedingen en of de inhoud ("500 g", "6 x 330 ml", "per stuk") leesbaar is.
+- [ ] Nalopen wat er nu in `receipts.store` staat. `bon-uploaden` geeft al "AH" en "PLUS" als code; oudere bonnen kunnen een andere schrijfwijze hebben.
+- [ ] De open punten beslissen (zie onder).
+
+#### Deel 1 – Opslaan en classificeren
+
+- [ ] Eén formaat voor alle winkels (`data/<winkel>-aanbiedingen.json`): per aanbieding de kortingstekst, de labels, de looptijd, of het een groep is, of het alleen in de winkel geldt, en de artikelen met nummer, titel, merk, inhoud, categorie, prijs en actieprijs.
+- [ ] Eén opslagscript: `ah-bonus-opslaan.py` wordt `aanbiedingen-opslaan.py --winkel AH|PLUS`. De Edge Function `aanbiedingen-opslaan` en `save_offers` blijven zoals ze zijn. `MINSTENS` geldt per winkel.
+- [ ] `article_id` bij PLUS is het artikelnummer van de webshop. Geeft de bron een EAN, dan komt die in een eigen kolom op `articles`; daarmee is later hetzelfde artikel in twee winkels te herkennen. Vastleggen bij de kolom en in `aanbiedingen.md`.
+- [ ] PLUS-winkels zijn franchisezaken. Vraagt de bron om een winkel, dan één vaste winkel kiezen en `store_only` vullen waar dat nodig is. Lokale aanbiedingen komen niet mee.
+- [ ] Inhoud bij het opslaan omzetten naar hoeveelheid en eenheid, voor de prijs per eenheid in deel 4.
+- [ ] Een eigen workflowbestand voor PLUS met een eigen schema (een schema geldt per workflow, niet per job). Een mislukte PLUS-ronde raakt AH dan niet.
+- [ ] Nieuwe PLUS-artikelen gaan door `artikelen-classificeren`, net als AH: één keer per artikel, daarna alleen de nieuwe van die week. De eerste keer kost dat meer AI-aanroepen.
+- [ ] `product_types.main_group` is de eigen indeling van de app, begonnen als de hoofdcategorie van AH. De categorie van een winkel is alleen invoer voor de AI. In de code is dat al zo (een nieuw type krijgt alleen een hoofdgroep die al bestaat); bijwerken in `producttypes.md`. De terugval bij favorieten in `offers_for_me()` splitst `articles.category` nog op "/", de vorm van AH: die gaat de hoofdgroep van het type van het artikel gebruiken.
+- [ ] Koppelingen: bij elk artikel de winkel tonen, met een filter per winkel.
+- [ ] In de app is nog niets zichtbaar. Controle in Koppelingen: verwacht een vollere "Geen type" en een paar nieuwe types. Het AH-assortiment heeft de typelijst gevormd; PLUS laat zien waar die tekortschiet.
+
+Huismerken: "PLUS" wordt een merk zoals "AH". Wie "plus" typt, krijgt alles van het merk PLUS. Een merkfavoriet "AH" voor pindakaas raakt de PLUS-pindakaas niet. Een begrip "huismerk" (elk huismerk telt) komt niet in deze stap.
+
+#### Deel 2 – Mijn winkels
+
+- [ ] In het profiel een blok "Mijn winkels", waarin je aanvinkt welke supermarkten meedoen. Per persoon, net als de favorieten. Tabel `user_stores` (`user_id`, `supermarket`), met RLS op de eigen rijen; schrijven kan rechtstreeks, zonder RPC, zoals bij `favorites`.
+- [ ] De keuze staat altijd als rij in de tabel: bestaande en nieuwe gebruikers krijgen een rij AH, en de laatste winkel is niet uit te vinken. "Geen rijen betekent AH" zou AH onmogelijk maken om uit te zetten. PLUS zet je zelf aan.
+- [ ] "Voor jou" en de favorieten gebruiken alleen je eigen winkels.
+- [ ] Een gedeelde lijst gebruikt de winkels van alle leden samen. Doet Els alleen AH en Gijs AH en PLUS, dan toont de lijst AH en PLUS. `offers_for_list`, `offer_details_for_list` en het kiezen filteren daarop.
+- [ ] Een gekozen aanbieding of een item uit Voor jou blijft altijd zichtbaar, ook als de winkel daarna uit iemands profiel gaat.
+- [ ] De lijst leest de winkels van de leden bij het laden. Leden en winkels veranderen zelden; live meeluisteren via Realtime is niet nodig.
+- Waarom niet per kijker filteren op de lijst: dan ziet Els "3 in de bonus" en Gijs "5", en een gekozen PLUS-aanbieding staat hoe dan ook voor iedereen op de lijst.
+- Later: een voorstel afleiden uit de bonnen ("je koopt ook bij PLUS. Aanzetten?").
+
+#### Deel 3 – Weergave
+
+- [ ] Chip in de kop: het totaal met de winkelnamen ("3 in de bonus bij AH en PLUS"). Zo werkt `renderBonus()` al. Geen aantallen per winkel: een item kan bij beide in de aanbieding zijn, dus die tellen niet op tot het totaal.
+- [ ] Een item met alleen het label "Bonus" krijgt geen winkel op de rij; het kan bij beide winkels in de aanbieding zijn en de winkel staat in het paneel.
+- [ ] Gekozen aanbieding: de winkel in de metaregel ("voor tomatensoep · PLUS · t/m za"), zodra de lijst meer dan één winkel heeft. Na kiezen is het item aan een winkel gebonden.
+- [ ] Paneel: per item eerst dezelfde variant, daarna (tot deel 4 er is) de volgorde van de winkels van de lijst. De winkel staat al in de metaregel zodra er meer dan één is (`Logica.paneelRegel()`).
+- [ ] Voor jou: `offers_for_me()` geeft elke geldige aanbieding één keer, dus AH en PLUS staan er los van elkaar in en de lijst wordt langer. De winkel staat al op de rij. Kijken of dat zo werkt of dat ze per type bij elkaar moeten.
+- Wegklikken, terughalen, het logboek en het terugvallen na afloop werken per aanbieding en hebben al een winkel. Daar verandert niets.
+- Later, niet in deze stap: een winkelmodus ("ik sta bij PLUS") die de aanbiedingen van die winkel naar voren haalt.
+
+#### Deel 4 – Vergelijken en volgorde
+
+- [ ] De korting in één vorm vastleggen, naast de tekst: de soort (`x_voor_prijs`, `x_plus_y_gratis`, `ne_halve_prijs`, `procent`, `actieprijs`), het aantal stuks dat nodig is en het bedrag of percentage. Het opslagscript zet de tekst van elke winkel daarin om. `discount_type` en `labels` worden nu nergens gelezen, dus dit breekt niets.
+- [ ] `nodigVoorKorting()` in `logica.js` leest nu de kortingstekst uit `items.offer_choice` en uit `offers_for_list`. Het kan pas weg als het aantal stuks ook in die twee staat.
+- [ ] Prijs per eenheid per artikel, met de korting erin verrekend: 1+1 gratis is per stuk de helft, "2 voor 3,99" is 2,00 per stuk.
+- [ ] Per item de aanbiedingen op de laagste prijs per eenheid na korting, over winkels heen. Bij een aanbieding met meer artikelen telt het voordeligste artikel waar de term voor staat. Dezelfde variant blijft voorgaan.
+- [ ] Alleen vergelijken binnen dezelfde eenheid (kg met kg, stuk met stuk). Lukt dat niet, dan blijft de volgorde van deel 3.
+- Niet in deze stap: eigen winkel en merkvoorkeur in de volgorde. Wie een winkel niet wil, zet hem uit in "Mijn winkels"; merkvoorkeur loopt via de favorieten.
+
+Bonnen en aankopen: PLUS-aankopen komen alleen binnen via een bonfoto, en die heeft geen artikelnummer; het type van een PLUS-aankoop komt dus uit de naam. Een gekozen PLUS-aanbieding die je afvinkt geeft het artikel wel mee via `article_supermarket` + `article_id`; dat werkt al. Profiel en vaste producten blijven over alle winkels heen.
+
+Beheer: een winkel die een week niets oplevert valt op als mislukte workflow, en eventueel in Koppelingen ("PLUS: laatste week opgehaald op …"). GitHub schakelt een schema uit na 60 dagen zonder commit.
+
+Besloten op 10 oktober 2026:
+
+- Winkels per persoon, in het profiel. Een gedeelde lijst gebruikt de winkels van alle leden samen.
+- Iedereen begint met AH, als rij in de tabel; PLUS zet je zelf aan.
+- De chip toont het totaal met de winkelnamen, zonder aantallen per winkel.
+- Geen winkel op de rij bij een item dat alleen "Bonus" heeft.
+- `article_id` bij PLUS is het webshopnummer; een EAN komt in een eigen kolom.
+- `main_group` is de indeling van de app, niet die van AH.
+- "Voordeligst" is de laagste prijs per eenheid na korting.
+- De check-constraint op `supermarkt` (`AH`, `PLUS`) uit de baseline zat op de tabel `deals` en is met die tabel vervallen.
+
+Open, te beslissen na deel 0:
+
+- De korting in één vorm al opslaan in deel 1, of pas in deel 4? Hangt af van hoe de kortingsteksten van PLUS eruitzien.
+- Komt de PLUS-week vanzelf binnen via GitHub, of moet het ophalen ergens anders draaien?
+
+Na elk deel testen en committen. De beschrijving in `docs/systeem/` gaat mee in dezelfde commit.
+
+Klaar als:
+
+- PLUS-aanbiedingen elke week vanzelf binnenkomen, en een mislukte ronde AH niet raakt;
+- wie PLUS niet heeft aangevinkt er niets van merkt;
+- als één van ons PLUS aanzet, iemand die kwark op de lijst zet zowel een AH- als een PLUS-aanbieding ziet, met de voordeligste per kilo bovenaan;
+- een gekozen PLUS-aanbieding op de rij laat zien dat het bij PLUS is;
+- in Koppelingen per winkel te zien is wat geen type heeft.
+
+```
+/plan
+Wat: PLUS als tweede supermarkt naast AH. Lees eerst stap 9 in ROADMAP.md; daar staan de keuzes. Begin met deel 0 (verkennen) en bouw daarna niets voordat ik de open punten heb beslist.
+Waarom: wij kopen ook bij PLUS. Ik wil bij een item de aanbiedingen van beide winkels zien, met de voordeligste bovenaan, zonder dat iemand die alleen bij AH komt er last van heeft.
+Hoe het moet werken: zoals beschreven in de delen 0 tot en met 4 van stap 9. Doe de delen in die volgorde en stop na elk deel voor een test en een commit.
+Grenzen: de scripts die ophalen lezen alleen. Matching en profiel blijven op type. Tot en met deel 1 verandert er niets in de app. Supabase-calls in data.js, logica in logica.js (ARCHITECTURE.md). Elke databasewijziging is een nieuw migratiebestand in supabase/migrations/. Gewijzigde Edge Functions opnieuw deployen.
+```
 
 ---
 
@@ -569,7 +662,7 @@ Klaar als: iemand die kwark op de lijst zet zowel een AH- als een Jumbo-aanbiedi
 Niet bouwen voordat de testfase goed werkt. Wel alvast vastleggen.
 
 - Aankopen: afvinken op de lijst als basis, bonfoto (AI leest de regels, foto wordt niet bewaard) als aanvulling. Geen inloggen bij AH namens gebruikers.
-- Aanbiedingen: duurzame bron kiezen. Opties: afspraak met een folder-aggregator, of de AH-bonusdata zonder login na juridisch advies. Daarna Jumbo en andere ketens.
+- Aanbiedingen: duurzame bron kiezen. Opties: afspraak met een folder-aggregator, of de data van de winkels zonder login na juridisch advies. De interne JSON-calls van plus.nl uit stap 9 zijn goed voor de testfase, niet voor gebruikers van buiten. Daarna Jumbo en andere ketens.
 - AVG: privacyverklaring, verwerkingsregister, bewaartermijnen, RLS controleren voor meerdere huishoudens.
 - Kleine testgroep van buiten.
 
