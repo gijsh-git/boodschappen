@@ -15,6 +15,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const KOP = "x-aanbiedingen-sleutel";
 // Model dat de artikelen beoordeelt
 const MODEL = "claude-opus-5-5";
+// Hoeveel het model nadenkt per portie: "low", "medium" of "high". Met "low" kwam een kwart van een nieuwe
+// week als twijfel terug; "medium" kost wat meer en twijfelt minder.
+const INSPANNING = "medium";
 // Zoveel artikelen per aanroep van de AI, en zoveel aanroepen tegelijk per aanroep van deze functie
 const PORTIE = 40;
 const TEGELIJK = 3;
@@ -29,12 +32,14 @@ Kies per artikel het ene type waar het bij hoort, of "${GEEN}". Neem de naam van
 - Toets: zou iemand die dit type koopt bij een aanbieding dit artikel in plaats daarvan kopen? Zo ja, dan hoort het erbij, ook als het een ander merk, formaat, een andere smaak of biologisch is.
 - Kijk naar wat het artikel is, niet naar losse woorden. Een woord uit de typenaam in de titel is geen bewijs: pompoensoep is geen pompoen, brood met pompoen is geen pompoen, douchegel met avocado is geen avocado, thee met honing is geen honing.
 - De categorie van de supermarkt helpt, maar is geen bewijs: wat de titel zegt gaat voor. De hoofdgroep van een type is de hoofdcategorie waar het meestal staat; een artikel mag bij een type uit een andere hoofdgroep horen.
-- Lees de afbakening. "Niet:" zegt wat er net niet bij hoort en waar dat wel hoort. Varianten waar je niet tussen wisselt hebben een eigen type: zero, light, suikervrij, 0%, decaf en alcoholvrij tegenover gewoon; halfvolle en volle melk; vers tegenover gedroogd of uit pot of blik; wat alleen in een eigen apparaat of systeem werkt. Bestaat dat eigen type niet, kies dan "${GEEN}" en niet de gewone variant.
+- Lees de afbakening. "Niet:" zegt wat er net niet bij hoort en waar dat wel hoort. Varianten waar je niet tussen wisselt hebben een eigen type: zero, light, suikervrij, zonder toegevoegde suiker, 0%, decaf en alcoholvrij tegenover gewoon; halfvolle en volle melk; vers tegenover gedroogd of uit pot of blik; wat alleen in een eigen apparaat of systeem werkt. Bestaat dat eigen type niet, kies dan "${GEEN}" en niet de gewone variant.
+- Wat het product is en waar het voor dient beslist, niet het hoofdingrediënt of het merk: een mix die een saus heet (macaronisaus, roomsaus) is een sausmix en geen kruidenmix, gehaktballetjes uit het tapasschap zijn tapas en geen vlees, babyvoeding in een potje is een babyhapje ook als het fruit is, een toetje op basis van yoghurt is een toetje.
+- Eén productlijn van één merk krijgt één type: artikelen van hetzelfde merk die alleen in smaak, formaat of verpakking verschillen horen bij hetzelfde type. Uitzondering is de variant met een eigen type uit de regel hierboven (zero, light, alcoholvrij). Een woord als "Classics", "Selectie" of "Kleintje" is geen productlijn: daaronder vallen verschillende soorten.
 - Een apparaat, handvat of starterset, een cadeaupakket en een gemengde verpakking met meerdere soorten horen bij geen enkel type.
 - Past er geen type, kies dan "${GEEN}". Kies geen type dat alleen in de buurt komt. Geef in voorstel dan de naam van het type dat in de lijst ontbreekt, zoals iemand het op een boodschappenlijst zet (kleine letters, zonder merk), of een lege tekst als het geen gewone boodschap is. Bij een gekozen type is voorstel leeg.
 - variant: het ene woord dat zegt welke smaak of soort het artikel binnen zijn type is, zoals iemand het op een boodschappenlijst voor de soortnaam zet: "tomaat" bij tomatensoep, "kip" bij kippensoep, "aardbei" bij aardbeienyoghurt, "paprika" bij paprikachips, "naturel" bij chips naturel. Enkelvoud, kleine letters, het hoofdbestanddeel of de hoofdsmaak en geen bijzaak ("tomaat" bij Chinese tomatensoep). Geen merk, geen formaat, niet biologisch of huismerk, en niet wat de naam van het type al zegt. Valt er geen smaak of soort te noemen (halfvolle melk bij het type halfvolle melk, wc-papier), of is het "${GEEN}", dan een lege tekst.
 - Bij een voorstel geef je ook voorstel_hoofdgroep (de hoofdgroep waar het type onder hoort, letterlijk een van de koppen uit de lijst), voorstel_eronder (één zin: wat valt eronder, ongeacht merk, met een of twee voorbeelden) en voorstel_niet (wat er net niet bij hoort en bij welk type dat wel hoort, of een lege tekst). Met een hoofdgroep erbij wordt het type meteen aangemaakt. Stel daarom een soort voor waar een koper binnen wisselt, geen merk, smaak of los artikel, en gebruik de naam die het meest voor de hand ligt, in het meervoud als de lijst dat bij zulke types ook doet. Twijfel je of het een eigen type verdient of toch bij een bestaand type hoort, laat voorstel_hoofdgroep dan leeg: het voorstel wacht dan op de beheerder. Zonder voorstel zijn deze drie een lege tekst.
-- zekerheid: "hoog" als het er zonder twijfel bij hoort, "middel" als het waarschijnlijk klopt, "laag" bij echte twijfel over een variant. Bij "${GEEN}" zegt de zekerheid hoe zeker je bent dat geen type past.
+- zekerheid: "hoog" als het er zonder twijfel bij hoort, "middel" als het waarschijnlijk klopt, "laag" bij echte twijfel: je aarzelt tussen twee types, of de titel zegt niet wat het artikel is. Alleen "laag" komt bij de beheerder; gebruik het dus niet uit voorzichtigheid, maar wel altijd als een mens moet meekijken. Bij "${GEEN}" zegt de zekerheid hoe zeker je bent dat geen type past.
 - reden: één korte zin in het Nederlands.
 
 Geef voor elk artikel precies één oordeel, met het nummer van het artikel.`;
@@ -157,7 +162,7 @@ Deno.serve(async (req) => {
       betas: ["server-side-fallback-2026-07-01"],
       // @ts-ignore: de "default"-vorm staat nog niet in alle versies van de SDK-types
       fallbacks: "default",
-      output_config: { effort: "low", format: { type: "json_schema", schema } },
+      output_config: { effort: INSPANNING, format: { type: "json_schema", schema } },
       system: [{ type: "text", text: systeem, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: "Artikelen:\n" + portie.map((a, i) => artikelRegel(i + 1, a)).join("\n") }],
     });

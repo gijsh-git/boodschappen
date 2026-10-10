@@ -15,6 +15,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const KOP = "x-aanbiedingen-sleutel";
 // Model dat de termen beoordeelt
 const MODEL = "claude-opus-5-5";
+// Hoeveel het model nadenkt per portie: "low", "medium" of "high"
+const INSPANNING = "medium";
 // Zoveel termen per aanroep van de AI, en zo vaak achter elkaar als er intussen termen bijkomen
 const PORTIE = 40;
 const RONDES = 3;
@@ -27,7 +29,7 @@ const INSTRUCTIES = `Je koppelt wat mensen op een boodschappenlijst typen aan de
 De termen zijn kort en slordig: tikfouten, afkortingen, enkelvoud of meervoud, soms een merk erbij, soms een bontekst. Kies per term het ene type waar hij voor staat, of "${GEEN}". Neem de naam van het type letterlijk over uit de lijst.
 
 - Toets: zou iemand die dit opschrijft bij een aanbieding een artikel van dat type kopen?
-- Lees de afbakening. "Niet:" zegt wat er net niet bij hoort en waar dat wel hoort. Varianten waar je niet tussen wisselt hebben een eigen type: zero, light, suikervrij, 0%, decaf en alcoholvrij; halfvolle en volle melk; vers tegenover gedroogd of uit pot of blik. Zonder "gedroogd", "pot" of "blik" in de term is het de verse variant.
+- Lees de afbakening. "Niet:" zegt wat er net niet bij hoort en waar dat wel hoort. Varianten waar je niet tussen wisselt hebben een eigen type: zero, light, suikervrij, zonder toegevoegde suiker, 0%, decaf en alcoholvrij; halfvolle en volle melk; vers tegenover gedroogd of uit pot of blik. Zonder "gedroogd", "pot" of "blik" in de term is het de verse variant.
 - merk: noemt de term een merk naast de soort ("sensodyne tandpasta", "pasta van barilla"), geef dat merk dan zoals het op de verpakking staat. Anders een lege tekst. Een merk dat mensen als soortnaam gebruiken ("nutella" voor chocoladepasta) is geen merk hier.
 - Een losse merknaam zonder soort krijgt "${GEEN}": het merk kan van alles zijn.
 - Een term die te vaag is om één type te kiezen ("sap", "papier", "saus", "groenten", "iets lekkers") krijgt "${GEEN}". Gok niet: een fout type geeft een label op iets wat de koper niet zoekt.
@@ -35,7 +37,7 @@ De termen zijn kort en slordig: tikfouten, afkortingen, enkelvoud of meervoud, s
 - variant: het ene woord dat zegt welke smaak of soort binnen het type de term noemt: "tomaat" bij "tomatensoep", "kip" bij "kippensoep", "aardbei" bij "aardbeien yoghurt", "paprika" bij "chips paprika". Enkelvoud, kleine letters, geen merk, en niet wat de naam van het type al zegt. Noemt de term geen smaak of soort ("soep", "chips", "halfvolle melk"), of is het "${GEEN}", dan een lege tekst.
 - voorstel: alleen bij "${GEEN}", als de term wel een gewone boodschap is maar het type in de lijst ontbreekt ("afwasborstel"): de naam die dat type zou hebben, zoals op een boodschappenlijst (kleine letters, zonder merk). Bij een vage term, een losse merknaam of een gekozen type een lege tekst.
 - Bij een voorstel geef je ook voorstel_hoofdgroep (de hoofdgroep waar het type onder hoort, letterlijk een van de koppen uit de lijst), voorstel_eronder (één zin: wat valt eronder, ongeacht merk, met een of twee voorbeelden) en voorstel_niet (wat er net niet bij hoort en bij welk type dat wel hoort, of een lege tekst). Met een hoofdgroep erbij wordt het type meteen aangemaakt. Stel daarom een soort voor waar een koper binnen wisselt, geen merk, smaak of los artikel, en gebruik de naam die het meest voor de hand ligt, in het meervoud als de lijst dat bij zulke types ook doet. Twijfel je of het een eigen type verdient of toch bij een bestaand type hoort, laat voorstel_hoofdgroep dan leeg: het voorstel wacht dan op de beheerder. Zonder voorstel zijn deze drie een lege tekst.
-- zekerheid: "hoog" als de term zonder twijfel dit type is, "middel" als het waarschijnlijk klopt, "laag" bij echte twijfel. Bij "${GEEN}" zegt de zekerheid hoe zeker je bent dat geen type past.
+- zekerheid: "hoog" als de term zonder twijfel dit type is, "middel" als het waarschijnlijk klopt, "laag" bij echte twijfel: je aarzelt tussen twee types. Alleen "laag" komt bij de beheerder; gebruik het dus niet uit voorzichtigheid, maar wel altijd als een mens moet meekijken. Bij "${GEEN}" zegt de zekerheid hoe zeker je bent dat geen type past.
 - reden: één korte zin in het Nederlands.
 
 Geef voor elke term precies één oordeel, met het nummer van de term.`;
@@ -159,7 +161,7 @@ Deno.serve(async (req) => {
         betas: ["server-side-fallback-2026-07-01"],
         // @ts-ignore: de "default"-vorm staat nog niet in alle versies van de SDK-types
         fallbacks: "default",
-        output_config: { effort: "low", format: { type: "json_schema", schema } },
+        output_config: { effort: INSPANNING, format: { type: "json_schema", schema } },
         // De opdracht en de typelijst zijn voor elke aanroep gelijk en komen binnen vijf minuten uit de cache
         system: [{ type: "text", text: INSTRUCTIES + "\n\n# Producttypes\n" + typesTekst(types), cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: "Termen:\n" + termen.map((t, i) => `${i + 1}. ${t.term}`).join("\n") }],

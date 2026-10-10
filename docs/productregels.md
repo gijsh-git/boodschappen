@@ -250,10 +250,24 @@ Besluiten die zijn gebleven uit de tijd van de voorstellen (7 en 8 oktober 2026)
 
 Besluiten (9 oktober 2026):
 
-6. Vindt de AI geen type, dan noemt hij welk type ontbreekt. De beheerder maakt dat type aan in het scherm Koppelingen, kiest een bestaand type, of laat het zonder.
+6. Vindt de AI geen type, dan noemt hij welk type ontbreekt, met hoofdgroep en afbakening. Is hij daar zeker genoeg van (zekerheid hoog of middel) en lijkt de naam niet op een bestaand type, dan ontstaat het type vanzelf en hoort het artikel er meteen bij; het staat dan in het scherm Koppelingen onder "Nieuwe types". Twijfelt de AI of het een eigen type verdient, dan wacht het voorstel onder "Geen type" op de beheerder.
 7. Een oordeel dat de beheerder heeft gezet of nagekeken vervangt de AI niet meer.
-8. De oordelen met zekerheid hoog worden niet stuk voor stuk nagekeken: dat zijn er te veel. Ze zijn in te zien bij het type. De meeste fouten zaten eerder in zekerheid middel.
+8. Alleen zekerheid laag komt bij de beheerder, en wat geen type heeft met een voorstel voor een type dat ontbreekt (besluit van 10 oktober 2026; daarvoor ook middel). Hoog en middel zijn in te zien bij het type. De reden staat hieronder bij "Proef van 10 oktober 2026".
 9. De database is de bron van de typelijst. `docs/producttypes-export.csv` is een afdruk die bij elke commit wordt ververst; pas dat bestand nooit met de hand aan.
+
+Besluit (10 oktober 2026):
+
+16. Eén productlijn van één merk krijgt één type: artikelen van hetzelfde merk die alleen in smaak, formaat of verpakking verschillen horen bij hetzelfde type (Almhof Hoekje, Redband Dropfruit). Uitzondering is de variant met een eigen type uit besluit 4. Een woord als "Classics", "Selectie" of "Kleintje" is geen productlijn. Dit staat in de opdracht aan de AI; een controle in code is geprobeerd en vervallen, zie hieronder.
+
+### Proef van 10 oktober 2026
+
+De 382 artikelen van de eerste PLUS-week die om nakijken vroegen zijn opnieuw beoordeeld, zonder iets op te slaan, en vergeleken met wat de beheerder ervan maakte (64 gewijzigd, 318 bevestigd).
+
+- De eerste ronde zoals ze sindsdien is (de besluiten in de afbakening van de types en in de opdracht, meer denkruimte) vindt 59 van de 64 wijzigingen zelf. Het meeste nakijkwerk kwam dus niet van fouten maar van besluiten die nog nergens stonden.
+- Een tweede ronde met meer context (de productregels, artikelen van hetzelfde merk, voorbeelden per type) vindt er niet meer: 56 met hetzelfde model en hoge inspanning, 57 met een sterker model. Wat de eerste ronde mist, missen de andere ook (Cremeux Blanc, Dropfruit duo's, Truffelmayo). De tweede ronde is daarom niet gebouwd.
+- Zekerheid laag is een bruikbaar sein: 31 van de 382, en daar zit het meeste in van wat echt fout is. Met zekerheid hoog week er 1 van de 163 af van de beheerder.
+- Een oordeel is aan de randen niet vast: opnieuw beoordelen verschuift ongeveer een op de zeven twijfelgevallen naar een buurtype (banketkoekjes en koekjes) of naar "geen type". Een artikel wordt daarom één keer beoordeeld en daarna alleen door de beheerder verzet.
+- Een controle in code op productlijnen (zelfde merk, zelfde titel zonder smaak en inhoud, ander type) vond 51 groepen, vrijwel allemaal terecht verschillend: zero naast gewoon, of een woord dat geen productlijn is ("Mora Classics"). Die controle is er niet gekomen.
 
 ## Matchen van lijsttermen
 
@@ -284,6 +298,6 @@ Na de eerste week van PLUS stonden er 376 artikelen met zekerheid middel of laag
 ## Werkwijze
 
 1. De AI koppelt elk nieuw artikel en elke onbekende term zelf aan een type. Niets wacht op goedkeuring.
-2. De beheerder kijkt in het scherm Koppelingen na wat de AI niet zeker wist en wat geen type kreeg, en zet recht wat fout is.
+2. De beheerder ziet in het scherm Koppelingen alleen waar de AI echt over twijfelde (zekerheid laag), welke types de AI zelf heeft aangemaakt, en wat geen type kreeg omdat er een type ontbreekt. De rest telt mee zonder dat iemand ernaar kijkt.
 3. Een nieuw type, een andere naam of afbakening, en samenvoegen gebeuren in dat scherm, nooit in een bestand.
 4. Nieuwe beslissingen over het niveau worden in dit bestand vastgelegd onder "Vastgestelde producten", en in de afbakening van het type zelf.
