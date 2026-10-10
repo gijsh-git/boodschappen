@@ -11,6 +11,8 @@ go run . -volgende ../../data/plus-aanbiedingen.json       # de volgende week, a
 go run . -producten 40 ../../data/plus-aanbiedingen.json   # ook de productpagina van de eerste 40 artikelen; -1 is alle
 ```
 
+De taak "PLUS verkennen" uit deze verkenning is vervangen door de wekelijkse taak `.github/workflows/plus-aanbiedingen.yml`.
+
 ## Waar de data vandaan komt
 
 plus.nl is een OutSystems-app. De pagina `/aanbiedingen` haalt haar gegevens met JSON-calls op `/screenservices/…`. Drie daarvan zijn genoeg, alle drie zonder account en zonder winkelkeuze:

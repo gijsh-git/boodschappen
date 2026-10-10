@@ -1,11 +1,12 @@
-// Haalt de AH-bonus van de lopende week op, met per aanbieding de artikelen, en zet die in een JSON-bestand.
+// Haalt de AH-bonus van de lopende week op, met per aanbieding de artikelen, en zet die in een JSON-bestand,
+// in het formaat dat voor elke winkel gelijk is (zie scripts/aanbiedingen-opslaan.py).
 // Alleen lezen, met een anoniem token: er is geen AH-account voor nodig en er wordt niets ingelogd.
-// Elk artikel heeft twee id's: webshop_id (de webwinkel) en hq_id. Het hq_id is het product_id dat op een kassabon staat.
+// Elk artikel heeft twee id's: webshop_id (de webwinkel) en artikel_id, bij AH het hqId. Dat is het product_id dat op een kassabon staat.
 // Alleen de landelijke AH-bonus; Gall & Gall, Etos en de online aanbiedingen blijven buiten beschouwing.
 //
 // Gebruik:
 //
-//	cd scripts/ah-bonus && go run . ../../data/ah-bonus.json
+//	cd scripts/ah-bonus && go run . ../../data/ah-aanbiedingen.json
 package main
 
 import (
@@ -40,7 +41,7 @@ const groepVraag = `query BonusGroep($id: String, $van: String, $tot: String) {
 
 type artikel struct {
 	WebshopID int    `json:"webshop_id"`
-	HqID      int    `json:"hq_id,omitempty"`
+	HqID      int    `json:"artikel_id,omitempty"`
 	Titel     string `json:"titel"`
 	Merk      string `json:"merk,omitempty"`
 	Inhoud    string `json:"inhoud,omitempty"`
@@ -48,7 +49,7 @@ type artikel struct {
 	Categorie string  `json:"categorie,omitempty"`
 	Prijs     float64 `json:"prijs,omitempty"`
 	// Alleen gevuld als AH een bonusprijs per stuk geeft; bij "2e halve prijs" is die er niet
-	Bonusprijs float64 `json:"bonusprijs,omitempty"`
+	Bonusprijs float64 `json:"actieprijs,omitempty"`
 }
 
 type label struct {
@@ -80,6 +81,7 @@ type aanbieding struct {
 }
 
 type week struct {
+	Winkel       string       `json:"winkel"`
 	Van          string       `json:"van"`
 	Tot          string       `json:"tot"`
 	Opgehaald    string       `json:"opgehaald"`
@@ -118,7 +120,7 @@ func probeer(vraag func() error) error {
 
 func main() {
 	if len(os.Args) != 2 {
-		stop("gebruik: go run . <pad naar ah-bonus.json>")
+		stop("gebruik: go run . <pad naar ah-aanbiedingen.json>")
 	}
 	uit := os.Args[1]
 
@@ -149,7 +151,7 @@ func main() {
 		stop("AH geeft geen bonusweek terug")
 	}
 	periode := meta.Periods[0]
-	w := week{Van: periode.BonusStartDate, Tot: periode.BonusEndDate, Opgehaald: time.Now().Format(time.RFC3339)}
+	w := week{Winkel: "AH", Van: periode.BonusStartDate, Tot: periode.BonusEndDate, Opgehaald: time.Now().Format(time.RFC3339)}
 
 	// Dezelfde categorie staat onder meerdere tabbladen
 	var categorieen []string

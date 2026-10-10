@@ -1,5 +1,5 @@
 // Edge Function: geeft artikelen uit de aanbiedingen een producttype.
-// Bedoeld voor het ophaalscript (scripts/ah-bonus-opslaan.py), niet voor de app: er is geen login, maar
+// Bedoeld voor het ophaalscript (scripts/aanbiedingen-opslaan.py), niet voor de app: er is geen login, maar
 // dezelfde sleutel als bij aanbiedingen-opslaan in de header x-aanbiedingen-sleutel (secret
 // AANBIEDINGEN_SLEUTEL). Per aanroep beoordeelt de AI een aantal artikelen die nog geen oordeel hebben, met
 // titel, merk, inhoud en categorie als invoer en de hele typelijst erbij, en slaat dat op via

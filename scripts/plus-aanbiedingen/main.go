@@ -1,4 +1,5 @@
-// Haalt de PLUS-aanbiedingen van één week op, met per aanbieding de artikelen, en zet die in een JSON-bestand.
+// Haalt de PLUS-aanbiedingen van één week op, met per aanbieding de artikelen, en zet die in een JSON-bestand,
+// in het formaat dat voor elke winkel gelijk is (zie scripts/aanbiedingen-opslaan.py).
 // Alleen lezen, zonder account: dezelfde JSON-calls die plus.nl/aanbiedingen zelf doet (OutSystems).
 // Die calls zijn intern en kunnen bij elke nieuwe versie van de site veranderen. De versienummers die de site
 // bij een call verwacht staan daarom niet in dit script; ze worden elke keer uit de scripts van de site gelezen.
@@ -9,6 +10,8 @@
 //	cd scripts/plus-aanbiedingen && go run . ../../data/plus-aanbiedingen.json
 //	go run . -volgende ../../data/plus-aanbiedingen.json     de volgende week, als die al gepubliceerd is
 //	go run . -producten 50 ../../data/plus-aanbiedingen.json ook de productpagina van de eerste 50 artikelen (-1: alle)
+//	go run . -producten -1 -bekend ../../data/plus-bekend.json ../../data/plus-aanbiedingen.json
+//	    de productpagina van elk artikel dat niet in plus-bekend.json staat (zie aanbiedingen-opslaan.py --bekend)
 package main
 
 import (
@@ -55,13 +58,15 @@ var (
 )
 
 type artikel struct {
-	// Het artikelnummer van de webshop (SKU). Tekst, omdat het een nummer met voorloopnullen kan zijn
+	// Het artikelnummer van de webshop (SKU), bij PLUS ook het artikel_id: een bon van PLUS heeft geen nummers.
+	// Tekst, omdat het een nummer met voorloopnullen kan zijn
+	ArtikelID string `json:"artikel_id"`
 	WebshopID string `json:"webshop_id"`
 	Titel     string `json:"titel"`
 	Merk      string `json:"merk,omitempty"`
 	// Zoals PLUS het schrijft, zonder "Per": "1000 ml", "16 st". Bij een losse aanbieding uit de slug gehaald
 	Inhoud string `json:"inhoud,omitempty"`
-	// Bij een groep alleen de diepste categorie ("Zuiveldranken"); met de productpagina het hele pad, gescheiden door "/"
+	// Bij een groep alleen de diepste categorie ("Zuiveldranken"); met de productpagina het pad, gescheiden door "/"
 	Categorie string  `json:"categorie,omitempty"`
 	Prijs     float64 `json:"prijs,omitempty"`
 	// Alleen gevuld als PLUS een actieprijs per stuk geeft; bij "1+1 gratis" of "3 voor" is die er niet
@@ -112,6 +117,7 @@ type aanbieding struct {
 }
 
 type week struct {
+	Winkel       string       `json:"winkel"`
 	Van          string       `json:"van"`
 	Tot          string       `json:"tot"`
 	Opgehaald    string       `json:"opgehaald"`
@@ -207,6 +213,11 @@ func (k *klant) zoekCall(c *call) error {
 	return nil
 }
 
+// De site zegt zelf dat iets niet bestaat. Dat is een antwoord, geen hapering: opnieuw proberen helpt niet
+type bestaatNiet struct{ melding string }
+
+func (b bestaatNiet) Error() string { return b.melding }
+
 // Doet een call van de site en zet het deel "data" van het antwoord in uit
 func (k *klant) haal(c *call, variabelen map[string]any, verwijzing string, uit any) error {
 	body, err := json.Marshal(map[string]any{
@@ -217,7 +228,8 @@ func (k *klant) haal(c *call, variabelen map[string]any, verwijzing string, uit 
 	if err != nil {
 		return err
 	}
-	return probeer(func() error {
+	var nietGevonden error
+	err = probeer(func() error {
 		data, err := k.vraag("POST", basis+"/"+c.pad, body, verwijzing)
 		if err != nil {
 			return err
@@ -233,10 +245,18 @@ func (k *klant) haal(c *call, variabelen map[string]any, verwijzing string, uit 
 			return fmt.Errorf("geen JSON: %.200s", data)
 		}
 		if antwoord.Exception != nil {
+			if strings.Contains(antwoord.Exception.Message, "NotFound") {
+				nietGevonden = bestaatNiet{antwoord.Exception.Message}
+				return nil
+			}
 			return fmt.Errorf("%s: %s", antwoord.Exception.Name, antwoord.Exception.Message)
 		}
 		return json.Unmarshal(antwoord.Data, uit)
 	})
+	if err == nil {
+		err = nietGevonden
+	}
+	return err
 }
 
 // De site stuurt bij elke call de toestand van het scherm mee. Dit zijn de velden van een bezoeker die niet is
@@ -350,11 +370,28 @@ func titel(merk, naam string) string {
 func main() {
 	volgende := flag.Bool("volgende", false, "de volgende week in plaats van de lopende")
 	producten := flag.Int("producten", 0, "van zoveel artikelen ook de productpagina ophalen (EAN, inhoud, categoriepad); -1 is alle")
+	bekendPad := flag.String("bekend", "", "bestand met de artikelnummers die geen productpagina meer nodig hebben")
 	flag.Parse()
 	if flag.NArg() != 1 {
-		stop("gebruik: go run . [-volgende] [-producten N] <pad naar plus-aanbiedingen.json>")
+		stop("gebruik: go run . [-volgende] [-producten N] [-bekend bestand] <pad naar plus-aanbiedingen.json>")
 	}
 	uit := flag.Arg(0)
+
+	// Wat de database al kent: een EAN en een inhoud veranderen niet, dus die pagina hoeft niet opnieuw
+	bekend := map[string]bool{}
+	if *bekendPad != "" {
+		data, err := os.ReadFile(*bekendPad)
+		if err != nil {
+			stop("%s lezen mislukt: %v", *bekendPad, err)
+		}
+		var nummers []string
+		if err := json.Unmarshal(data, &nummers); err != nil {
+			stop("%s is geen lijst met artikelnummers: %v", *bekendPad, err)
+		}
+		for _, nummer := range nummers {
+			bekend[nummer] = true
+		}
+	}
 
 	koekjes, _ := cookiejar.New(nil)
 	k := &klant{http: &http.Client{Jar: koekjes, Timeout: 60 * time.Second}}
@@ -398,7 +435,7 @@ func main() {
 		stop("aanbiedingen ophalen mislukt: %v", err)
 	}
 
-	w := week{Van: lijst.PromotionPeriod.FromDate, Tot: lijst.PromotionPeriod.ToDate, Opgehaald: time.Now().Format(time.RFC3339), Aanbiedingen: []aanbieding{}}
+	w := week{Winkel: "PLUS", Van: lijst.PromotionPeriod.FromDate, Tot: lijst.PromotionPeriod.ToDate, Opgehaald: time.Now().Format(time.RFC3339), Aanbiedingen: []aanbieding{}}
 	for _, blok := range lijst.PromotionOfferList.List {
 		for _, o := range blok.Category.Offers.List {
 			if o.IsFreeDeliveryOffer {
@@ -416,7 +453,7 @@ func main() {
 			// Bij een groep staat in Product_SKU een nummer dat er niets mee te maken heeft.
 			if o.IsSingleProduct {
 				art := artikel{
-					WebshopID: o.ProductSKU, Titel: a.Titel, Merk: strings.TrimSpace(o.Brand), Categorie: a.Categorie,
+					ArtikelID: o.ProductSKU, WebshopID: o.ProductSKU, Titel: a.Titel, Merk: strings.TrimSpace(o.Brand), Categorie: a.Categorie,
 					Prijs: float64(o.PriceOriginalProduct), Actieprijs: float64(o.NewPrice), AlleenWinkel: o.IsOfflineSaleOnly, Slug: o.Slug,
 				}
 				if m := slugInhoud.FindStringSubmatch(o.Slug); m != nil {
@@ -441,7 +478,10 @@ func main() {
 		err := k.haal(detailCall, bezoeker(map[string]any{
 			"StoreChannelD": "", "PromotionOfferId": a.ID, "_promotionOfferIdInDataFetchStatus": 1,
 		}), basis+"/aanbiedingen/"+a.ID, &detail)
-		if err != nil {
+		// Een enkele groep heeft bij PLUS geen pagina met artikelen; die blijft leeg en telt niet als mislukt
+		if _, geenPagina := err.(bestaatNiet); geenPagina {
+			fmt.Fprintf(os.Stderr, "groep %s (%s) heeft bij PLUS geen artikelen\n", a.ID, a.Titel)
+		} else if err != nil {
 			mislukt++
 			a.Mislukt = true
 			fmt.Fprintf(os.Stderr, "groep %s (%s) mislukt: %v\n", a.ID, a.Titel, err)
@@ -449,7 +489,7 @@ func main() {
 		for _, regel := range detail.PromotionOfferDetail.ProductList.List {
 			p := regel.PLP
 			art := artikel{
-				WebshopID: p.SKU, Titel: titel(p.Brand, p.Name), Merk: strings.TrimSpace(p.Brand),
+				ArtikelID: p.SKU, WebshopID: p.SKU, Titel: titel(p.Brand, p.Name), Merk: strings.TrimSpace(p.Brand),
 				Inhoud: strings.TrimSpace(strings.TrimPrefix(p.Subtitle, "Per ")),
 				Prijs:  float64(regel.PriceOriginal), Actieprijs: float64(p.OriginalPrice),
 				AlleenWinkel: p.IsOfflineSaleOnly, Lokaal: p.IsLocalItem, Slug: p.Slug,
@@ -463,12 +503,16 @@ func main() {
 	}
 
 	// De productpagina: één verzoek per artikel, daarom alleen op verzoek
-	opgehaald, zonderPagina := 0, 0
+	opgehaald, zonderPagina, alBekend := 0, 0, 0
 	gezien := map[string]*artikel{}
 	for i := range w.Aanbiedingen {
 		for j := range w.Aanbiedingen[i].Artikelen {
 			art := &w.Aanbiedingen[i].Artikelen[j]
 			if art.WebshopID == "" || art.Slug == "" {
+				continue
+			}
+			if bekend[art.WebshopID] {
+				alBekend++
 				continue
 			}
 			// Hetzelfde artikel kan in twee aanbiedingen zitten
@@ -503,8 +547,12 @@ func main() {
 			art.EAN = p.ProductOut.Medicine.EAN
 			art.Hoeveelheid, art.Eenheid = float64(p.ReferenceQuantity.Size), p.ReferenceQuantity.Symbol
 			art.PrijsPerEenheid, art.Basiseenheid = float64(p.ProductOut.Overview.BaseUnitPrice), p.ReferenceQuantity.BaseUnit
+			// Na de vaste indeling (hoofdgroep, groep, soort) volgen soms seizoenspaden ("Kerstassortiment/...")
 			pad := []string{}
 			for _, c := range p.ProductOut.Categories.List {
+				if len(pad) == 3 {
+					break
+				}
 				pad = append(pad, c.Name)
 			}
 			if len(pad) > 0 {
@@ -534,7 +582,7 @@ func main() {
 	fmt.Printf("aanbiedingen van %s tot %s opgeslagen in %s: %d aanbiedingen (%d groepen, %d mislukt, %d zonder artikelen), %d artikelen, %d keer gratis bezorging overgeslagen\n",
 		w.Van, w.Tot, uit, len(w.Aanbiedingen), groepen, mislukt, leeg, artikelen, w.Overgeslagen)
 	if *producten != 0 {
-		fmt.Printf("productpagina's: %d opgehaald, %d mislukt\n", opgehaald, zonderPagina)
+		fmt.Printf("productpagina's: %d opgehaald, %d mislukt, %d al bekend\n", opgehaald, zonderPagina, alBekend)
 	}
 }
 

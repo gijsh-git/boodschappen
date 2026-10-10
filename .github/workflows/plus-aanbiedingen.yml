@@ -1,0 +1,46 @@
+# Haalt de PLUS-aanbiedingen van de lopende week op en zet die in de database (roadmap stap 9). Nieuwe
+# artikelen krijgen daarna een producttype via de Edge Function artikelen-classificeren (zelfde sleutel).
+# De week van PLUS loopt van woensdag tot en met dinsdag. Vrijdag draait het nog eens: dat vangt een mislukte
+# woensdag op en neemt wijzigingen van PLUS mee. Opnieuw draaien voegt niets dubbel toe.
+# Een eigen bestand naast ah-bonus.yml: een schema geldt per workflow, en een mislukte ronde bij PLUS raakt
+# AH zo niet. plus.nl heeft geen openbare API; het script gebruikt de calls van de site zelf en kan dus
+# breken als de site verandert of de servers van GitHub gaat weigeren. Dat valt op als mislukte taak.
+# De productpagina (EAN, inhoud als getal) wordt alleen opgehaald voor artikelen die de database nog niet
+# kent: de eerste keer is dat de hele week (ongeveer tien minuten), daarna alleen wat nieuw is.
+# Nodig: de secret AANBIEDINGEN_SLEUTEL, dezelfde als bij ah-bonus.yml.
+name: PLUS-aanbiedingen ophalen
+
+on:
+  schedule:
+    # In UTC: 06:45 Nederlandse tijd in de zomer, 05:45 in de winter
+    - cron: "45 4 * * 3"
+    - cron: "45 4 * * 5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency: plus-aanbiedingen
+
+jobs:
+  ophalen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      AANBIEDINGEN_SLEUTEL: ${{ secrets.AANBIEDINGEN_SLEUTEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: scripts/plus-aanbiedingen/go.mod
+          cache-dependency-path: scripts/plus-aanbiedingen/go.sum
+      - name: Vragen welke artikelen al bekend zijn
+        run: |
+          mkdir -p data
+          python3 scripts/aanbiedingen-opslaan.py --winkel PLUS --bekend
+      - name: Aanbiedingen ophalen bij PLUS
+        run: |
+          cd scripts/plus-aanbiedingen
+          go run . -producten -1 -bekend ../../data/plus-bekend.json ../../data/plus-aanbiedingen.json
+      - name: Opslaan in de database
+        run: python3 scripts/aanbiedingen-opslaan.py --winkel PLUS --echt

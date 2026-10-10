@@ -32,8 +32,8 @@ jobs:
         run: |
           mkdir -p data
           cd scripts/ah-bonus
-          go run . ../../data/ah-bonus.json
+          go run . ../../data/ah-aanbiedingen.json
       - name: Opslaan in de database
         env:
           AANBIEDINGEN_SLEUTEL: ${{ secrets.AANBIEDINGEN_SLEUTEL }}
-        run: python3 scripts/ah-bonus-opslaan.py --echt
+        run: python3 scripts/aanbiedingen-opslaan.py --winkel AH --echt

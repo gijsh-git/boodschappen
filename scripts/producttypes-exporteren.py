@@ -28,7 +28,7 @@ def laad(naam):
     return module
 
 
-opslaan = laad("ah-bonus-opslaan")
+opslaan = laad("aanbiedingen-opslaan")
 importeren = opslaan.importeren
 
 UITVOER = importeren.HOOFDMAP / "docs" / "producttypes-export.csv"

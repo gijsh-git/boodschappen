@@ -52,6 +52,7 @@ const Logica = (() => {
   //   types:       [{ id, naam, hoofdgroep, valt_eronder, valt_er_niet_onder, telt_mee, nieuw, artikelen, namen, aankopen }]
   let koppelingen = null;
   let typeOpen = null; // id van het type dat is opengeklapt
+  let koppelWinkel = null; // de supermarkt waarvan je de artikelen bekijkt ("PLUS"), of null voor alle
   let typeDetails = {}; // type-id -> { namen, artikelen }, pas opgehaald bij openklappen
   const ZEKERHEID = { high: "hoog", medium: "middel", low: "laag" };
 
@@ -434,6 +435,7 @@ const Logica = (() => {
     vergeetKoppelingen() {
       koppelingen = null;
       typeOpen = null;
+      koppelWinkel = null;
       typeDetails = {};
     },
 
@@ -455,10 +457,26 @@ const Logica = (() => {
     // De types die de AI zelf heeft aangemaakt en die de beheerder nog niet heeft gezien
     nieuweTypes() { return ((koppelingen || {}).types || []).filter((t) => t.nieuw); },
 
+    // De supermarkten met een artikel om na te kijken of zonder type, kort zoals in de database: ["AH", "PLUS"]
+    koppelWinkels() {
+      const alles = koppelingen || {};
+      return this.dealWinkels([...(alles.artikelen || []), ...(alles.zonder_type || [])]);
+    },
+
+    // De gekozen supermarkt, of null voor alle; ook null als die winkel niets meer heeft om te tonen
+    koppelWinkel() { return this.koppelWinkels().includes(koppelWinkel) ? koppelWinkel : null; },
+    zetKoppelWinkel(supermarkt) { koppelWinkel = supermarkt || null; },
+
+    // De artikelen van de gekozen supermarkt; zonder keuze allemaal
+    vanKoppelWinkel(artikelen) {
+      const winkel = this.koppelWinkel();
+      return winkel ? artikelen.filter((a) => a.supermarkt === winkel) : artikelen;
+    },
+
     // De artikelen om na te kijken, per type: [{ type_id, type, rijen }]
     artikelGroepen() {
       const per = new Map();
-      for (const rij of (koppelingen || {}).artikelen || []) {
+      for (const rij of this.vanKoppelWinkel((koppelingen || {}).artikelen || [])) {
         if (!per.has(rij.type_id)) per.set(rij.type_id, { type_id: rij.type_id, type: rij.type, rijen: [] });
         per.get(rij.type_id).rijen.push(rij);
       }
@@ -467,6 +485,7 @@ const Logica = (() => {
 
     // Wat de AI nergens kwijt kon, per voorgesteld type: [{ voorstel, artikelen, termen }]. De groepen met de
     // meeste rijen eerst; wat zonder voorstel is (geen gewone boodschap) staat onderaan met voorstel null.
+    // Met een gekozen supermarkt alleen de artikelen van die winkel; een term hoort bij geen winkel en valt dan weg.
     ontbrekend() {
       const per = new Map();
       const groep = (voorstel) => {
@@ -474,8 +493,8 @@ const Logica = (() => {
         if (!per.has(sleutel)) per.set(sleutel, { voorstel: voorstel || null, artikelen: [], termen: [] });
         return per.get(sleutel);
       };
-      for (const artikel of (koppelingen || {}).zonder_type || []) groep(artikel.voorstel).artikelen.push(artikel);
-      for (const term of (koppelingen || {}).termen || []) {
+      for (const artikel of this.vanKoppelWinkel((koppelingen || {}).zonder_type || [])) groep(artikel.voorstel).artikelen.push(artikel);
+      for (const term of this.koppelWinkel() ? [] : (koppelingen || {}).termen || []) {
         if (!term.type_id && term.voorstel) groep(term.voorstel).termen.push(term);
       }
       const aantal = (g) => g.artikelen.length + g.termen.length;

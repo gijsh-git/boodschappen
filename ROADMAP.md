@@ -567,7 +567,7 @@ Uitgangspunten:
 #### Deel 0 – Verkennen
 
 - [x] Eén PLUS-week ophalen naar `data/plus-aanbiedingen.json`, zonder database (`scripts/plus-aanbiedingen`). Het script leest alleen. Bron voor de proef: de interne JSON-calls van plus.nl (OutSystems); die zijn kwetsbaar en niet bedoeld voor de publieke fase.
-- [x] Hetzelfde ophalen één keer vanaf GitHub draaien (een handmatige workflow die alleen ophaalt en telt, `.github/workflows/plus-verkennen.yml`). Gedraaid op 10 oktober 2026: dezelfde telling als lokaal (206 aanbiedingen, 1498 artikelen, 20 productpagina's zonder fouten), in ruim twee minuten. plus.nl laat de servers van GitHub door.
+- [x] Hetzelfde ophalen één keer vanaf GitHub draaien (een handmatige workflow die alleen ophaalt en telt, `plus-verkennen.yml`; in deel 1 vervangen door de wekelijkse `plus-aanbiedingen.yml`). Gedraaid op 10 oktober 2026: dezelfde telling als lokaal (206 aanbiedingen, 1498 artikelen, 20 productpagina's zonder fouten), in ruim twee minuten. plus.nl laat de servers van GitHub door.
 - [x] Verslag in `docs/verkenning-plus.md`, zoals bij AH: aantal aanbiedingen, welke nummers er zijn (webshopnummer, EAN), groepen, kortingsteksten, looptijd (waarschijnlijk zondag tot en met zaterdag), categorieën, lokale aanbiedingen en of de inhoud ("500 g", "6 x 330 ml", "per stuk") leesbaar is.
 - [x] Nalopen wat er nu in `receipts.store` staat. `bon-uploaden` geeft al "AH" en "PLUS" als code; oudere bonnen kunnen een andere schrijfwijze hebben.
 - [x] De open punten beslissen (zie onder).
@@ -584,16 +584,18 @@ Uitkomst (10 oktober 2026), volledig in `docs/verkenning-plus.md`:
 
 #### Deel 1 – Opslaan en classificeren
 
-- [ ] Eén formaat voor alle winkels (`data/<winkel>-aanbiedingen.json`): per aanbieding de kortingstekst, de labels, de looptijd, of het een groep is, of het alleen in de winkel geldt, en de artikelen met nummer, titel, merk, inhoud, categorie, prijs en actieprijs.
-- [ ] Eén opslagscript: `ah-bonus-opslaan.py` wordt `aanbiedingen-opslaan.py --winkel AH|PLUS`. De Edge Function `aanbiedingen-opslaan` en `save_offers` blijven zoals ze zijn. `MINSTENS` geldt per winkel.
-- [ ] `article_id` bij PLUS is het artikelnummer van de webshop. Geeft de bron een EAN, dan komt die in een eigen kolom op `articles`; daarmee is later hetzelfde artikel in twee winkels te herkennen. Vastleggen bij de kolom en in `aanbiedingen.md`.
-- [ ] EAN en de inhoud als getal komen van de productpagina van PLUS, één verzoek per artikel, en alleen voor artikelen die de database nog niet kent. Het ophaalscript vraagt daarvoor eerst welke artikelnummers al een EAN hebben: de Edge Function `aanbiedingen-opslaan` krijgt er een leesvraag bij, met dezelfde sleutel. De eerste ronde is dat de hele week (ongeveer 1500 verzoeken, tien minuten), daarna alleen wat nieuw is.
-- [ ] PLUS-winkels zijn franchisezaken. Vraagt de bron om een winkel, dan één vaste winkel kiezen en `store_only` vullen waar dat nodig is. Lokale aanbiedingen komen niet mee.
-- [ ] Inhoud bij het opslaan omzetten naar hoeveelheid en eenheid, voor de prijs per eenheid in deel 4.
-- [ ] Een eigen workflowbestand voor PLUS met een eigen schema (een schema geldt per workflow, niet per job). Een mislukte PLUS-ronde raakt AH dan niet.
+- [x] Eén formaat voor alle winkels (`data/<winkel>-aanbiedingen.json`): per aanbieding de kortingstekst, de labels, de looptijd, of het een groep is, of het alleen in de winkel geldt, en de artikelen met nummer, titel, merk, inhoud, categorie, prijs en actieprijs.
+- [x] Eén opslagscript: `ah-bonus-opslaan.py` wordt `aanbiedingen-opslaan.py --winkel AH|PLUS`. De Edge Function `aanbiedingen-opslaan` en `save_offers` blijven zoals ze zijn. `MINSTENS` geldt per winkel.
+- [x] `article_id` bij PLUS is het artikelnummer van de webshop. Geeft de bron een EAN, dan komt die in een eigen kolom op `articles`; daarmee is later hetzelfde artikel in twee winkels te herkennen. Vastleggen bij de kolom en in `aanbiedingen.md`.
+- [x] EAN en de inhoud als getal komen van de productpagina van PLUS, één verzoek per artikel, en alleen voor artikelen die de database nog niet kent. Het ophaalscript vraagt daarvoor eerst welke artikelnummers al een EAN hebben: de Edge Function `aanbiedingen-opslaan` krijgt er een leesvraag bij, met dezelfde sleutel. De eerste ronde is dat de hele week (ongeveer 1500 verzoeken, tien minuten), daarna alleen wat nieuw is.
+- [x] PLUS-winkels zijn franchisezaken. De bron vraagt niet om een winkel: zonder winkelkeuze komen alleen de landelijke aanbiedingen, dus er is geen vaste winkel gekozen. `store_only` is gevuld bij wat alleen in de winkel te koop is (sterke drank).
+- [x] Inhoud bij het opslaan omzetten naar hoeveelheid en eenheid (`articles.quantity` en `unit`: g, ml of st), voor de prijs per eenheid in deel 4. Ook voor AH, uit de tekst van de inhoud.
+- [x] Een eigen workflowbestand voor PLUS met een eigen schema (een schema geldt per workflow, niet per job): `.github/workflows/plus-aanbiedingen.yml`, woensdag- en vrijdagochtend. Een mislukte PLUS-ronde raakt AH dan niet.
 - [ ] Nieuwe PLUS-artikelen gaan door `artikelen-classificeren`, net als AH: één keer per artikel, daarna alleen de nieuwe van die week. De eerste keer kost dat meer AI-aanroepen.
-- [ ] `product_types.main_group` is de eigen indeling van de app, begonnen als de hoofdcategorie van AH. De categorie van een winkel is alleen invoer voor de AI. In de code is dat al zo (een nieuw type krijgt alleen een hoofdgroep die al bestaat); bijwerken in `producttypes.md`. De terugval bij favorieten in `offers_for_me()` splitst `articles.category` nog op "/", de vorm van AH: die gaat de hoofdgroep van het type van het artikel gebruiken.
-- [ ] Koppelingen: bij elk artikel de winkel tonen, met een filter per winkel.
+- [x] `product_types.main_group` is de eigen indeling van de app, begonnen als de hoofdcategorie van AH. De categorie van een winkel is alleen invoer voor de AI. In de code is dat al zo (een nieuw type krijgt alleen een hoofdgroep die al bestaat); bijwerken in `producttypes.md`. De terugval bij favorieten in `offers_for_me()` splitst `articles.category` nog op "/", de vorm van AH: die gaat de hoofdgroep van het type van het artikel gebruiken.
+- [x] Koppelingen: bij elk artikel de winkel tonen, met een filter per winkel.
+- [x] Een slot tot deel 2 er is: `shown_supermarkets()` geeft de winkels waarvan de app aanbiedingen toont, voorlopig alleen AH. Zonder dat slot zou elke PLUS-aanbieding meteen een label of een regel in Voor jou geven. Deel 2 vervangt het door "Mijn winkels".
+- [ ] Een kortingstekst waar PLUS alleen een actieprijs geeft (ruim de helft): het opslagscript maakt "VOOR 1.49", en per gewicht "KILO VOOR 1.69", de vorm van AH. Nakijken of dat op de rij en in het paneel goed leest zodra PLUS zichtbaar is (deel 3).
 - [ ] In de app is nog niets zichtbaar. Controle in Koppelingen: verwacht een vollere "Geen type" en een paar nieuwe types. Het AH-assortiment heeft de typelijst gevormd; PLUS laat zien waar die tekortschiet.
 
 Huismerken: "PLUS" wordt een merk zoals "AH". Wie "plus" typt, krijgt alles van het merk PLUS. Een merkfavoriet "AH" voor pindakaas raakt de PLUS-pindakaas niet. Een begrip "huismerk" (elk huismerk telt) komt niet in deze stap.

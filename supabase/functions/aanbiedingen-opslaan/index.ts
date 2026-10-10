@@ -1,12 +1,14 @@
 // Edge Function: neemt de opgehaalde aanbiedingen van een supermarkt aan en slaat ze op via save_offers.
-// Bedoeld voor het ophaalscript (scripts/ah-bonus-opslaan.py), niet voor de app: er is geen login, maar
+// Bedoeld voor het opslagscript (scripts/aanbiedingen-opslaan.py), niet voor de app: er is geen login, maar
 // een eigen sleutel in de header x-aanbiedingen-sleutel, die gelijk moet zijn aan de secret
 // AANBIEDINGEN_SLEUTEL. Zo hoeft de service role key Supabase niet uit: wie de sleutel heeft kan alleen
-// aanbiedingen opslaan, niets lezen en niets anders schrijven.
+// aanbiedingen opslaan en niets anders schrijven. Lezen kan één ding: met { supermarkt, vraag: "bekend" }
+// de artikelnummers van die supermarkt die al een EAN hebben (known_article_ids), zodat het ophaalscript
+// de productpagina alleen voor nieuwe artikelen opvraagt. Dat zijn openbare gegevens van de winkel.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const KOP = "x-aanbiedingen-sleutel";
-const MAX_TEKENS = 5_000_000; // een AH-week is ongeveer 1 MB
+const MAX_TEKENS = 5_000_000; // een week van AH of PLUS is ongeveer 1 MB
 const MAX_AANBIEDINGEN = 2000;
 
 function antwoord(inhoud: unknown, status = 200) {
@@ -61,24 +63,36 @@ Deno.serve(async (req) => {
     stukken.push(value);
   }
 
-  let invoer: { supermarkt?: unknown; aanbiedingen?: unknown };
+  let invoer: { supermarkt?: unknown; aanbiedingen?: unknown; vraag?: unknown };
   try {
     invoer = JSON.parse(await new Blob(stukken).text());
   } catch {
     return antwoord({ fout: "De gegevens zijn geen geldige JSON." }, 400);
   }
-  const { supermarkt, aanbiedingen } = invoer ?? {};
+  const { supermarkt, aanbiedingen, vraag } = invoer ?? {};
   if (typeof supermarkt !== "string" || !supermarkt.trim() || supermarkt.length > 40) {
     return antwoord({ fout: "Geen supermarkt opgegeven." }, 400);
-  }
-  if (!Array.isArray(aanbiedingen) || aanbiedingen.length === 0 || aanbiedingen.length > MAX_AANBIEDINGEN) {
-    return antwoord({ fout: `Geef 1 tot ${MAX_AANBIEDINGEN} aanbiedingen mee.` }, 400);
   }
 
   // De service role komt uit de omgeving van de functie en wordt alleen voor deze ene aanroep gebruikt
   const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+
+  if (vraag !== undefined) {
+    if (vraag !== "bekend") return antwoord({ fout: "Onbekende vraag." }, 400);
+    const { data, error } = await db.rpc("known_article_ids", { p_supermarket: supermarkt.trim() });
+    if (error) {
+      console.error("known_article_ids mislukt:", error.message);
+      return antwoord({ fout: "Lezen mislukt: " + error.message }, 500);
+    }
+    return antwoord({ artikelen: data ?? [] });
+  }
+
+  if (!Array.isArray(aanbiedingen) || aanbiedingen.length === 0 || aanbiedingen.length > MAX_AANBIEDINGEN) {
+    return antwoord({ fout: `Geef 1 tot ${MAX_AANBIEDINGEN} aanbiedingen mee.` }, 400);
+  }
+
   const { data, error } = await db.rpc("save_offers", { p_supermarket: supermarkt.trim(), p_offers: aanbiedingen });
   if (error) {
     console.error("save_offers mislukt:", error.message);

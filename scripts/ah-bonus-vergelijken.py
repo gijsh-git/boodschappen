@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Legt de AH-bonus van één week (data/ah-bonus.json, zie scripts/ah-bonus) naast wat we bij AH kopen
+"""Legt de AH-bonus van één week (data/ah-aanbiedingen.json, zie scripts/ah-bonus) naast wat we bij AH kopen
 (data/ah-bonnen.json, zie scripts/ah-bonnen). Verkenning: het schrijft niets, het telt alleen.
 
 Twee manieren om een aanbieding aan een aankoop te koppelen:
-  via ID    het product_id op de bon is het hq_id van een artikel in de aanbieding: precies dat artikel
+  via ID    het product_id op de bon is het artikel_id (bij AH het hqId) van een artikel in de aanbieding: precies dat artikel
   via naam  de naam van het product komt als hele woorden voor in de titel van een artikel in de aanbieding
 
 Gebruik, vanuit de hoofdmap van het project:
@@ -23,7 +23,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 HOOFDMAP = Path(__file__).resolve().parent.parent
-BONUS = HOOFDMAP / "data" / "ah-bonus.json"
+BONUS = HOOFDMAP / "data" / "ah-aanbiedingen.json"
 BONNEN = HOOFDMAP / "data" / "ah-bonnen.json"
 NAMEN = HOOFDMAP / "data" / "ah-namen.json"
 # Vanaf zoveel aankoopdagen noemen we iets een vast product (het aankoopprofiel toont het interval ook vanaf 3)
@@ -119,7 +119,7 @@ def main():
         via_id = {}    # artikel-titel -> product, voor artikelen die we zelf gekocht hebben
         via_naam = defaultdict(list)  # product -> titels van artikelen die erop lijken
         for art in a["artikelen"]:
-            pid = art.get("hq_id")
+            pid = art.get("artikel_id")
             if pid in id_dagen:
                 via_id[art["titel"]] = (id_product[pid], pid)
             tw = frozenset(stam(w) for w in woorden(art["titel"]))

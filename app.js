@@ -2799,7 +2799,7 @@ function kpKiezer(anker, zonder, kies) {
 }
 
 function kpArtikelInfo(artikel) {
-  return [artikel.merk, artikel.inhoud, artikel.categorie].filter(Boolean).join(" · ");
+  return [artikel.supermarkt, artikel.merk, artikel.inhoud, artikel.categorie].filter(Boolean).join(" · ");
 }
 
 function kpOordeel(rij) {
@@ -3000,6 +3000,20 @@ function renderKoppelingen() {
   const ontbreekt = Logica.ontbrekend();
   const nieuw = Logica.nieuweTypes();
   const tel = (lijst, per) => lijst.reduce((n, x) => n + per(x), 0);
+
+  // De keuze per supermarkt geldt voor de artikelen in "om na te kijken" en "Geen type"
+  const winkels = Logica.koppelWinkels();
+  $("kp-winkels").hidden = winkels.length < 2;
+  $("kp-winkels").replaceChildren(...[null, ...winkels].map((winkel) => {
+    const knop = kpEl("button", "", winkel ? Logica.winkelNaam(winkel) : "Alle winkels");
+    knop.type = "button";
+    knop.setAttribute("aria-pressed", Logica.koppelWinkel() === winkel);
+    knop.addEventListener("click", () => {
+      Logica.zetKoppelWinkel(winkel);
+      renderKoppelingen();
+    });
+    return knop;
+  }));
 
   $("kp-nieuw").replaceChildren(...nieuw.map(kpNieuwType));
   $("kp-nieuw-kop").textContent = `Nieuwe types (${nieuw.length})`;
