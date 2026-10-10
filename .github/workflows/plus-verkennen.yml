@@ -1,0 +1,30 @@
+# Proef voor roadmap stap 9, deel 0: komt het ophalen van de PLUS-aanbiedingen ook vanaf GitHub door?
+# plus.nl zit achter een beveiliging (Imperva) die servers van GitHub kan weigeren. Deze taak haalt de lopende
+# week op, telt, en bewaart niets: er is geen sleutel nodig en de database wordt niet geraakt.
+# Alleen met de hand te starten (Actions > "PLUS verkennen" > Run workflow). De uitkomst staat in het logboek
+# van de stap "Aanbiedingen ophalen bij PLUS".
+name: PLUS verkennen
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency: plus-verkennen
+
+jobs:
+  ophalen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: scripts/plus-aanbiedingen/go.mod
+          cache-dependency-path: scripts/plus-aanbiedingen/go.sum
+      - name: Aanbiedingen ophalen bij PLUS
+        run: |
+          mkdir -p data
+          cd scripts/plus-aanbiedingen
+          go run . -producten 20 ../../data/plus-aanbiedingen.json

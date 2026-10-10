@@ -53,7 +53,7 @@ Read the file for the domain you work in before changing it. A reference like (s
 | Profielscherm, aankoopprofiel, favorieten, Voor jou | `docs/systeem/profiel-en-voorjou.md` | Profile screen, Purchase profile, Favourites, Voor jou |
 | Aanbiedingen, Bonus-label, bonuspaneel, kiezen, wegklikken | `docs/systeem/aanbiedingen.md` (matching leunt op `producttypes.md`) | Offers, Bonus label, Matching offers, Variant, Choosing an offer, Dismissing an offer, Logging offer choices |
 | Producttypes, termen matchen, scherm Koppelingen, classificeren | `docs/systeem/producttypes.md` | Product types, Matching list terms |
-| Bonnen scannen, AH-import, AH-bonusscripts | `docs/systeem/bonnen.md` | Receipts, Historic AH receipts, AH bonus exploration |
+| Bonnen scannen, AH-import, AH-bonusscripts, PLUS-script | `docs/systeem/bonnen.md` | Receipts, Historic AH receipts, AH bonus exploration, PLUS offers exploration |
 | Edge Functions, secrets, een nieuwe omgeving | `docs/systeem/opzet.md` | |
 
 Other documents: `ARCHITECTURE.md` (how the client code is layered), `ROADMAP.md` (steps, done and planned, and the original wishes), `IDEEEN.md`, `docs/productregels.md` (decisions on product types), `docs/migraties.md` (migration commands), and the check queries `docs/aankoopprofiel-controle.sql` and `docs/producttypes-controle.sql`.

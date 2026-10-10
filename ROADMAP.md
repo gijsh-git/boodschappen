@@ -566,11 +566,21 @@ Uitgangspunten:
 
 #### Deel 0 – Verkennen
 
-- [ ] Eén PLUS-week ophalen naar `data/plus-aanbiedingen.json`, zonder database. Het script leest alleen. Bron voor de proef: de interne JSON-calls van plus.nl (OutSystems); die zijn kwetsbaar en niet bedoeld voor de publieke fase.
-- [ ] Hetzelfde ophalen één keer vanaf GitHub draaien (een handmatige workflow die alleen ophaalt en telt). Blokkeert plus.nl de servers van GitHub, dan komt de week niet vanzelf binnen en is er een andere opzet nodig (bijvoorbeeld lokaal draaien). Dat moet bekend zijn vóór deel 1.
-- [ ] Verslag in `docs/verkenning-plus.md`, zoals bij AH: aantal aanbiedingen, welke nummers er zijn (webshopnummer, EAN), groepen, kortingsteksten, looptijd (waarschijnlijk zondag tot en met zaterdag), categorieën, lokale aanbiedingen en of de inhoud ("500 g", "6 x 330 ml", "per stuk") leesbaar is.
-- [ ] Nalopen wat er nu in `receipts.store` staat. `bon-uploaden` geeft al "AH" en "PLUS" als code; oudere bonnen kunnen een andere schrijfwijze hebben.
+- [x] Eén PLUS-week ophalen naar `data/plus-aanbiedingen.json`, zonder database (`scripts/plus-aanbiedingen`). Het script leest alleen. Bron voor de proef: de interne JSON-calls van plus.nl (OutSystems); die zijn kwetsbaar en niet bedoeld voor de publieke fase.
+- [ ] Hetzelfde ophalen één keer vanaf GitHub draaien (een handmatige workflow die alleen ophaalt en telt). De workflow staat klaar (`.github/workflows/plus-verkennen.yml`, Actions > "PLUS verkennen" > Run workflow); hij moet nog één keer draaien. Blokkeert plus.nl de servers van GitHub, dan komt de week niet vanzelf binnen en is er een andere opzet nodig (bijvoorbeeld lokaal draaien). Dat moet bekend zijn vóór deel 1.
+- [x] Verslag in `docs/verkenning-plus.md`, zoals bij AH: aantal aanbiedingen, welke nummers er zijn (webshopnummer, EAN), groepen, kortingsteksten, looptijd (waarschijnlijk zondag tot en met zaterdag), categorieën, lokale aanbiedingen en of de inhoud ("500 g", "6 x 330 ml", "per stuk") leesbaar is.
+- [x] Nalopen wat er nu in `receipts.store` staat. `bon-uploaden` geeft al "AH" en "PLUS" als code; oudere bonnen kunnen een andere schrijfwijze hebben.
 - [ ] De open punten beslissen (zie onder).
+
+Uitkomst (10 oktober 2026), volledig in `docs/verkenning-plus.md`:
+
+- Ophalen werkt zonder account en zonder winkelkeuze, in ruim een minuut: 206 aanbiedingen (160 groepen, 46 losse artikelen) met 1498 artikelen. De calls zijn intern; het script leest de versienummers die de site verwacht elke ronde opnieuw uit.
+- De week loopt van woensdag tot en met dinsdag, niet van zondag tot en met zaterdag. De looptijd staat per aanbieding: er zijn dagaanbiedingen en acties van twee tot acht weken. De volgende week staat er een paar dagen eerder.
+- De korting komt alleen als tekst, in zeven vaste vormen ("2 VOOR 3.99", "1+1 GRATIS", "25 % KORTING"). Bij ruim de helft is er geen tekst, alleen een actieprijs: deel 1 maakt daar zelf een tekst van, anders staat er alleen "Bonus".
+- Elk artikel heeft een webshopnummer, merk, inhoud ("500 g"), categorie en prijs. Het EAN en de inhoud als getal staan alleen op de productpagina: één verzoek per artikel. Deel 1 kiest of dat elke week voor alles gebeurt of alleen voor nieuwe artikelen.
+- Geen lokale aanbiedingen zonder winkelkeuze; er hoeft geen vaste winkel gekozen te worden. "Alleen in de winkel" is er wel (sterke drank).
+- Het huismerk is een familie van merken ("PLUS", "PLUS Korenlanders", "PLUS Boerentrots", …).
+- `receipts.store`: 240 bonnen in de back-up van 7 oktober, allemaal `AH`. Niets recht te zetten.
 
 #### Deel 1 – Opslaan en classificeren
 
@@ -631,10 +641,10 @@ Besloten op 10 oktober 2026:
 - `main_group` is de indeling van de app, niet die van AH.
 - "Voordeligst" is de laagste prijs per eenheid na korting.
 - De check-constraint op `supermarkt` (`AH`, `PLUS`) uit de baseline zat op de tabel `deals` en is met die tabel vervallen.
+- De korting in één vorm komt pas in deel 4 (besloten na deel 0). De teksten van PLUS zijn regelmatig, en omdat de tekst wordt opgeslagen kan het omzetten later zonder opnieuw op te halen.
 
 Open, te beslissen na deel 0:
 
-- De korting in één vorm al opslaan in deel 1, of pas in deel 4? Hangt af van hoe de kortingsteksten van PLUS eruitzien.
 - Komt de PLUS-week vanzelf binnen via GitHub, of moet het ophalen ergens anders draaien?
 
 Na elk deel testen en committen. De beschrijving in `docs/systeem/` gaat mee in dezelfde commit.
