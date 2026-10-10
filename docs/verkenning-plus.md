@@ -25,7 +25,7 @@ Wat er kwetsbaar aan is:
 
 - Elke call vraagt twee versienummers: één van de hele site en één van de call zelf. Beide veranderen bij een nieuwe versie van de site. Het script leest ze daarom bij elke ronde uit de scripts van de site en heeft ze niet vast in de code staan.
 - Een call stuurt de toestand van het scherm mee (een twintigtal velden zoals `IsDesktop` en `StoreNumber`). Verandert PLUS het scherm, dan verandert die lijst.
-- De site zit achter Imperva. Vanaf de laptop kwam alles door met alleen de naam van een gewone browser. Of dat vanaf GitHub ook zo is, moet de taak "PLUS verkennen" laten zien.
+- De site zit achter Imperva. Vanaf de laptop kwam alles door met alleen de naam van een gewone browser. Vanaf GitHub ook: de taak "PLUS verkennen" gaf op 10 oktober dezelfde telling (206 aanbiedingen, 1498 artikelen, 20 productpagina's zonder fouten) in ruim twee minuten. Dat is één ronde; de beveiliging kan later strenger worden.
 - Het antwoord is altijd met Brotli ingepakt, ook als je om gzip vraagt. Daarom is het script in Go met één bibliotheek erbij; Python zonder extra pakket kan het niet lezen.
 - De week kies je met `PromotionPeriodId`: 1 is de lopende week, 2 de volgende. De schakelaar `IsNextWeekPromotions` doet op zichzelf niets. Met 0, wat de site zelf stuurt, kwam op zaterdag de volgende week terug.
 
@@ -120,7 +120,8 @@ De opzet van stap 9 klopt. De verkenning scherpt deze dingen aan:
 5. **Dagaanbiedingen bestaan.** De looptijd staat al per aanbieding, dus dat werkt; ze zijn alleen zichtbaar op die ene dag.
 6. **Het huismerk is een familie van merken**, zie hierboven.
 
-## Nog open
+## Besloten na de verkenning
 
-- De proef vanaf GitHub: de taak "PLUS verkennen" (`.github/workflows/plus-verkennen.yml`) moet één keer met de hand draaien. Komt daar dezelfde telling uit, dan kan de week vanzelf binnenkomen.
-- De korting in één vorm al in deel 1 of pas in deel 4. Uit de verkenning: het hoeft niet eerder. De teksten zijn regelmatig, `nodigVoorKorting()` leest ze al, en omdat de tekst wordt opgeslagen kan het omzetten later zonder opnieuw op te halen.
+- De PLUS-week komt binnen via GitHub Actions, net als AH: de proef vanaf GitHub slaagde.
+- De korting in één vorm komt pas in deel 4. De teksten zijn regelmatig, `nodigVoorKorting()` leest ze al, en omdat de tekst wordt opgeslagen kan het omzetten later zonder opnieuw op te halen.
+- De productpagina wordt alleen opgehaald voor artikelen die de database nog niet kent.

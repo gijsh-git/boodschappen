@@ -567,10 +567,10 @@ Uitgangspunten:
 #### Deel 0 – Verkennen
 
 - [x] Eén PLUS-week ophalen naar `data/plus-aanbiedingen.json`, zonder database (`scripts/plus-aanbiedingen`). Het script leest alleen. Bron voor de proef: de interne JSON-calls van plus.nl (OutSystems); die zijn kwetsbaar en niet bedoeld voor de publieke fase.
-- [ ] Hetzelfde ophalen één keer vanaf GitHub draaien (een handmatige workflow die alleen ophaalt en telt). De workflow staat klaar (`.github/workflows/plus-verkennen.yml`, Actions > "PLUS verkennen" > Run workflow); hij moet nog één keer draaien. Blokkeert plus.nl de servers van GitHub, dan komt de week niet vanzelf binnen en is er een andere opzet nodig (bijvoorbeeld lokaal draaien). Dat moet bekend zijn vóór deel 1.
+- [x] Hetzelfde ophalen één keer vanaf GitHub draaien (een handmatige workflow die alleen ophaalt en telt, `.github/workflows/plus-verkennen.yml`). Gedraaid op 10 oktober 2026: dezelfde telling als lokaal (206 aanbiedingen, 1498 artikelen, 20 productpagina's zonder fouten), in ruim twee minuten. plus.nl laat de servers van GitHub door.
 - [x] Verslag in `docs/verkenning-plus.md`, zoals bij AH: aantal aanbiedingen, welke nummers er zijn (webshopnummer, EAN), groepen, kortingsteksten, looptijd (waarschijnlijk zondag tot en met zaterdag), categorieën, lokale aanbiedingen en of de inhoud ("500 g", "6 x 330 ml", "per stuk") leesbaar is.
 - [x] Nalopen wat er nu in `receipts.store` staat. `bon-uploaden` geeft al "AH" en "PLUS" als code; oudere bonnen kunnen een andere schrijfwijze hebben.
-- [ ] De open punten beslissen (zie onder).
+- [x] De open punten beslissen (zie onder).
 
 Uitkomst (10 oktober 2026), volledig in `docs/verkenning-plus.md`:
 
@@ -587,6 +587,7 @@ Uitkomst (10 oktober 2026), volledig in `docs/verkenning-plus.md`:
 - [ ] Eén formaat voor alle winkels (`data/<winkel>-aanbiedingen.json`): per aanbieding de kortingstekst, de labels, de looptijd, of het een groep is, of het alleen in de winkel geldt, en de artikelen met nummer, titel, merk, inhoud, categorie, prijs en actieprijs.
 - [ ] Eén opslagscript: `ah-bonus-opslaan.py` wordt `aanbiedingen-opslaan.py --winkel AH|PLUS`. De Edge Function `aanbiedingen-opslaan` en `save_offers` blijven zoals ze zijn. `MINSTENS` geldt per winkel.
 - [ ] `article_id` bij PLUS is het artikelnummer van de webshop. Geeft de bron een EAN, dan komt die in een eigen kolom op `articles`; daarmee is later hetzelfde artikel in twee winkels te herkennen. Vastleggen bij de kolom en in `aanbiedingen.md`.
+- [ ] EAN en de inhoud als getal komen van de productpagina van PLUS, één verzoek per artikel, en alleen voor artikelen die de database nog niet kent. Het ophaalscript vraagt daarvoor eerst welke artikelnummers al een EAN hebben: de Edge Function `aanbiedingen-opslaan` krijgt er een leesvraag bij, met dezelfde sleutel. De eerste ronde is dat de hele week (ongeveer 1500 verzoeken, tien minuten), daarna alleen wat nieuw is.
 - [ ] PLUS-winkels zijn franchisezaken. Vraagt de bron om een winkel, dan één vaste winkel kiezen en `store_only` vullen waar dat nodig is. Lokale aanbiedingen komen niet mee.
 - [ ] Inhoud bij het opslaan omzetten naar hoeveelheid en eenheid, voor de prijs per eenheid in deel 4.
 - [ ] Een eigen workflowbestand voor PLUS met een eigen schema (een schema geldt per workflow, niet per job). Een mislukte PLUS-ronde raakt AH dan niet.
@@ -641,11 +642,10 @@ Besloten op 10 oktober 2026:
 - `main_group` is de indeling van de app, niet die van AH.
 - "Voordeligst" is de laagste prijs per eenheid na korting.
 - De check-constraint op `supermarkt` (`AH`, `PLUS`) uit de baseline zat op de tabel `deals` en is met die tabel vervallen.
+- De productpagina van PLUS (EAN, inhoud als getal) wordt alleen opgehaald voor artikelen die de database nog niet kent, niet elke week voor alles (besloten na deel 0).
+- De PLUS-week komt binnen via GitHub Actions, net als AH (besloten na deel 0: de proef vanaf GitHub slaagde). Eén geslaagde ronde is geen garantie dat de beveiliging van plus.nl dat zo laat; een mislukte ronde valt op als mislukte workflow.
 - De korting in één vorm komt pas in deel 4 (besloten na deel 0). De teksten van PLUS zijn regelmatig, en omdat de tekst wordt opgeslagen kan het omzetten later zonder opnieuw op te halen.
 
-Open, te beslissen na deel 0:
-
-- Komt de PLUS-week vanzelf binnen via GitHub, of moet het ophalen ergens anders draaien?
 
 Na elk deel testen en committen. De beschrijving in `docs/systeem/` gaat mee in dezelfde commit.
 
