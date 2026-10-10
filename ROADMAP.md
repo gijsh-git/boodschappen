@@ -564,7 +564,7 @@ Uitgangspunten:
 - Vergelijken tussen winkels gebeurt op type en op prijs per eenheid, niet op hetzelfde artikel. Er is geen koppeling tussen een AH-artikel en een PLUS-artikel.
 - Onafhankelijkheid (`IDEEEN.md`): de volgorde komt uit prijs en voorkeur, nooit uit betaalde plekken.
 
-#### Deel 0 – Verkennen
+#### [x] Deel 0 – Verkennen
 
 - [x] Eén PLUS-week ophalen naar `data/plus-aanbiedingen.json`, zonder database (`scripts/plus-aanbiedingen`). Het script leest alleen. Bron voor de proef: de interne JSON-calls van plus.nl (OutSystems); die zijn kwetsbaar en niet bedoeld voor de publieke fase.
 - [x] Hetzelfde ophalen één keer vanaf GitHub draaien (een handmatige workflow die alleen ophaalt en telt, `plus-verkennen.yml`; in deel 1 vervangen door de wekelijkse `plus-aanbiedingen.yml`). Gedraaid op 10 oktober 2026: dezelfde telling als lokaal (206 aanbiedingen, 1498 artikelen, 20 productpagina's zonder fouten), in ruim twee minuten. plus.nl laat de servers van GitHub door.
@@ -582,7 +582,7 @@ Uitkomst (10 oktober 2026), volledig in `docs/verkenning-plus.md`:
 - Het huismerk is een familie van merken ("PLUS", "PLUS Korenlanders", "PLUS Boerentrots", …).
 - `receipts.store`: 240 bonnen in de back-up van 7 oktober, allemaal `AH`. Niets recht te zetten.
 
-#### Deel 1 – Opslaan en classificeren
+#### [x] Deel 1 – Opslaan en classificeren
 
 - [x] Eén formaat voor alle winkels (`data/<winkel>-aanbiedingen.json`): per aanbieding de kortingstekst, de labels, de looptijd, of het een groep is, of het alleen in de winkel geldt, en de artikelen met nummer, titel, merk, inhoud, categorie, prijs en actieprijs.
 - [x] Eén opslagscript: `ah-bonus-opslaan.py` wordt `aanbiedingen-opslaan.py --winkel AH|PLUS`. De Edge Function `aanbiedingen-opslaan` en `save_offers` blijven zoals ze zijn. `MINSTENS` geldt per winkel.
@@ -591,16 +591,18 @@ Uitkomst (10 oktober 2026), volledig in `docs/verkenning-plus.md`:
 - [x] PLUS-winkels zijn franchisezaken. De bron vraagt niet om een winkel: zonder winkelkeuze komen alleen de landelijke aanbiedingen, dus er is geen vaste winkel gekozen. `store_only` is gevuld bij wat alleen in de winkel te koop is (sterke drank).
 - [x] Inhoud bij het opslaan omzetten naar hoeveelheid en eenheid (`articles.quantity` en `unit`: g, ml of st), voor de prijs per eenheid in deel 4. Ook voor AH, uit de tekst van de inhoud.
 - [x] Een eigen workflowbestand voor PLUS met een eigen schema (een schema geldt per workflow, niet per job): `.github/workflows/plus-aanbiedingen.yml`, woensdag- en vrijdagochtend. Een mislukte PLUS-ronde raakt AH dan niet.
-- [ ] Nieuwe PLUS-artikelen gaan door `artikelen-classificeren`, net als AH: één keer per artikel, daarna alleen de nieuwe van die week. De eerste keer kost dat meer AI-aanroepen.
+- [x] Nieuwe PLUS-artikelen gaan door `artikelen-classificeren`, net als AH: één keer per artikel, daarna alleen de nieuwe van die week. De eerste keer kost dat meer AI-aanroepen.
 - [x] `product_types.main_group` is de eigen indeling van de app, begonnen als de hoofdcategorie van AH. De categorie van een winkel is alleen invoer voor de AI. In de code is dat al zo (een nieuw type krijgt alleen een hoofdgroep die al bestaat); bijwerken in `producttypes.md`. De terugval bij favorieten in `offers_for_me()` splitst `articles.category` nog op "/", de vorm van AH: die gaat de hoofdgroep van het type van het artikel gebruiken.
 - [x] Koppelingen: bij elk artikel de winkel tonen, met een filter per winkel.
 - [x] Een slot tot deel 2 er is: `shown_supermarkets()` geeft de winkels waarvan de app aanbiedingen toont, voorlopig alleen AH. Zonder dat slot zou elke PLUS-aanbieding meteen een label of een regel in Voor jou geven. Deel 2 vervangt het door "Mijn winkels".
-- [ ] Een kortingstekst waar PLUS alleen een actieprijs geeft (ruim de helft): het opslagscript maakt "VOOR 1.49", en per gewicht "KILO VOOR 1.69", de vorm van AH. Nakijken of dat op de rij en in het paneel goed leest zodra PLUS zichtbaar is (deel 3).
-- [ ] In de app is nog niets zichtbaar. Controle in Koppelingen: verwacht een vollere "Geen type" en een paar nieuwe types. Het AH-assortiment heeft de typelijst gevormd; PLUS laat zien waar die tekortschiet.
+- [x] Een kortingstekst waar PLUS alleen een actieprijs geeft (ruim de helft): het opslagscript maakt "VOOR 1.49", en per gewicht "KILO VOOR 1.69", de vorm van AH.
+- [x] In de app is nog niets zichtbaar (bevestigd op 10 oktober 2026: geen kortingen van PLUS op de lijst of in Voor jou). Controle in Koppelingen: verwacht een vollere "Geen type" en een paar nieuwe types. Het AH-assortiment heeft de typelijst gevormd; PLUS laat zien waar die tekortschiet.
 
 Huismerken: "PLUS" wordt een merk zoals "AH". Wie "plus" typt, krijgt alles van het merk PLUS. Een merkfavoriet "AH" voor pindakaas raakt de PLUS-pindakaas niet. Een begrip "huismerk" (elk huismerk telt) komt niet in deze stap.
 
-#### Deel 2 – Mijn winkels
+Stand na 10 oktober 2026: de eerste PLUS-week staat in de database (206 aanbiedingen, 1498 artikelen, elk met EAN, hoeveelheid en type). De correcties op de types die daaruit volgden en de keuze voor één AI-ronde staan in `docs/productregels.md`. Of de zelfgemaakte kortingstekst goed leest is een punt van deel 3 geworden. Nog niet gezien: de eerste geplande rondes met de nieuwe scriptnaam (AH op maandag, PLUS op woensdag).
+
+#### [ ] Deel 2 – Mijn winkels
 
 - [ ] In het profiel een blok "Mijn winkels", waarin je aanvinkt welke supermarkten meedoen. Per persoon, net als de favorieten. Tabel `user_stores` (`user_id`, `supermarket`), met RLS op de eigen rijen; schrijven kan rechtstreeks, zonder RPC, zoals bij `favorites`.
 - [ ] De keuze staat altijd als rij in de tabel: bestaande en nieuwe gebruikers krijgen een rij AH, en de laatste winkel is niet uit te vinken. "Geen rijen betekent AH" zou AH onmogelijk maken om uit te zetten. PLUS zet je zelf aan.
@@ -611,8 +613,9 @@ Huismerken: "PLUS" wordt een merk zoals "AH". Wie "plus" typt, krijgt alles van 
 - Waarom niet per kijker filteren op de lijst: dan ziet Els "3 in de bonus" en Gijs "5", en een gekozen PLUS-aanbieding staat hoe dan ook voor iedereen op de lijst.
 - Later: een voorstel afleiden uit de bonnen ("je koopt ook bij PLUS. Aanzetten?").
 
-#### Deel 3 – Weergave
+#### [ ] Deel 3 – Weergave
 
+- [ ] Nakijken of de zelfgemaakte kortingstekst van PLUS ("VOOR 1.49", "KILO VOOR 1.69") op de rij en in het paneel goed leest.
 - [ ] Chip in de kop: het totaal met de winkelnamen ("3 in de bonus bij AH en PLUS"). Zo werkt `renderBonus()` al. Geen aantallen per winkel: een item kan bij beide in de aanbieding zijn, dus die tellen niet op tot het totaal.
 - [ ] Een item met alleen het label "Bonus" krijgt geen winkel op de rij; het kan bij beide winkels in de aanbieding zijn en de winkel staat in het paneel.
 - [ ] Gekozen aanbieding: de winkel in de metaregel ("voor tomatensoep · PLUS · t/m za"), zodra de lijst meer dan één winkel heeft. Na kiezen is het item aan een winkel gebonden.
@@ -621,7 +624,7 @@ Huismerken: "PLUS" wordt een merk zoals "AH". Wie "plus" typt, krijgt alles van 
 - Wegklikken, terughalen, het logboek en het terugvallen na afloop werken per aanbieding en hebben al een winkel. Daar verandert niets.
 - Later, niet in deze stap: een winkelmodus ("ik sta bij PLUS") die de aanbiedingen van die winkel naar voren haalt.
 
-#### Deel 4 – Vergelijken en volgorde
+#### [ ] Deel 4 – Vergelijken en volgorde
 
 - [ ] De korting in één vorm vastleggen, naast de tekst: de soort (`x_voor_prijs`, `x_plus_y_gratis`, `ne_halve_prijs`, `procent`, `actieprijs`), het aantal stuks dat nodig is en het bedrag of percentage. Het opslagscript zet de tekst van elke winkel daarin om. `discount_type` en `labels` worden nu nergens gelezen, dus dit breekt niets.
 - [ ] `nodigVoorKorting()` in `logica.js` leest nu de kortingstekst uit `items.offer_choice` en uit `offers_for_list`. Het kan pas weg als het aantal stuks ook in die twee staat.
