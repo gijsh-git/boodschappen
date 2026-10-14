@@ -602,14 +602,14 @@ Huismerken: "PLUS" wordt een merk zoals "AH". Wie "plus" typt, krijgt alles van 
 
 Stand na 10 oktober 2026: de eerste PLUS-week staat in de database (206 aanbiedingen, 1498 artikelen, elk met EAN, hoeveelheid en type). De correcties op de types die daaruit volgden en de keuze voor één AI-ronde staan in `docs/productregels.md`. Of de zelfgemaakte kortingstekst goed leest is een punt van deel 3 geworden. Nog niet gezien: de eerste geplande rondes met de nieuwe scriptnaam (AH op maandag, PLUS op woensdag).
 
-#### [ ] Deel 2 – Mijn winkels
+#### [x] Deel 2 – Mijn winkels
 
-- [ ] In het profiel een blok "Mijn winkels", waarin je aanvinkt welke supermarkten meedoen. Per persoon, net als de favorieten. Tabel `user_stores` (`user_id`, `supermarket`), met RLS op de eigen rijen; schrijven kan rechtstreeks, zonder RPC, zoals bij `favorites`.
-- [ ] De keuze staat altijd als rij in de tabel: bestaande en nieuwe gebruikers krijgen een rij AH, en de laatste winkel is niet uit te vinken. "Geen rijen betekent AH" zou AH onmogelijk maken om uit te zetten. PLUS zet je zelf aan.
-- [ ] "Voor jou" en de favorieten gebruiken alleen je eigen winkels.
-- [ ] Een gedeelde lijst gebruikt de winkels van alle leden samen. Doet Els alleen AH en Gijs AH en PLUS, dan toont de lijst AH en PLUS. `offers_for_list`, `offer_details_for_list` en het kiezen filteren daarop.
-- [ ] Een gekozen aanbieding of een item uit Voor jou blijft altijd zichtbaar, ook als de winkel daarna uit iemands profiel gaat.
-- [ ] De lijst leest de winkels van de leden bij het laden. Leden en winkels veranderen zelden; live meeluisteren via Realtime is niet nodig.
+- [x] In het profiel een blok "Mijn winkels", waarin je aanvinkt welke supermarkten meedoen. Per persoon, net als de favorieten. Tabel `user_stores` (`user_id`, `supermarket`), met RLS op de eigen rijen; schrijven kan rechtstreeks, zonder RPC, zoals bij `favorites`.
+- [x] De keuze staat altijd als rij in de tabel: bestaande en nieuwe gebruikers krijgen een rij AH, en de laatste winkel is niet uit te vinken. "Geen rijen betekent AH" zou AH onmogelijk maken om uit te zetten. PLUS zet je zelf aan.
+- [x] "Voor jou" en de favorieten gebruiken alleen je eigen winkels.
+- [x] Een gedeelde lijst gebruikt de winkels van alle leden samen. Doet Els alleen AH en Gijs AH en PLUS, dan toont de lijst AH en PLUS. `offers_for_list`, `offer_details_for_list` en het kiezen filteren daarop.
+- [x] Een gekozen aanbieding of een item uit Voor jou blijft altijd zichtbaar, ook als de winkel daarna uit iemands profiel gaat.
+- [x] De lijst leest de winkels van de leden bij elke aanroep van `offers_for_list` en `offer_details_for_list`. Leden en winkels veranderen zelden; live meeluisteren via Realtime is niet nodig.
 - Waarom niet per kijker filteren op de lijst: dan ziet Els "3 in de bonus" en Gijs "5", en een gekozen PLUS-aanbieding staat hoe dan ook voor iedereen op de lijst.
 - Later: een voorstel afleiden uit de bonnen ("je koopt ook bij PLUS. Aanzetten?").
 
