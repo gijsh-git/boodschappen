@@ -107,6 +107,7 @@ const Logica = (() => {
     // ---------- Een item op de lijst ----------
     // Wat er op de rij van een item staat:
     // { aantal: "2×" of "500 g" of "", voor: de oorspronkelijke term of null, label: de korting, "Bonus" of null,
+    //   winkel: de supermarkt van een gekozen aanbieding als de lijst er meer dan één heeft, anders null,
     //   geldigTot: laatste dag van de aanbieding of null, nodig: stuks voor de korting als er nu minder staan, anders null }
     itemRegel(item) {
       // Gekozen, of de aanbieding zelf op de lijst (vanuit Voor jou): de korting en tot wanneer
@@ -118,6 +119,8 @@ const Logica = (() => {
         aantal: aantalTekst(item.quantity),
         voor: keuze ? keuze.voor : null,
         label: vast ? vast.korting || "Bonus" : deals[item.id] ? "Bonus" : null,
+        // Na kiezen is het item aan een winkel gebonden; de winkel staat er pas bij als de lijst er meer dan één heeft
+        winkel: vast && vast.supermarkt && this.dealWinkels(Object.values(deals).flat()).length > 1 ? vast.supermarkt : null,
         geldigTot: vast ? vast.geldigTot : null,
         nodig: nodig && stuks !== null && stuks < nodig ? nodig : null
       };
@@ -132,7 +135,7 @@ const Logica = (() => {
     eigenAanbieding(itemId) {
       const eigen = (deals[itemId] || []).find((d) => d.korting);
       // de bron schrijft "2 VOOR 5.99"
-      return eigen ? { korting: eigen.korting.toLowerCase(), geldigTot: eigen.geldig_tot } : null;
+      return eigen ? { korting: eigen.korting.toLowerCase(), geldigTot: eigen.geldig_tot, supermarkt: eigen.supermarkt } : null;
     },
 
     // Het zoeken gebeurt in de database (offers_for_list); we krijgen alleen per item terug bij welke
@@ -196,7 +199,7 @@ const Logica = (() => {
       const k = item.offer_choice;
       if (!item.original_name || !k) return null;
       // de bron schrijft "2 VOOR 5.99"
-      return { voor: item.original_name, korting: (k.korting || "").toLowerCase(), geldigTot: k.geldig_tot };
+      return { voor: item.original_name, korting: (k.korting || "").toLowerCase(), geldigTot: k.geldig_tot, supermarkt: k.supermarkt };
     },
 
     keuzeOpen() { return keuze; },

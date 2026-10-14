@@ -613,14 +613,17 @@ Stand na 10 oktober 2026: de eerste PLUS-week staat in de database (206 aanbiedi
 - Waarom niet per kijker filteren op de lijst: dan ziet Els "3 in de bonus" en Gijs "5", en een gekozen PLUS-aanbieding staat hoe dan ook voor iedereen op de lijst.
 - Later: een voorstel afleiden uit de bonnen ("je koopt ook bij PLUS. Aanzetten?").
 
-#### [ ] Deel 3 – Weergave
+#### [x] Deel 3 – Weergave
 
-- [ ] Nakijken of de zelfgemaakte kortingstekst van PLUS ("VOOR 1.49", "KILO VOOR 1.69") op de rij en in het paneel goed leest.
-- [ ] Chip in de kop: het totaal met de winkelnamen ("3 in de bonus bij AH en PLUS"). Zo werkt `renderBonus()` al. Geen aantallen per winkel: een item kan bij beide in de aanbieding zijn, dus die tellen niet op tot het totaal.
-- [ ] Een item met alleen het label "Bonus" krijgt geen winkel op de rij; het kan bij beide winkels in de aanbieding zijn en de winkel staat in het paneel.
-- [ ] Gekozen aanbieding: de winkel in de metaregel ("voor tomatensoep · PLUS · t/m za"), zodra de lijst meer dan één winkel heeft. Na kiezen is het item aan een winkel gebonden.
-- [ ] Paneel: per item eerst dezelfde variant, daarna (tot deel 4 er is) de volgorde van de winkels van de lijst. De winkel staat al in de metaregel zodra er meer dan één is (`Logica.paneelRegel()`).
-- [ ] Voor jou: `offers_for_me()` geeft elke geldige aanbieding één keer, dus AH en PLUS staan er los van elkaar in en de lijst wordt langer. De winkel staat al op de rij. Kijken of dat zo werkt of dat ze per type bij elkaar moeten.
+- [x] Nakijken of de zelfgemaakte kortingstekst van PLUS ("VOOR 1.49", "KILO VOOR 1.69") op de rij en in het paneel goed leest.
+- [x] Chip in de kop: het totaal met de winkelnamen ("3 in de bonus bij AH en PLUS"). Zo werkt `renderBonus()` al. Geen aantallen per winkel: een item kan bij beide in de aanbieding zijn, dus die tellen niet op tot het totaal.
+- [x] Een item met alleen het label "Bonus" krijgt geen winkel op de rij; het kan bij beide winkels in de aanbieding zijn en de winkel staat in het paneel.
+- [x] Gekozen aanbieding: de winkel in de metaregel ("voor tomatensoep · PLUS · t/m za"), zodra de lijst meer dan één winkel heeft. Na kiezen is het item aan een winkel gebonden.
+- [x] Paneel: per item (migratie `20261014090000_paneel_volgorde_winkels`) eerst dezelfde variant, daarna (tot deel 4 er is) de volgorde van de winkels van de lijst. De winkel staat al in de metaregel zodra er meer dan één is (`Logica.paneelRegel()`).
+- [x] Voor jou: `offers_for_me()` geeft elke geldige aanbieding één keer, dus AH en PLUS staan er los van elkaar in en de lijst wordt langer. De winkel staat al op de rij. Kijken of dat zo werkt of dat ze per type bij elkaar moeten.
+
+Uitkomst: de kortingstekst staat in kleine letters in dezelfde pil als die van AH ("voor 1.49", "kilo voor 1.69"); de rij en het paneel gebruiken dezelfde vorm. Voor jou blijft zoals het is: elke aanbieding één keer, de winkel op de rij, geen groepering per type. Kijken op het scherm met echte PLUS-aanbiedingen kan pas zodra een lid PLUS aanzet.
+
 - Wegklikken, terughalen, het logboek en het terugvallen na afloop werken per aanbieding en hebben al een winkel. Daar verandert niets.
 - Later, niet in deze stap: een winkelmodus ("ik sta bij PLUS") die de aanbiedingen van die winkel naar voren haalt.
 

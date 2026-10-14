@@ -1597,6 +1597,7 @@ function itemRow(item) {
   inhoud.append(naam);
   const meta = [
     regel.voor && "voor " + regel.voor,
+    regel.winkel,
     regel.geldigTot && "t/m " + totDag(regel.geldigTot),
     regel.nodig && regel.nodig + " nodig voor de korting"
   ].filter(Boolean).join(" · ");
