@@ -50,7 +50,7 @@ Read the file for the domain you work in before changing it. A reference like (s
 |---|---|---|
 | Lijsten, archiveren, leden, uitnodigingen, inloggen | `docs/systeem/lijsten.md` | Multiple lists, Archiving and deleting, Members, Invitations, Auth is invite-only with passwords |
 | Items op de lijst, swipen, aankopen, foto naar items | `docs/systeem/items-en-aankopen.md` | Swipe, Purchases, Photo |
-| Profielscherm, aankoopprofiel, favorieten, Voor jou | `docs/systeem/profiel-en-voorjou.md` | Profile screen, Purchase profile, Favourites, Voor jou |
+| Profielscherm, aankoopprofiel, mijn winkels, favorieten, Voor jou | `docs/systeem/profiel-en-voorjou.md` | Profile screen, Purchase profile, My stores, Favourites, Voor jou |
 | Aanbiedingen, Bonus-label, bonuspaneel, kiezen, wegklikken | `docs/systeem/aanbiedingen.md` (matching leunt op `producttypes.md`) | Offers, Bonus label, Matching offers, Variant, Choosing an offer, Dismissing an offer, Logging offer choices |
 | Producttypes, termen matchen, scherm Koppelingen, classificeren | `docs/systeem/producttypes.md` | Product types, Matching list terms |
 | Bonnen scannen, AH-import, de ophaalscripts van AH en PLUS | `docs/systeem/bonnen.md` | Receipts, Historic AH receipts, AH bonus exploration, Fetching PLUS offers |

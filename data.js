@@ -156,6 +156,13 @@ const Data = (() => {
     favorietTermen(tekst) { return db.rpc("suggest_favorite_terms", { p_query: tekst }); },
     favorietMerken(tekst) { return db.rpc("suggest_favorite_brands", { p_query: tekst }); },
 
+    // ---------- Mijn winkels ----------
+    // Alleen je eigen winkels (de database geeft geen andere terug)
+    winkels() { return db.from("user_stores").select("supermarket"); },
+    voegWinkelToe(supermarket) { return db.from("user_stores").insert({ supermarket }); },
+    // De database weigert de laatste winkel
+    verwijderWinkel(supermarket) { return db.from("user_stores").delete().eq("supermarket", supermarket); },
+
     // ---------- Koppelingen ----------
     // Alleen voor de beheerder; de functies controleren de rol zelf.
     // Wat de AI heeft gekoppeld en nog niet is nagekeken, wat geen type heeft, en alle types met hun tellingen

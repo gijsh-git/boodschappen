@@ -2,6 +2,9 @@
 // Roept alleen `Data` aan; app.js toont wat hier uitkomt. Nu de favorieten, de aanbiedingen bij de lijst,
 // Voor jou en de producten: de rest van de logica staat nog in app.js en verhuist per onderdeel.
 const Logica = (() => {
+  // ---------- Mijn winkels ----------
+  let winkels = null; // codes van je eigen winkels; null = nog niet opgehaald
+
   // ---------- Favorieten ----------
   let favorieten = null; // eigen favorieten: { id, term, brand, category }; null = nog niet opgehaald
   const suggestieVraag = { term: 0, merk: 0 }; // volgnummers, zodat een laat antwoord een nieuwere vraag niet overschrijft
@@ -26,7 +29,7 @@ const Logica = (() => {
   // In de volgorde van de database: per item, en daarbinnen eerst de aanbiedingen met dezelfde variant als het item.
   let dealDetails = null;
   let dealDetailsVraag = 0;
-  const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting van de supermarkt
+  const WINKELS = { AH: "Albert Heijn", PLUS: "PLUS" }; // volledige naam bij de afkorting van de supermarkt; de database kent dezelfde codes (user_stores)
   // De aanbieding die je in het paneel aan het kiezen bent, of null:
   // { itemId, aanbiedingId, opties: [{ artikel_id, titel, zelfde, past, gekozen }] of null (nog bezig),
   //   aan: Set van aangevinkte artikel-id's, aantal: Map van artikel-id naar aantal (ontbreekt = 1),
@@ -360,6 +363,36 @@ const Logica = (() => {
         .filter((p) => !nietNu.has(p.naam) && !opLijst.has(p.naam.trim().toLowerCase()))
         .sort((a, b) => druk(b) - druk(a));
     },
+
+    // ---------- Mijn winkels ----------
+    // De winkels die er zijn, met of je ze aan hebt; null zolang ze niet zijn opgehaald
+    winkelKeuze() {
+      if (!winkels) return null;
+      return Object.entries(WINKELS).map(([code, naam]) => ({ code, naam, aan: winkels.includes(code), laatste: winkels.length === 1 && winkels[0] === code }));
+    },
+
+    async laadWinkels() {
+      const { data, error } = await Data.winkels();
+      if (error) return { fout: error.message };
+      winkels = data.map((r) => r.supermarket);
+      return {};
+    },
+
+    // Aan- of uitzetten. De laatste winkel kan niet uit; lukt het schrijven niet, dan staat de keuze weer
+    // zoals de database hem heeft.
+    async zetWinkel(code, aan) {
+      if (!winkels || !(code in WINKELS)) return {};
+      if (aan === winkels.includes(code)) return {};
+      if (!aan && winkels.length === 1) return { fout: "Je moet minstens één winkel overhouden." };
+      winkels = aan ? [...winkels, code] : winkels.filter((c) => c !== code);
+      const { error } = aan ? await Data.voegWinkelToe(code) : await Data.verwijderWinkel(code);
+      if (!error) return {};
+      await this.laadWinkels();
+      return { fout: error.message };
+    },
+
+    // Bij uitloggen: de volgende gebruiker begint leeg
+    vergeetWinkels() { winkels = null; },
 
     // ---------- Favorieten ----------
     favorieten() { return favorieten; },

@@ -287,6 +287,8 @@ function toonProfiel() {
   loadBeheerder();
   renderAankoopprofiel();
   loadAankoopprofiel();
+  renderWinkels();
+  loadWinkels();
   stopFavorietBewerken();
   renderFavorieten();
   loadFavorieten();
@@ -639,6 +641,43 @@ $("ap-lijst").addEventListener("change", () => {
   loadAankoopprofiel();
 });
 
+// ---------- Mijn winkels ----------
+// De sectie "Mijn winkels" op het profiel: welke supermarkten voor jou meedoen. De keuze en de regels staan
+// in logica.js; hier alleen het tonen. De lijst gebruikt de winkels van alle leden samen (de database
+// rekent dat uit), dus na een wijziging haalt de open lijst zijn aanbiedingen opnieuw op.
+async function loadWinkels() {
+  const { fout } = await Logica.laadWinkels();
+  if (!profielOpen) return;
+  if (fout) return say("winkels-msg", fout);
+  renderWinkels();
+}
+
+function renderWinkels() {
+  const keuze = Logica.winkelKeuze();
+  $("winkels-lijst").replaceChildren(...(keuze || []).map((w) => {
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+    label.className = "winkel-rij";
+    const vink = document.createElement("input");
+    vink.type = "checkbox";
+    vink.checked = w.aan;
+    vink.disabled = w.laatste;
+    vink.addEventListener("change", async () => {
+      const klaar = Logica.zetWinkel(w.code, vink.checked);
+      renderWinkels();
+      const { fout } = await klaar;
+      say("winkels-msg", fout || "");
+      if (fout) renderWinkels();
+      else if (currentList) loadDeals();
+    });
+    const naam = document.createElement("span");
+    naam.textContent = w.naam;
+    label.append(vink, naam);
+    li.append(label);
+    return li;
+  }));
+}
+
 // ---------- Favorieten ----------
 // De sectie "Mijn favorieten" op het profiel. De favorieten zelf en de regels staan in logica.js;
 // hier alleen het tonen en het formulier.
@@ -811,6 +850,7 @@ async function logout() {
   profielLijst = "";
   profielVraag++;
   Logica.vergeetFavorieten();
+  Logica.vergeetWinkels();
   verbergOngedaan();
   show("login");
 }

@@ -609,3 +609,8 @@ section[data-terug] { touch-action: pan-y; transition: transform 0.18s ease-out;
 /* Het scherm waar je bent: oranje pil, vette tekst */
 .tabbalk button[aria-current=page] { color: var(--tekst); font-weight: 700; }
 .tabbalk button[aria-current=page] .tab-icoon { background: var(--oranje); color: #fff; }
+
+/* Mijn winkels */
+.winkels-lijst { list-style: none; margin: 0; padding: 0; }
+.winkel-rij { display: flex; align-items: center; gap: 12px; padding: 10px 0; font-size: 1rem; }
+.winkel-rij input { width: 20px; height: 20px; flex: none; }
