@@ -2809,9 +2809,32 @@ async function kpDoe(knop, actie, melding) {
   if (!uit.fout && Logica.typeOpen()) loadTypeDetails(Logica.typeOpen());
 }
 
+// Een nieuw type maken vanuit een rij en de rij er meteen aan koppelen. Het formulier komt in `anker`;
+// nogmaals aanroepen sluit het. `kies` krijgt het nieuwe type, zoals bij kpKiezer().
+function kpMaakEnKies(anker, kies, naam = "", hoofdgroep = "") {
+  const open = anker.querySelector(":scope > .type-formulier");
+  if (open) return open.remove();
+  const form = kpTypeFormulier({ naam, hoofdgroep }, "Type aanmaken", async (velden, knop) => {
+    knop.disabled = true;
+    say("koppel-msg", "Bezig...");
+    const uit = await Logica.maakType(velden, null);
+    if (!profielOpen) return;
+    if (uit.fout) {
+      knop.disabled = false;
+      say("koppel-msg", uit.fout);
+      return;
+    }
+    kies({ id: uit.nieuw.id, naam: uit.nieuw.naam }, knop);
+  });
+  anker.append(form);
+  form.querySelector("input").focus();
+}
+
 // De keuzelijst "Ander type": een zoekveld met daaronder de types die passen. Eén tegelijk open.
 // `zonder` is het type dat de rij al heeft; `kies` krijgt het gekozen type.
-function kpKiezer(anker, zonder, kies) {
+// Onderaan staat altijd "Nieuw type aanmaken": het type wordt gemaakt en daarna meteen gekozen.
+// `hoofdgroep` is de voorzet voor het nieuwe type.
+function kpKiezer(anker, zonder, kies, hoofdgroep = "") {
   const open = anker.querySelector(".type-kiezer");
   document.querySelectorAll(".type-kiezer").forEach((k) => k.remove());
   if (open) return;
@@ -2834,7 +2857,10 @@ function kpKiezer(anker, zonder, kies) {
     if (veld.value.trim() && types.length === 0) lijst.append(kpEl("p", "bonnen-info", "Geen type gevonden."));
   };
   veld.addEventListener("input", toon);
-  blok.append(veld, lijst);
+  const nieuw = kpEl("button", "link", "Nieuw type aanmaken");
+  nieuw.type = "button";
+  nieuw.addEventListener("click", () => kpMaakEnKies(blok, kies, veld.value.trim(), hoofdgroep));
+  blok.append(veld, lijst, nieuw);
   anker.append(blok);
   veld.focus();
 }
@@ -2859,6 +2885,8 @@ function kpTermRij(term, metKlopt) {
   acties.append(kpKnop("Ander type", () => kpKiezer(rij, term.type_id, (t, k) =>
     kpDoe(k, () => Logica.zetTermType(term, t.id), `"${term.term}" staat nu voor ${t.naam}.`))));
   if (term.type_id) acties.append(kpKnop("Geen type", (k) => kpDoe(k, () => Logica.zetTermType(term, null))));
+  acties.append(kpKnop("Nieuw type", () => kpMaakEnKies(rij, (t, k) =>
+    kpDoe(k, () => Logica.zetTermType(term, t.id), `"${term.term}" staat nu voor ${t.naam}.`), term.term)));
   rij.append(acties);
   return rij;
 }
@@ -2872,8 +2900,10 @@ function kpArtikelRij(artikel, typeId, { klopt = false, geenType = false, oordee
   const acties = kpEl("div", "voorstel-acties");
   if (klopt) acties.append(kpKnop("Klopt", (k) => kpDoe(k, () => Logica.klopt([], [artikel]))));
   acties.append(kpKnop("Ander type", () => kpKiezer(rij, typeId, (t, k) =>
-    kpDoe(k, () => Logica.zetArtikelType(artikel, t.id), `"${artikel.titel}" hoort nu bij ${t.naam}.`))));
+    kpDoe(k, () => Logica.zetArtikelType(artikel, t.id), `"${artikel.titel}" hoort nu bij ${t.naam}.`), Logica.hoofdgroepVan([artikel]))));
   if (geenType) acties.append(kpKnop("Geen type", (k) => kpDoe(k, () => Logica.zetArtikelType(artikel, null))));
+  acties.append(kpKnop("Nieuw type", () => kpMaakEnKies(rij, (t, k) =>
+    kpDoe(k, () => Logica.zetArtikelType(artikel, t.id), `"${artikel.titel}" hoort nu bij ${t.naam}.`), "", Logica.hoofdgroepVan([artikel]))));
   rij.append(acties);
   return rij;
 }

@@ -206,7 +206,7 @@ Frisdrank, sappen, water;sprite;Citroen-limoenfrisdrank met suiker, zoals sprite
 Frisdrank, sappen, water;sprite zero;Citroen-limoenfrisdrank zonder suiker, zoals sprite zero, 7up free en fanta lemon zero.;De variant met suiker (sprite).;ja
 Frisdrank, sappen, water;tomatensap;Houdbaar tomaten- en groentesap in fles of pak, zoals biologisch tomatensap.;Gekoelde groentesappen en smoothies horen bij smoothie.;ja
 Frisdrank, sappen, water;tonic;Tonic van elk merk, zoals royal club, schweppes en fever-tree.;Bitter lemon (bitter lemon).;ja
-Frisdrank, sappen, water;tonic zero;Tonic zonder suiker van elk merk, zoals royal club tonic 0% suiker.;Tonic met suiker (tonic).;ja
+Frisdrank, sappen, water;tonic en bitter lemon zero;Tonic zonder suiker van elk merk, zoals royal club tonic 0% suiker.;Tonic met suiker (tonic).;ja
 Frisdrank, sappen, water;tropische frisdrank;Frisdrank met tropische fruitsmaak en suiker, ongeacht merk, zoals Hawai Tropical.;Sinas (sinas) en de varianten zonder suiker.;ja
 Frisdrank, sappen, water;vitaminwater;Water met vitamines in elke smaak, zoals sourcy vitaminwater aardbei perzik en mango guave.;Water met smaak zonder vitamines (water met smaak).;ja
 Frisdrank, sappen, water;water;Water zonder koolzuur van elk merk, zoals spa reine en sourcy.;"Bruisend water (water koolzuurhoudend); water met smaak (water met smaak); vitaminwater (vitaminwater).";ja
@@ -470,7 +470,6 @@ Ontbijtgranen, beleg;muisjes;Muisjes en anijshagel voor op beschuit of brood: ro
 Ontbijtgranen, beleg;ontbijtgranen;Gevormde en gevulde ontbijtgranen, ongeacht merk of smaak: chocapic, cheerios, krokante kussentjes, special k, smacks.;Cornflakes, muesli, granola en havermout zijn eigen types.;ja
 Ontbijtgranen, beleg;ontbijtverrijkers;Mixen van zaden, pitten, noten en gedroogd fruit om door yoghurt of muesli te doen, zoals chiazaad of cranberry-pittenmix.;Muesli (muesli), studentenhaver (studentenhaver).;ja
 Ontbijtgranen, beleg;pindakaas;Pindakaas, ongeacht merk of soort: calvé, met stukjes pinda, 100% pinda.;Andere notenpasta's en chocoladepasta horen bij chocoladepasta.;ja
-Ontbijtgranen, beleg;pindakaas light;Pindakaas met minder vet, zoals Calvé pindakaas light.;Gewone pindakaas (pindakaas).;ja
 Ontbijtgranen, beleg;rijstwafels;Rijstwafels en maïswafels, naturel of met een laagje: rijstwafels naturel, rijstwafels met chocolade.;Crackers horen bij crackers.;ja
 Pasta, rijst, wereldkeuken;babi pangang saus;Kant-en-klare zoetzure babi pangang saus, ongeacht merk.;"Mix voor babi pangang in een zakje (kruidenmix); woksaus sweet & sour (woksaus).";ja
 Pasta, rijst, wereldkeuken;bao buns;Bao buns en gestoomde broodjes voor Aziatische gerechten, ongeacht merk.;"Afbakbroodjes (afbakbroodjes); wraps (wraps).";ja
@@ -479,6 +478,7 @@ Pasta, rijst, wereldkeuken;bulgur;Droge bulgur om te koken, zoals volkoren bulgu
 Pasta, rijst, wereldkeuken;couscous;Couscous, ongeacht merk, ook volkoren.;;ja
 Pasta, rijst, wereldkeuken;gebakken uitjes;Gebakken uitjes en seroendeng als topping, ongeacht merk.;Verse uien (uien).;ja
 Pasta, rijst, wereldkeuken;gedroogde paddenstoelen;Gedroogde paddenstoelen om te weken en mee te koken, zoals gedroogde porcini of een gedroogde paddenstoelenmix.;Verse paddenstoelen (paddenstoelen), verse champignons (champignons).;ja
+Pasta, rijst, wereldkeuken;gedroogde peulvruchten;Droge bonen, erwten en linzen om zelf te koken, zoals adukibonen en spliterwten.;Bonen en linzen in pot of blik horen bij hun eigen type, zoals bruine bonen of linzen.;ja
 Pasta, rijst, wereldkeuken;gierst;Droge gierst om te koken.;Quinoa (quinoa), couscous (couscous).;ja
 Pasta, rijst, wereldkeuken;gochujang;Koreaanse rode-peperpasta, ongeacht merk: sempio, bibigo.;Sojasaus (sojasaus).;ja
 Pasta, rijst, wereldkeuken;ingelegde pepers;Ingelegde pepers in pot, zoals jalapeños en groene pepers.;Verse pepers horen bij rode peper, gevulde pepers uit het tapasschap bij tapas.;ja
@@ -538,7 +538,6 @@ Soepen, sauzen, kruiden, olie;erwtensoep;Kant-en-klare erwtensoep, hollands of p
 Soepen, sauzen, kruiden, olie;fritessaus;Fritessaus in pot of knijpfles, ongeacht merk.;Mayonaise (mayonaise).;ja
 Soepen, sauzen, kruiden, olie;fritessaus zero;Fritessaus zonder toegevoegde suiker, zoals Remia fritessaus zero.;Gewone fritessaus hoort bij fritessaus.;ja
 Soepen, sauzen, kruiden, olie;frituurolie;Frituurolie en frituurvet, vloeibaar of vast.;Zonnebloemolie voor bakken (zonnebloemolie).;ja
-Soepen, sauzen, kruiden, olie;gedroogde peulvruchten;Droge bonen, erwten en linzen om zelf te koken, zoals adukibonen en spliterwten.;Bonen en linzen in pot of blik horen bij hun eigen type, zoals bruine bonen of linzen.;ja
 Soepen, sauzen, kruiden, olie;gembersiroop;Gembersiroop voor in de keuken.;Limonadesiroop (siroop).;ja
 Soepen, sauzen, kruiden, olie;groentesaus;Saus voor over groente, zoals hollandaise-achtige groentesaus van knorr of maggi.;Kaassaus heeft een eigen type.;ja
 Soepen, sauzen, kruiden, olie;harissa;Harissa: pittige peperpasta of -saus uit een pot of tube.;Harissa als droog kruidenmengsel (specerijmengsel).;ja

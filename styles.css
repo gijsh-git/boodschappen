@@ -379,6 +379,8 @@ button.koop:hover::before, button.koop:focus-visible::before { border-color: var
 .type-kiezer input[type=text] { display: block; width: 100%; padding: 10px 12px; }
 .type-kiezer-lijst button.link { display: flex; align-items: baseline; gap: 12px; width: 100%; padding: 8px 0; text-align: left; }
 .type-kiezer-lijst button.link span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.type-kiezer > button.link { display: block; margin-top: 6px; }
+.type-kiezer .type-formulier { margin-top: 8px; }
 .type-kiezer-lijst button.link small { color: var(--grijs); font-weight: 400; }
 .type-kiezer-lijst button.link + button.link { border-top: 1px solid var(--rand); border-radius: 0; }
 /* Naam, hoofdgroep en afbakening van een type */
