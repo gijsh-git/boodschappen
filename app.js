@@ -1339,7 +1339,7 @@ function bonusDetailRij(detail) {
     });
   }
   const tekst = kpEl("span", "bonus-tekst");
-  const meta = [regel.voor && "voor " + regel.voor, regel.winkel, "t/m " + totDag(detail.geldig_tot)].filter(Boolean).join(" · ");
+  const meta = [regel.voor && "voor " + regel.voor, "t/m " + totDag(detail.geldig_tot), regel.winkel].filter(Boolean).join(" · ");
   tekst.append(kpEl("span", "item-naam", detail.titel), kpEl("span", "item-sub", meta));
   kop.append(tekst, kpEl("span", "bonus-label", regel.label));
   li.append(kop);
@@ -1597,8 +1597,8 @@ function itemRow(item) {
   inhoud.append(naam);
   const meta = [
     regel.voor && "voor " + regel.voor,
-    regel.winkel,
     regel.geldigTot && "t/m " + totDag(regel.geldigTot),
+    regel.winkel,
     regel.nodig && regel.nodig + " nodig voor de korting"
   ].filter(Boolean).join(" · ");
   if (meta) {
