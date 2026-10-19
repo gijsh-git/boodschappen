@@ -216,8 +216,14 @@ def geef_types(url, sleutel):
 
 def lees_sleutel():
     sleutel = os.environ.get("AANBIEDINGEN_SLEUTEL", "").strip()
+    bestand = importeren.HOOFDMAP / ".env"
+    if not sleutel and bestand.exists():
+        for regel in bestand.read_text().splitlines():
+            naam, _, waarde = regel.partition("=")
+            if naam.strip() == "AANBIEDINGEN_SLEUTEL":
+                sleutel = waarde.strip().strip("\"'")
     if not sleutel:
-        sys.exit("AANBIEDINGEN_SLEUTEL is niet gezet.")
+        sys.exit("AANBIEDINGEN_SLEUTEL is niet gezet (in de omgeving of in .env).")
     return sleutel
 
 
