@@ -98,6 +98,7 @@ Borrel, chips, snacks;tapenade;Tapenade en bruschetta-spread, zoals olijftapenad
 Borrel, chips, snacks;toastjes;Borreltoast en luxe toastjes, zoals picos, scrocchi en borreltoast zeezout.;Borrelcrackers (borrelcrackers).;ja
 Borrel, chips, snacks;tortilla chips;Tortilla chips en tortilla crackers die geen doritos zijn, zoals bolletje sea salt black pepper of sour cream & onion.;Doritos (doritos), salsadip (salsa).;ja
 Borrel, chips, snacks;walnoten;Walnoten, heel of in stukjes.;Studentenhaver (studentenhaver).;ja
+Borrel, chips, snacks;worstsnacks;Droge worst- en vleessnacks als tussendoortje, zoals Bifi en worstbites.;Salami in plakken voor op brood hoort bij salami.;ja
 Borrel, chips, snacks;zaden en pitten;Losse zaden en pitten om te strooien of mee te bakken: sesamzaad, zonnebloempitten, pompoenpitten, lijnzaad en chiazaad.;Pijnboompitten (pijnboompitten) en noten.;ja
 Borrel, chips, snacks;zoute stengels;Zoute sticks en pretzels.;Kaasstengels (kaaszoutjes).;ja
 Diepvries;aardappelkroketjes;Diepvries aardappelkroketjes en rösti voor bij de maaltijd.;"Friet (friet); vleeskroketten (kroketten).";ja
@@ -105,6 +106,7 @@ Diepvries;bitterballen;Alle bitterballen uit de vriezer voor oven, airfryer of f
 Diepvries;bladerdeeg;Diepvries bladerdeeg in plakjes of op rol.;;ja
 Diepvries;borrelhapjes;Gemengde en losse diepvries borrelhapjes voor de oven of airfryer: borrelmix, mini bites, kaashapjes, kipsnacks.;"Bitterballen (bitterballen), kroketten (kroketten), kaassoufflés (kaassoufflés), loempia's (loempia's); frituursnacks als viandel, bamischijf en kipkorn (frituursnacks); gekoelde hapjes uit het tapasschap (tapas).";ja
 Diepvries;churros;Diepvries churros om te bakken, zoals Aviko churros.;Donuts (donuts).;ja
+Diepvries;deegvellen;Vellen deeg om zelf loempia's of dumplings te maken, zoals loempiavellen en gyozavellen.;Bladerdeeg hoort bij bladerdeeg.;ja
 Diepvries;diepvriesfruit;Fruit uit de vriezer: frambozen, bosvruchten, mango, smoothiefruit.;Vers fruit.;ja
 Diepvries;diepvriesgroente;Groente uit de vriezer: spinazie, doperwten, sperziebonen, broccoli, wokgroente, soepgroente.;"Verse groente zoals spinazie en sperziebonen; groente uit pot of blik.";ja
 Diepvries;friet;Diepvries friet en patat, ongeacht dikte of snit: frites, steakhouse friet, wedges, airfryer friet.;Aardappelkroketjes (aardappelkroketjes).;ja
@@ -138,13 +140,20 @@ Drogisterij;fusion5 scheermesjes;Navulmesjes voor het Gillette Fusion5-systeem.;
 Drogisterij;gezichtsreiniger;Gezichtsreiniging voor mannen en vrouwen: reinigingsgel, -melk, -mousse, -crème, tonic en gezichtsscrub.;Micellair water (micellair water), reinigingsdoekjes (reinigingsdoekjes), oogmake-up remover (make-up remover).;ja
 Drogisterij;haargel;Haargel, styling crème-gel en wax: nivea men matte gel, nivea care & hold.;Haarmousse (haarmousse), haarspray (haarspray).;ja
 Drogisterij;haarmousse;Haarmousse en stylingschuim: nivea volume care styling mousse.;Haargel (haargel), haarspray (haarspray).;ja
+Drogisterij;haarolie;Verzorgende olie en serum voor het haar, zoals Syoss beauty elixir.;Conditioner en haarmaskers (conditioner).;ja
+Drogisterij;haarpoeder;Stylingpoeder voor volume in het haar, zoals Got2b Powder en Taft volume powder.;Droogshampoo (droogshampoo), haarspray (haarspray).;ja
+Drogisterij;haarserum;Haarserum en haarolie om in het haar te laten zitten, zoals Elvive Extraordinary oil en Gliss oil elixir.;Conditioner en haarmaskers (conditioner), anti-klitspray (haarspray).;ja
 Drogisterij;haarspray;Haarlak, haarspray en anti-klitspray: nivea diamond gloss styling spray.;Haarmousse (haarmousse), haargel (haargel).;ja
 Drogisterij;handcrème;Handcrème in tube of pot: nivea 3in1 repair handcrème.;Bodycrème (bodylotion).;ja
 Drogisterij;handzeep;Vloeibare handzeep in pomp of navulverpakking, ongeacht merk of geur: palmolive, unicura antibacterieel.;Blokzeep (zeep), douchegel (douchegel).;ja
+Drogisterij;hoestdrank;Hoestsiroop en hoestdrank tegen droge of vastzittende hoest, zoals Lucovitaal hoestsiroop.;Keelpastilles (keelpastilles), pijnstillers (pijnstillers).;ja
 Drogisterij;huidolie;Verzorgende olie voor huid en baby, zoals babyolie en huidolie.;Bodylotion en bodycrème (bodylotion), doucheolie (douchegel).;ja
 Drogisterij;incontinentiebroekjes;Wegwerp incontinentieondergoed en pants: tena pants, tena silhouette high waist.;Incontinentieverband (incontinentieverband), menstruatieondergoed (menstruatieondergoed).;ja
 Drogisterij;incontinentieverband;Incontinentieverband en incontinentie-inlegkruisjes, voor vrouwen en mannen: tena discreet, tena lights, tena men active fit, always discreet.;Incontinentiebroekjes (incontinentiebroekjes), gewone inlegkruisjes (inlegkruisjes), maandverband (maandverband).;ja
 Drogisterij;inlegkruisjes;Inlegkruisjes voor dagelijks gebruik, ongeacht merk of lengte: always dailies, libresse dailies.;Incontinentie-inlegkruisjes (incontinentieverband), maandverband (maandverband).;ja
+Drogisterij;intieme doekjes;Vochtige doekjes voor de intieme hygiëne, zoals Chilly intiemtissues en Lactacyd intieme doekjes.;Gezichtsreinigingsdoekjes (reinigingsdoekjes), vochtig toiletpapier (vochtig toiletpapier).;ja
+Drogisterij;intieme wasemulsie;Wasgels en wasemulsies voor de intieme hygiëne, zoals Lactacyd en Chilly wasemulsie.;Intieme doekjes (intieme doekjes), douchegel (douchegel).;ja
+Drogisterij;keelspray;Sprays tegen keelpijn en hoest, zoals Lucovitaal keel & hoest spray.;Keelpastilles (keelpastilles), mondspray (mondwater).;ja
 Drogisterij;labs scheermesjes;Navulmesjes voor het Gillette Labs-systeem, ook body + intimate.;"Andere Gillette-systemen; een Labs-trimmer (trimmer).";ja
 Drogisterij;lippenbalsem;Lippenbalsem en lipverzorgingsstift: labello, nivea lip care.;;ja
 Drogisterij;maandverband;Maandverband voor dag en nacht, met of zonder vleugels: libresse, always, sanature.;Incontinentieverband (incontinentieverband), tampons (tampons), inlegkruisjes (inlegkruisjes).;ja
@@ -155,6 +164,8 @@ Drogisterij;micellair water;Micellair water voor gezicht en make-up, ongeacht hu
 Drogisterij;mondwater;Mondwater en mondspray: sensodyne fresh & cool, listerine.;Tandpasta (tandpasta).;ja
 Drogisterij;nachtcrème;Nachtcrème voor het gezicht: nivea hydraterende nachtcrème.;Dagcrème en gezichtscrème (dagcrème).;ja
 Drogisterij;nagelverzorging;Producten voor nagels: nagelvijl, nagellak, nagellakremover, nagelriemolie.;Handcrème (handcrème).;ja
+Drogisterij;neusspray;Neussprays en neusdruppels tegen een verstopte neus of bijholteklachten, zoals xylometazoline-spray of zoutoplossing.;;ja
+Drogisterij;ontharingsmiddelen;Ontharingscrème en waxstrips voor benen, lichaam of gezicht, zoals Veet.;Scheermesjes (scheermesjes), trimmers (trimmer).;ja
 Drogisterij;opzetborstels;Opzetborstels voor een elektrische tandenborstel: oral-b precision clean, cross action.;"Handtandenborstels (tandenborstel); de elektrische tandenborstel zelf hoort bij geen type.";ja
 Drogisterij;pijnstillers;Paracetamol, ibuprofen en andere pijnstillers, in tabletten of bruistabletten.;Vitamines (vitamines).;ja
 Drogisterij;pleisters;Pleisters en wondpleisters in strip of op rol, ook blarenpleisters.;;ja
@@ -172,6 +183,7 @@ Drogisterij;venus scheermesjes;Navulmesjes voor Gillette Venus, ook comfortglide
 Drogisterij;vitamines;Vitamines en voedingssupplementen: multivitamine, vitamine d, vitamine c.;Pijnstillers (pijnstillers), eiwitpoeder.;ja
 Drogisterij;wattenschijfjes;Wattenschijfjes en wattenbollen voor gezicht en make-up.;Wattenstaafjes (wattenstaafjes), reinigingsdoekjes (reinigingsdoekjes).;ja
 Drogisterij;wattenstaafjes;Wattenstaafjes, ook voor baby's.;Wattenschijfjes (wattenschijfjes).;ja
+Drogisterij;wondspray;Sprays en middelen om wondjes te ontsmetten, zoals Dettol huidspray of jodium.;Pleisters horen bij pleisters.;ja
 Drogisterij;zeep;Blokzeep en zeeptabletten: palmolive naturals zeeptablet, unicura tabletzeep.;Vloeibare handzeep in pompje of navulling (handzeep).;ja
 Drogisterij;zonnebrand;Zonnebrandcrème, -spray en -melk met spf, ook voor kinderen en aftersun.;Dagcrème met spf (dagcrème).;ja
 Frisdrank, sappen, water;appelsap;Appelsap, helder of troebel, vers of houdbaar.;Multivruchtensap (multivruchtensap).;ja
@@ -179,6 +191,7 @@ Frisdrank, sappen, water;bitter lemon;Bitter lemon van elk merk, zoals royal clu
 Frisdrank, sappen, water;cassis;Cassisfrisdrank, zoals fanta cassis.;Cassissiroop (siroop).;ja
 Frisdrank, sappen, water;cola;Cola met suiker van elk merk en elke smaak, zoals coca-cola original, pepsi, cherry en vanilla.;Cola zero, light of zonder suiker (cola zero).;ja
 Frisdrank, sappen, water;cola zero;Cola zonder suiker of light, ook met smaak of zonder cafeïne, zoals coca-cola zero sugar, pepsi zero, coca-cola light en cherry zero.;Cola met suiker (cola).;ja
+Frisdrank, sappen, water;drank met nata de coco;Vruchtendranken met stukjes kokosgelei (nata de coco), zoals Mogu Mogu aardbei of lychee.;Tropische frisdrank met prik hoort bij tropische frisdrank.;ja
 Frisdrank, sappen, water;drinkpakjes;Kleine pakjes vruchtendrank voor kinderen, zoals wicky en capri-sun.;Sap in een groot pak (appelsap, sinaasappelsap).;ja
 Frisdrank, sappen, water;druivensap;Rood of wit druivensap, houdbaar of vers.;Multivruchtensap (multivruchtensap).;ja
 Frisdrank, sappen, water;dubbelfrisss 1kcal;Frisse fruitdranken zonder suiker, zoals dubbelfrisss 1kcal witte druiven & citroen en appel & zwarte bessen.;De gewone variant (dubbelfrisss).;ja
@@ -196,6 +209,7 @@ Frisdrank, sappen, water;ice tea;Ice tea van elk merk en elke smaak, zoals lipto
 Frisdrank, sappen, water;ice tea zero;Ice tea zonder suiker, zoals lipton zero en fuze tea zero.;Ice tea met suiker (ice tea).;ja
 Frisdrank, sappen, water;kokoswater;Kokoswater van elk merk, ook aloe vera-drank.;;ja
 Frisdrank, sappen, water;multivruchtensap;Sap van meerdere vruchten, zoals multivitaminesap en tropisch fruitsap.;"Sinaasappelsap (sinaasappelsap); appelsap (appelsap).";ja
+Frisdrank, sappen, water;rivella;Frisdrank op basis van melkwei, zoals Rivella original.;;ja
 Frisdrank, sappen, water;sinaasappelsap;Sinaasappelsap en jus d'orange, vers of houdbaar, met of zonder vruchtvlees.;"Sinas (sinas); multivruchtensap (multivruchtensap).";ja
 Frisdrank, sappen, water;sinas;Sinaasappelfrisdrank met suiker, zoals fanta orange en sisi.;"Fanta orange zero en andere zero-smaken (fanta zero); cassis (cassis).";ja
 Frisdrank, sappen, water;siroop;Limonadesiroop met suiker in elke smaak, zoals ranja, framboos- en cassissiroop.;Siroop zonder suiker zoals slimpie (siroop 0% suiker).;ja
@@ -337,6 +351,7 @@ Huishouden;koperpoets;Poetsmiddel voor koper en messing: brasso.;Zilverpoets (zi
 Huishouden;luchtverfrisser;Luchtverfrissers als spray, stekker of geurstokjes: glade, air wick.;Textielspray (textielspray).;ja
 Huishouden;meubelspray;Onderhoudsmiddel voor hout en meubels, spray of olie: pledge, bruynzeel meubelolie, houtolie.;Laminaatreiniger (vloerreiniger).;ja
 Huishouden;ontstopper;Afvoerontstopper als gel, vloeistof of korrels: destop, mr muscle, bruynzeel.;Soda (soda).;ja
+Huishouden;oplaadbare batterijen;Herlaadbare batterijen in elk formaat, zoals oplaadbare AA en AAA van Duracell of Varta.;Wegwerpbatterijen en knoopcellen horen bij batterijen.;ja
 Huishouden;ovenreiniger;Reinigers voor oven, grill, bbq en kookplaat: mr muscle ovenreiniger, bruynzeel power foam.;Gewone keukenspray (keukenreiniger).;ja
 Huishouden;schimmelreiniger;Schimmel-, aanslag- en voegenreiniger: bruynzeel schimmel & aanslagreiniger.;Badkamerreiniger, antikalk.;ja
 Huishouden;schoonmaakazijn;Azijn om mee schoon te maken, naturel of met geur, zoals Vintastic schoonmaakazijn.;Azijn voor in de keuken (azijn).;ja
@@ -360,6 +375,7 @@ Huishouden;vloerreiniger;Reiniger voor vloer, hout en laminaat: blue wonder vloe
 Huishouden;vochtig toiletpapier;Vochtige toiletdoekjes in een pak, ongeacht merk of geur, zoals Page vochtig toiletpapier.;Droog wc-papier (toiletpapier), billendoekjes (billendoekjes).;ja
 Huishouden;vuilniszakken;Afvalzakken en pedaalemmerzakken in elk formaat.;Diepvrieszakjes (diepvrieszakjes).;ja
 Huishouden;wasbenzine;Wasbenzine om te ontvetten en vlekken te verwijderen: sel.;Terpentine (terpentine).;ja
+Huishouden;wasmachinereiniger;Reinigers om de wasmachine schoon te maken, zoals Dettol wasmachinereiniger of Dr. Beckmann.;Reiniger voor de vaatwasser hoort bij vaatwasmachinereiniger, wasmiddel bij wasmiddel.;ja
 Huishouden;wasmiddel;Wasmiddel vloeibaar, als poeder, capsules of doekjes, wit, kleur of zwart: omo, robijn, lenor capsules.;Wasverzachter, geurbooster, vlekverwijderer.;ja
 Huishouden;wasverzachter;Wasverzachter in elke geur, ook hypoallergeen: lenor, robijn puur & zacht.;Geurbooster en wasparfum (geurbooster), droogtrommeldoekjes.;ja
 Huishouden;waxinelichtjes;Waxinelichtjes en theelichtjes.;;ja
@@ -414,8 +430,10 @@ Koffie, thee;dolce gusto cups;Cups voor een Dolce Gusto-machine, ongeacht merk o
 Koffie, thee;filterkoffie;Gemalen koffie, ongeacht merk of maling: snelfiltermaling, grove maling, espressomaling, mokka, aroma.;Oploskoffie (oploskoffie), koffiepads (koffiepads), hele bonen (koffiebonen).;ja
 Koffie, thee;granenkoffie;Koffievervanger op basis van geroosterde granen, zoals Zonnatura granenkoffie of Bambu.;Decaf oploskoffie (decaf oploskoffie).;ja
 Koffie, thee;ijskoffie;Kant-en-klare gekoelde koffiedrank, ongeacht merk of smaak: douwe egberts ice macchiato, iced latte.;Cappuccino in poedervorm hoort bij cappuccino.;ja
+Koffie, thee;ijskoffie zonder suiker;Kant-en-klare gekoelde koffiedrank zonder toegevoegde suiker, zoals Starbucks caffè latte no added sugar.;IJskoffie met suiker hoort bij ijskoffie, decaf ijskoffie bij decaf ijskoffie.;ja
 Koffie, thee;koffiebonen;Hele koffiebonen voor een bonenmachine, ongeacht merk, branding of herkomst: aroma, espresso, crema, Colombia.;Decaf koffiebonen (decaf koffiebonen), gemalen koffie (filterkoffie).;ja
 Koffie, thee;koffiecapsules;Nespresso-compatibele koffiecapsules, ongeacht merk of smaak: espresso, lungo, ristretto.;Decaf capsules (decaf koffiecapsules), Dolce Gusto cups (dolce gusto cups).;ja
+Koffie, thee;koffieconcentraat;Vloeibaar koffie- en espressoconcentraat om aan te lengen met water of melk, zoals Douwe Egberts espresso concentrate.;Kant-en-klare gekoelde koffiedrank hoort bij ijskoffie.;ja
 Koffie, thee;koffiefilters;Papieren koffiefilters voor een filterapparaat, ongeacht maat: 1x2, 1x4.;;ja
 Koffie, thee;koffiepads;Koffiepads voor een padmachine zoals Senseo, ongeacht merk of branding: mild, classic, dark roast, mokka.;Decaf koffiepads (decaf koffiepads), capsules (koffiecapsules).;ja
 Koffie, thee;matcha latte;Mix of poeder voor matcha latte.;Groene thee in zakjes (thee).;ja
@@ -426,7 +444,10 @@ Koffie, thee;thee;Thee in zakjes of los, ongeacht merk of smaak: zwarte, groene,
 Koken, tafelen, vrije tijd;aanmaakblokjes;Aanmaakblokjes en aanmaakwokkels voor barbecue of haard.;"Houtskool hoort bij ""houtskool"".";ja
 Koken, tafelen, vrije tijd;aanstekers;Aanstekers, gasaanstekers en lucifers.;"Aanmaakblokjes horen bij ""aanmaakblokjes"".";ja
 Koken, tafelen, vrije tijd;dekbed;Dekbedden in elke maat of vulling, zoals wasbare dekbedden of een 2-pack.;;nee
+Koken, tafelen, vrije tijd;dekbedovertrekken;Dekbedovertrekken in elke maat, kleur of print, zoals een 1-persoons mousseline of 2-persoons gestreept overtrek.;Het dekbed zelf hoort bij dekbed, hoeslakens bij hoeslakens.;ja
 Koken, tafelen, vrije tijd;fleece;Kleding zoals fleecevesten en -truien voor dames en heren, in elke maat.;;nee
+Koken, tafelen, vrije tijd;gezelschapsspellen;Bord- en kaartspellen voor thuis, zoals Mens erger je niet of Stratego.;Elektronische spelcomputers horen bij geen type.;ja
+Koken, tafelen, vrije tijd;hoeslakens;Hoeslakens in elke maat en kleur, zoals 1- of 2-persoons katoen.;Dekbedovertrekken horen bij dekbedovertrekken, dekbedden bij dekbed.;ja
 Koken, tafelen, vrije tijd;houtskool;Houtskool en briketten voor de barbecue.;"Aanmaakblokjes horen bij ""aanmaakblokjes"".";ja
 Koken, tafelen, vrije tijd;kaarsen;Dinerkaarsen, stompkaarsen en geurkaarsen.;"Theelichtjes horen bij ""theelichtjes"".";ja
 Koken, tafelen, vrije tijd;kattenbak;Kattenbakken, ook slimme of zelfreinigende.;Kattenbakvulling is een eigen type bij dieren.;nee
@@ -434,8 +455,10 @@ Koken, tafelen, vrije tijd;koffiemachine;Koffiezetapparaten en melkopschuimers, 
 Koken, tafelen, vrije tijd;kokendwaterkraan;Kokendwaterkranen en waterkokers.;;nee
 Koken, tafelen, vrije tijd;lampen;Losse led-lampen en gloeilampen met elke fitting.;;ja
 Koken, tafelen, vrije tijd;luchtontvochtiger;Elektrische luchtontvochtigers, in elke capaciteit.;Vochtvreters en navulling zonder stroom horen bij huishouden.;nee
+Koken, tafelen, vrije tijd;puzzels;Legpuzzels in elk aantal stukjes, zoals Jan van Haasteren en Wasgij.;Bord- en kaartspellen horen bij gezelschapsspellen.;ja
 Koken, tafelen, vrije tijd;satéprikkers;Houten of bamboe prikkers voor saté en spiesjes, zoals satéprikkers 18 cm.;Wegwerpbestek hoort bij wegwerpborden.;ja
 Koken, tafelen, vrije tijd;servetten;Papieren servetten, ongeacht kleur of print.;Keukenpapier en tissues horen bij huishouden en drogisterij.;ja
+Koken, tafelen, vrije tijd;tafelkleden;Tafelkleden, tafellakens en tafellopers in elke maat en print, zoals een wit tafelkleed met sterren of een gouden tafelloper.;Papieren servetten horen bij servetten.;ja
 Koken, tafelen, vrije tijd;thuisbatterij;Thuisbatterijen en solarbanks voor het opslaan van stroom.;"Gewone batterijen (AA, AAA) horen bij ""batterijen"".";nee
 Koken, tafelen, vrije tijd;tuinhuis;Tuinhuisjes, bergingen en tuinmeubelen.;;nee
 Koken, tafelen, vrije tijd;wegwerpborden;Wegwerpborden en -bekers van karton of papier, ook wegwerpbestek.;"Servetten horen bij ""servetten"".";ja
@@ -470,22 +493,28 @@ Ontbijtgranen, beleg;muisjes;Muisjes en anijshagel voor op beschuit of brood: ro
 Ontbijtgranen, beleg;ontbijtgranen;Gevormde en gevulde ontbijtgranen, ongeacht merk of smaak: chocapic, cheerios, krokante kussentjes, special k, smacks.;Cornflakes, muesli, granola en havermout zijn eigen types.;ja
 Ontbijtgranen, beleg;ontbijtverrijkers;Mixen van zaden, pitten, noten en gedroogd fruit om door yoghurt of muesli te doen, zoals chiazaad of cranberry-pittenmix.;Muesli (muesli), studentenhaver (studentenhaver).;ja
 Ontbijtgranen, beleg;pindakaas;Pindakaas, ongeacht merk of soort: calvé, met stukjes pinda, 100% pinda.;Andere notenpasta's en chocoladepasta horen bij chocoladepasta.;ja
+Ontbijtgranen, beleg;pindakaas light;Pindakaas met minder vet, zoals Calvé pindakaas light.;Gewone pindakaas hoort bij pindakaas.;ja
 Ontbijtgranen, beleg;rijstwafels;Rijstwafels en maïswafels, naturel of met een laagje: rijstwafels naturel, rijstwafels met chocolade.;Crackers horen bij crackers.;ja
+Pasta, rijst, wereldkeuken;atjar;Ingelegde zoetzure groente in pot voor Indonesische gerechten, zoals atjar ketimoen en atjar tjampoer.;Augurken horen bij augurken, piccalilly bij piccalilly.;ja
 Pasta, rijst, wereldkeuken;babi pangang saus;Kant-en-klare zoetzure babi pangang saus, ongeacht merk.;"Mix voor babi pangang in een zakje (kruidenmix); woksaus sweet & sour (woksaus).";ja
 Pasta, rijst, wereldkeuken;bao buns;Bao buns en gestoomde broodjes voor Aziatische gerechten, ongeacht merk.;"Afbakbroodjes (afbakbroodjes); wraps (wraps).";ja
 Pasta, rijst, wereldkeuken;boekweit;Droge boekweitkorrels om te koken als bijgerecht, zoals biologische boekweit.;Boekweitmeel hoort bij meel.;ja
 Pasta, rijst, wereldkeuken;bulgur;Droge bulgur om te koken, zoals volkoren bulgur.;Couscous hoort bij couscous.;ja
 Pasta, rijst, wereldkeuken;couscous;Couscous, ongeacht merk, ook volkoren.;;ja
+Pasta, rijst, wereldkeuken;currypasta;Kruidenpasta's voor Indiase of andere curry's, zoals tandoori- of korma-pasta.;Indonesische kruidenpasta hoort bij boemboe, kant-en-klare currysaus bij een saustype.;ja
 Pasta, rijst, wereldkeuken;gebakken uitjes;Gebakken uitjes en seroendeng als topping, ongeacht merk.;Verse uien (uien).;ja
 Pasta, rijst, wereldkeuken;gedroogde paddenstoelen;Gedroogde paddenstoelen om te weken en mee te koken, zoals gedroogde porcini of een gedroogde paddenstoelenmix.;Verse paddenstoelen (paddenstoelen), verse champignons (champignons).;ja
 Pasta, rijst, wereldkeuken;gedroogde peulvruchten;Droge bonen, erwten en linzen om zelf te koken, zoals adukibonen en spliterwten.;Bonen en linzen in pot of blik horen bij hun eigen type, zoals bruine bonen of linzen.;ja
 Pasta, rijst, wereldkeuken;gierst;Droge gierst om te koken.;Quinoa (quinoa), couscous (couscous).;ja
 Pasta, rijst, wereldkeuken;gochujang;Koreaanse rode-peperpasta, ongeacht merk: sempio, bibigo.;Sojasaus (sojasaus).;ja
+Pasta, rijst, wereldkeuken;indiase currypasta;Kruidenpasta's in een pot voor Indiase currygerechten, zoals korma-, madras- en tikka masala-pasta van Patak's.;Kant-en-klare Indiase currysaus (indiase currysaus), Thaise currysaus (thaise currysaus), Indonesische kruidenpasta (boemboe).;ja
+Pasta, rijst, wereldkeuken;indiase currysaus;Kant-en-klare Indiase currysaus in pot, zoals butter chicken- of kormasaus.;Thaise curry hoort bij thaise currysaus, kruidenpasta bij currypasta.;ja
 Pasta, rijst, wereldkeuken;ingelegde pepers;Ingelegde pepers in pot, zoals jalapeños en groene pepers.;Verse pepers horen bij rode peper, gevulde pepers uit het tapasschap bij tapas.;ja
 Pasta, rijst, wereldkeuken;instant noedels;Instant noedels in beker of zakje om met heet water te bereiden, zoals Knorr Good Noodles en Unox noodles.;Gedroogde woknoedels (noedels), instantsoep (cup-a-soup).;ja
 Pasta, rijst, wereldkeuken;ketjap;Zoete sojasaus, ongeacht merk: ketjap manis.;Zoute sojasaus (sojasaus).;ja
 Pasta, rijst, wereldkeuken;kimchi;Gefermenteerde Koreaanse kool in pot, mild of pittig.;Zuurkool hoort bij zuurkool.;ja
 Pasta, rijst, wereldkeuken;kroepoek;Kroepoek, ongeacht merk of soort: naturel, cassave, Jakarta, Java, Bali, saté, pittig.;Chips (chips).;ja
+Pasta, rijst, wereldkeuken;maaltijdpakket;Pakketten met de droge ingrediënten en kruiden voor een compleet gerecht, zoals Honig Oosterse wraps of een burritopakket.;Losse kruidenmixen horen bij kruidenmix, pizzapakketten bij pizza kit.;ja
 Pasta, rijst, wereldkeuken;mirin;Mirin en zoete Japanse rijstwijn om mee te koken, ongeacht merk.;Sojasaus (sojasaus), woksaus (woksaus).;ja
 Pasta, rijst, wereldkeuken;noedels;Gedroogde noedels voor wokgerechten, ongeacht merk of soort: woknoodles, mie, volkoren noodles, rijstnoedels, mihoen.;Italiaanse pasta (pasta).;ja
 Pasta, rijst, wereldkeuken;parelgerst;Droge parelgerst en gort om te koken, zoals biologische parelgerst.;Kant-en-klare gortepap hoort bij pap.;ja
@@ -538,6 +567,7 @@ Soepen, sauzen, kruiden, olie;erwtensoep;Kant-en-klare erwtensoep, hollands of p
 Soepen, sauzen, kruiden, olie;fritessaus;Fritessaus in pot of knijpfles, ongeacht merk.;Mayonaise (mayonaise).;ja
 Soepen, sauzen, kruiden, olie;fritessaus zero;Fritessaus zonder toegevoegde suiker, zoals Remia fritessaus zero.;Gewone fritessaus hoort bij fritessaus.;ja
 Soepen, sauzen, kruiden, olie;frituurolie;Frituurolie en frituurvet, vloeibaar of vast.;Zonnebloemolie voor bakken (zonnebloemolie).;ja
+Soepen, sauzen, kruiden, olie;gelatine;Bindmiddelen om desserts te laten opstijven, zoals gelatineblaadjes en agar agar.;Maizena om sauzen te binden hoort bij maizena.;ja
 Soepen, sauzen, kruiden, olie;gembersiroop;Gembersiroop voor in de keuken.;Limonadesiroop (siroop).;ja
 Soepen, sauzen, kruiden, olie;groentesaus;Saus voor over groente, zoals hollandaise-achtige groentesaus van knorr of maggi.;Kaassaus heeft een eigen type.;ja
 Soepen, sauzen, kruiden, olie;harissa;Harissa: pittige peperpasta of -saus uit een pot of tube.;Harissa als droog kruidenmengsel (specerijmengsel).;ja
@@ -654,6 +684,7 @@ Vlees;kipgehakt;Gehakt van kip of kalkoen.;Rundergehakt (rundergehakt), half-om-
 Vlees;kippenpoten;Kippenpoten, kippenbouten en drumsticks, gekruid of naturel.;Kipvleugels en sticky chicken (kipvleugels), kipdijfilet (kipdijfilet).;ja
 Vlees;kipschnitzel;Gepaneerde kipschnitzels, kipcordon bleu en gepaneerde kipburgers uit het vleesschap.;Ongepaneerde kipfilet (kipfilet), diepvries kipburgers voor de frituur (frituursnacks).;ja
 Vlees;kipvleugels;Kipvleugels en kippenvleugeltjes, ook gemarineerd als sticky chicken in elke smaak.;Drumsticks en kippenbouten (kippenpoten).;ja
+Vlees;lamsvlees;Vers of diepgevroren lamsvlees om te bereiden, zoals lamskoteletten, lamshaasjes en lams chumps.;Wildvlees zoals hertenbiefstuk (hertenbiefstuk).;ja
 Vlees;nasivlees;Gekruid varkensvlees in reepjes of blokjes voor nasi of bami.;Hele varkenshaas (varkenshaas), roerbakvlees (roerbakvlees).;ja
 Vlees;ontbijtspek;Plakjes spek om te bakken, gerookt of ongerookt: ontbijtspek, bacon in plakjes.;Spekreepjes en spekblokjes (spekreepjes), speklappen (speklappen).;ja
 Vlees;roerbakvlees;Reepjes varkens- of rundvlees om te roerbakken, naturel of gekruid, zoals Indische stijl.;Shoarma en gyros (shoarma), nasivlees (nasivlees).;ja

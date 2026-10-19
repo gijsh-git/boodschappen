@@ -634,6 +634,11 @@ Uitkomst: de kortingstekst staat in kleine letters in dezelfde pil als die van A
 - [ ] Prijs per eenheid per artikel, met de korting erin verrekend: 1+1 gratis is per stuk de helft, "2 voor 3,99" is 2,00 per stuk.
 - [ ] Per item de aanbiedingen op de laagste prijs per eenheid na korting, over winkels heen. Bij een aanbieding met meer artikelen telt het voordeligste artikel waar de term voor staat. Dezelfde variant blijft voorgaan.
 - [ ] Alleen vergelijken binnen dezelfde eenheid (kg met kg, stuk met stuk). Lukt dat niet, dan blijft de volgorde van deel 3.
+- [ ] Prijzen tonen in het bonuspaneel, alleen bij aanbiedingen (besloten op 19 oktober 2026, zodat je kunt zien wat het goedkoopst is). De gegevens zijn er al: `offer_articles.price` (gewone prijs) en `bonus_price` (actieprijs), en `articles.quantity` en `unit` voor de prijs per kilo of liter. `offer_details_for_list` geeft ze nog niet mee; dat wordt een migratie. Producten zonder aanbieding krijgen geen prijs.
+- [ ] Per aanbieding de gewone prijs en de prijs na korting in de metaregel ("voor kipkerrie · t/m zo · was € 1,25"), met daarbij de prijs per kilo of liter ("€ 1,98 / kg"). De tekst komt uit `logica.js`, naast de prijs per eenheid hierboven; dezelfde berekening, niet twee.
+- [ ] Bij "1+1 gratis", "2e halve prijs" en "2 voor …" is `bonus_price` leeg of gelijk aan de gewone prijs. Daar telt de effectieve stukprijs uit de vastgelegde korting, niet het veld. Eerst de korting in één vorm vastleggen (eerste punt van dit deel), dan pas de prijzen tonen.
+- [ ] Een aanbieding met meer artikelen ("Alle Hak potten") toont geen enkele prijs maar "vanaf" het voordeligste artikel waar de term voor staat, op dezelfde regel als hierboven bij het vergelijken.
+- [ ] Geen prijs per eenheid zonder `quantity` en `unit` (bijvoorbeeld "20 wasbeurten"), of bij artikelen waarvan de eenheid niet past: dan alleen de stukprijs, en zo'n aanbieding doet niet mee aan de volgorde.
 - Niet in deze stap: eigen winkel en merkvoorkeur in de volgorde. Wie een winkel niet wil, zet hem uit in "Mijn winkels"; merkvoorkeur loopt via de favorieten.
 
 Bonnen en aankopen: PLUS-aankopen komen alleen binnen via een bonfoto, en die heeft geen artikelnummer; het type van een PLUS-aankoop komt dus uit de naam. Een gekozen PLUS-aanbieding die je afvinkt geeft het artikel wel mee via `article_supermarket` + `article_id`; dat werkt al. Profiel en vaste producten blijven over alle winkels heen.
@@ -649,6 +654,7 @@ Besloten op 10 oktober 2026:
 - `article_id` bij PLUS is het webshopnummer; een EAN komt in een eigen kolom.
 - `main_group` is de indeling van de app, niet die van AH.
 - "Voordeligst" is de laagste prijs per eenheid na korting.
+- Het paneel toont de gewone prijs en de prijs per kilo of liter bij aanbiedingen, niet bij producten zonder aanbieding (19 oktober 2026).
 - De check-constraint op `supermarkt` (`AH`, `PLUS`) uit de baseline zat op de tabel `deals` en is met die tabel vervallen.
 - De productpagina van PLUS (EAN, inhoud als getal) wordt alleen opgehaald voor artikelen die de database nog niet kent, niet elke week voor alles (besloten na deel 0).
 - De PLUS-week komt binnen via GitHub Actions, net als AH (besloten na deel 0: de proef vanaf GitHub slaagde). Eén geslaagde ronde is geen garantie dat de beveiliging van plus.nl dat zo laat; een mislukte ronde valt op als mislukte workflow.
