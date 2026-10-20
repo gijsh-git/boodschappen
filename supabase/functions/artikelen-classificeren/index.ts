@@ -13,8 +13,9 @@ import Anthropic from "npm:@anthropic-ai/sdk";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const KOP = "x-aanbiedingen-sleutel";
-// Model dat de artikelen beoordeelt
-const MODEL = "claude-opus-5-5";
+// Model dat de artikelen beoordeelt. Sonnet gaf op een steekproef van 200 artikelen in 94% hetzelfde type als Opus
+// (de rest was vaak een twijfelgeval), Haiku deed het slechter en schreef veel meer; Opus kostte ruim 30 dollar per week.
+const MODEL = "claude-sonnet-5-5";
 // Hoeveel het model nadenkt per portie: "low", "medium" of "high". Met "low" kwam een kwart van een nieuwe
 // week als twijfel terug; "medium" kost wat meer en twijfelt minder.
 const INSPANNING = "medium";
@@ -40,7 +41,8 @@ Kies per artikel het ene type waar het bij hoort, of "${GEEN}". Neem de naam van
 - variant: het ene woord dat zegt welke smaak of soort het artikel binnen zijn type is, zoals iemand het op een boodschappenlijst voor de soortnaam zet: "tomaat" bij tomatensoep, "kip" bij kippensoep, "aardbei" bij aardbeienyoghurt, "paprika" bij paprikachips, "naturel" bij chips naturel. Enkelvoud, kleine letters, het hoofdbestanddeel of de hoofdsmaak en geen bijzaak ("tomaat" bij Chinese tomatensoep). Geen merk, geen formaat, niet biologisch of huismerk, en niet wat de naam van het type al zegt. Valt er geen smaak of soort te noemen (halfvolle melk bij het type halfvolle melk, wc-papier), of is het "${GEEN}", dan een lege tekst.
 - Bij een voorstel geef je ook voorstel_hoofdgroep (de hoofdgroep waar het type onder hoort, letterlijk een van de koppen uit de lijst), voorstel_eronder (één zin: wat valt eronder, ongeacht merk, met een of twee voorbeelden) en voorstel_niet (wat er net niet bij hoort en bij welk type dat wel hoort, of een lege tekst). Met een hoofdgroep erbij wordt het type meteen aangemaakt. Stel daarom een soort voor waar een koper binnen wisselt, geen merk, smaak of los artikel, en gebruik de naam die het meest voor de hand ligt, in het meervoud als de lijst dat bij zulke types ook doet. Twijfel je of het een eigen type verdient of toch bij een bestaand type hoort, laat voorstel_hoofdgroep dan leeg: het voorstel wacht dan op de beheerder. Zonder voorstel zijn deze drie een lege tekst.
 - zekerheid: "hoog" als het er zonder twijfel bij hoort, "middel" als het waarschijnlijk klopt, "laag" bij echte twijfel: je aarzelt tussen twee types, of de titel zegt niet wat het artikel is. Alleen "laag" komt bij de beheerder; gebruik het dus niet uit voorzichtigheid, maar wel altijd als een mens moet meekijken. Bij "${GEEN}" zegt de zekerheid hoe zeker je bent dat geen type past.
-- reden: één korte zin in het Nederlands.
+- reden: één korte zin in het Nederlands, alleen bij zekerheid "middel" of "laag"; laat het veld weg bij "hoog".
+- De velden voorstel, voorstel_hoofdgroep, voorstel_eronder en voorstel_niet laat je weg, behalve bij "${GEEN}" met een voorstel.
 
 Geef voor elk artikel precies één oordeel, met het nummer van het artikel.`;
 
@@ -142,7 +144,8 @@ Deno.serve(async (req) => {
             zekerheid: { type: "string", enum: Object.keys(ZEKERHEID) },
             reden: { type: "string" },
           },
-          required: ["artikel", "type", "variant", "voorstel", "voorstel_hoofdgroep", "voorstel_eronder", "voorstel_niet", "zekerheid", "reden"],
+          // De rest is optioneel: dat scheelt de helft van de uitvoer, en uitvoer is het duurste deel
+          required: ["artikel", "type", "variant", "zekerheid"],
           additionalProperties: false,
         },
       },

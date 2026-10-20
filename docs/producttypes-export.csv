@@ -100,6 +100,7 @@ Borrel, chips, snacks;tortilla chips;Tortilla chips en tortilla crackers die gee
 Borrel, chips, snacks;walnoten;Walnoten, heel of in stukjes.;Studentenhaver (studentenhaver).;ja
 Borrel, chips, snacks;worstsnacks;Droge worst- en vleessnacks als tussendoortje, zoals Bifi en worstbites.;Salami in plakken voor op brood hoort bij salami.;ja
 Borrel, chips, snacks;zaden en pitten;Losse zaden en pitten om te strooien of mee te bakken: sesamzaad, zonnebloempitten, pompoenpitten, lijnzaad en chiazaad.;Pijnboompitten (pijnboompitten) en noten.;ja
+Borrel, chips, snacks;zeewiersnacks;Krokante gedroogde zeewiervelletjes als snack, zoals nori snack naturel of wasabi.;Nori voor sushi hoort bij nori.;ja
 Borrel, chips, snacks;zoute stengels;Zoute sticks en pretzels.;Kaasstengels (kaaszoutjes).;ja
 Diepvries;aardappelkroketjes;Diepvries aardappelkroketjes en rösti voor bij de maaltijd.;"Friet (friet); vleeskroketten (kroketten).";ja
 Diepvries;bitterballen;Alle bitterballen uit de vriezer voor oven, airfryer of friteuse, ongeacht vulling of formaat: rundvlees, kalfs, kip, stoofvlees, mini bitterballen.;"Kroketten (kroketten); mini bites en kaashapjes (borrelhapjes).";ja
@@ -145,6 +146,7 @@ Drogisterij;haarpoeder;Stylingpoeder voor volume in het haar, zoals Got2b Powder
 Drogisterij;haarserum;Haarserum en haarolie om in het haar te laten zitten, zoals Elvive Extraordinary oil en Gliss oil elixir.;Conditioner en haarmaskers (conditioner), anti-klitspray (haarspray).;ja
 Drogisterij;haarspray;Haarlak, haarspray en anti-klitspray: nivea diamond gloss styling spray.;Haarmousse (haarmousse), haargel (haargel).;ja
 Drogisterij;handcrème;Handcrème in tube of pot: nivea 3in1 repair handcrème.;Bodycrème (bodylotion).;ja
+Drogisterij;handdoekjes;Vochtige doekjes om de handen te reinigen, zoals Marcel's Green Soap hand wipes.;Schoonmaakdoekjes (doekjes), gezichtsreinigingsdoekjes (reinigingsdoekjes).;ja
 Drogisterij;handzeep;Vloeibare handzeep in pomp of navulverpakking, ongeacht merk of geur: palmolive, unicura antibacterieel.;Blokzeep (zeep), douchegel (douchegel).;ja
 Drogisterij;hoestdrank;Hoestsiroop en hoestdrank tegen droge of vastzittende hoest, zoals Lucovitaal hoestsiroop.;Keelpastilles (keelpastilles), pijnstillers (pijnstillers).;ja
 Drogisterij;huidolie;Verzorgende olie voor huid en baby, zoals babyolie en huidolie.;Bodylotion en bodycrème (bodylotion), doucheolie (douchegel).;ja
@@ -158,6 +160,7 @@ Drogisterij;labs scheermesjes;Navulmesjes voor het Gillette Labs-systeem, ook bo
 Drogisterij;lippenbalsem;Lippenbalsem en lipverzorgingsstift: labello, nivea lip care.;;ja
 Drogisterij;maandverband;Maandverband voor dag en nacht, met of zonder vleugels: libresse, always, sanature.;Incontinentieverband (incontinentieverband), tampons (tampons), inlegkruisjes (inlegkruisjes).;ja
 Drogisterij;mach3 scheermesjes;Navulmesjes voor het Gillette Mach3-systeem, ook Mach3 turbo.;Andere systemen (fusion5, proglide, labs, venus scheermesjes), wegwerpmesjes (scheermesjes).;ja
+Drogisterij;magnesiumolie;Magnesiumolie en spierolie om op de huid te sprayen, zoals Lucovitaal magnesium spierolie.;Vitamines en supplementen om in te nemen (vitamines), huidolie (huidolie).;ja
 Drogisterij;make-up remover;Oogmake-up remover en reinigingslotion voor de ogen, ook waterproof: nivea double effect.;Micellair water (micellair water).;ja
 Drogisterij;menstruatieondergoed;Herbruikbaar menstruatieondergoed en menstruatiecups: libresse intimawear, libresse teens period underwear.;Wegwerp incontinentiebroekjes (incontinentiebroekjes).;ja
 Drogisterij;micellair water;Micellair water voor gezicht en make-up, ongeacht huidtype: nivea micellair water, skin glow.;Oogmake-up remover (make-up remover), tonic (gezichtsreiniger).;ja
@@ -285,6 +288,7 @@ Groente, aardappelen;knoflook;Verse knoflookbollen en gepelde teentjes.;Knoflook
 Groente, aardappelen;komkommer;Verse komkommers, ook mini komkommers en biologisch.;Gesneden komkommer als rauwkost (rauwkost).;ja
 Groente, aardappelen;krieltjes;Geschilde krieltjes en mini krieltjes, ook gekruid zoals bbq.;Gewone aardappelen (aardappelen), aardappelpartjes (aardappelpartjes).;ja
 Groente, aardappelen;lente-uitjes;Verse lente-ui, bosui.;Gewone uien (uien).;ja
+Groente, aardappelen;lupinebonen;Lupinebonen in pot of blik, zoals Smaakt lupinebonen.;Witte bonen (witte bonen), kikkererwten (kikkererwten).;ja
 Groente, aardappelen;ovengroente;Gesneden groentemixen voor oven of airfryer: prei peen, spruitjes pompoen, courgette rode paprika.;Roerbakgroente (roerbakgroente), aardappelpartjes (aardappelpartjes).;ja
 Groente, aardappelen;paddenstoelen;Verse paddenstoelenmixen en andere paddenstoelen dan champignons: oesterzwammen, shiitake.;Champignons (champignons).;ja
 Groente, aardappelen;paksoi;Verse paksoi, ook mini paksoi.;Roerbakgroentemixen (roerbakgroente).;ja
@@ -443,18 +447,23 @@ Koffie, thee;tassimo cups;Discs voor een Tassimo-machine, ongeacht merk of smaak
 Koffie, thee;thee;Thee in zakjes of los, ongeacht merk of smaak: zwarte, groene, kruiden-, vruchten-, rooibos- en gemberthee en variatieboxen.;Gedecafeïneerde zwarte of groene thee (decaf thee), mixen voor chai latte (chai latte) en matcha latte (matcha latte), ice tea (ice tea).;ja
 Koken, tafelen, vrije tijd;aanmaakblokjes;Aanmaakblokjes en aanmaakwokkels voor barbecue of haard.;"Houtskool hoort bij ""houtskool"".";ja
 Koken, tafelen, vrije tijd;aanstekers;Aanstekers, gasaanstekers en lucifers.;"Aanmaakblokjes horen bij ""aanmaakblokjes"".";ja
+Koken, tafelen, vrije tijd;badmatten;Badmatten en badkamerkleedjes in elke kleur of maat, zoals een beige of witte badmat.;Handdoeken en plaids horen er niet bij.;ja
 Koken, tafelen, vrije tijd;dekbed;Dekbedden in elke maat of vulling, zoals wasbare dekbedden of een 2-pack.;;nee
 Koken, tafelen, vrije tijd;dekbedovertrekken;Dekbedovertrekken in elke maat, kleur of print, zoals een 1-persoons mousseline of 2-persoons gestreept overtrek.;Het dekbed zelf hoort bij dekbed, hoeslakens bij hoeslakens.;ja
+Koken, tafelen, vrije tijd;eetstokjes;Eetstokjes van bamboe of hout, ook wegwerp, zoals bamboe chopsticks.;Satéprikkers horen bij satéprikkers.;ja
 Koken, tafelen, vrije tijd;fleece;Kleding zoals fleecevesten en -truien voor dames en heren, in elke maat.;;nee
 Koken, tafelen, vrije tijd;gezelschapsspellen;Bord- en kaartspellen voor thuis, zoals Mens erger je niet of Stratego.;Elektronische spelcomputers horen bij geen type.;ja
+Koken, tafelen, vrije tijd;glazen;Drinkglazen voor thuis, zoals tumblers, waterglazen en wijnglazen.;Wegwerpbekers horen bij wegwerpborden.;ja
 Koken, tafelen, vrije tijd;hoeslakens;Hoeslakens in elke maat en kleur, zoals 1- of 2-persoons katoen.;Dekbedovertrekken horen bij dekbedovertrekken, dekbedden bij dekbed.;ja
 Koken, tafelen, vrije tijd;houtskool;Houtskool en briketten voor de barbecue.;"Aanmaakblokjes horen bij ""aanmaakblokjes"".";ja
+Koken, tafelen, vrije tijd;inpakpapier;Cadeaupapier op rol voor elke gelegenheid, zoals sinterklaas- of verjaardagspapier.;Cadeautasjes en wenskaarten (wenskaart).;ja
 Koken, tafelen, vrije tijd;kaarsen;Dinerkaarsen, stompkaarsen en geurkaarsen.;"Theelichtjes horen bij ""theelichtjes"".";ja
 Koken, tafelen, vrije tijd;kattenbak;Kattenbakken, ook slimme of zelfreinigende.;Kattenbakvulling is een eigen type bij dieren.;nee
 Koken, tafelen, vrije tijd;koffiemachine;Koffiezetapparaten en melkopschuimers, zoals volautomatische espressomachines, padapparaten en capsulemachines.;Koffiebonen, koffiepads en koffiecapsules zijn eigen types bij koffie.;nee
 Koken, tafelen, vrije tijd;kokendwaterkraan;Kokendwaterkranen en waterkokers.;;nee
 Koken, tafelen, vrije tijd;lampen;Losse led-lampen en gloeilampen met elke fitting.;;ja
 Koken, tafelen, vrije tijd;luchtontvochtiger;Elektrische luchtontvochtigers, in elke capaciteit.;Vochtvreters en navulling zonder stroom horen bij huishouden.;nee
+Koken, tafelen, vrije tijd;plaids;Plaids en woondekens in elke kleur of stof, zoals een teddy- of fleeceplaid.;Dekbedden horen bij dekbed.;ja
 Koken, tafelen, vrije tijd;puzzels;Legpuzzels in elk aantal stukjes, zoals Jan van Haasteren en Wasgij.;Bord- en kaartspellen horen bij gezelschapsspellen.;ja
 Koken, tafelen, vrije tijd;satéprikkers;Houten of bamboe prikkers voor saté en spiesjes, zoals satéprikkers 18 cm.;Wegwerpbestek hoort bij wegwerpborden.;ja
 Koken, tafelen, vrije tijd;servetten;Papieren servetten, ongeacht kleur of print.;Keukenpapier en tissues horen bij huishouden en drogisterij.;ja
@@ -465,6 +474,7 @@ Koken, tafelen, vrije tijd;wegwerpborden;Wegwerpborden en -bekers van karton of 
 Maaltijden, salades;aardappelsalade;Aardappelsalade en huzarensalade in een bakje, ongeacht merk.;"Salades voor op brood zoals kip-kerriesalade zijn beleg; maaltijdsalades (maaltijdsalade).";ja
 Maaltijden, salades;bapao;Gevulde gestoomde broodjes, ongeacht vulling of merk, zoals bapao kip, rundvlees, kipsaté en groente.;Hartige broodjes uit de bakkerij zoals saucijzenbroodje (hartig broodje).;ja
 Maaltijden, salades;börek;Gevulde Turkse deeghapjes, ongeacht vulling of merk: börek kip, börek spinazie, Kadir.;Hartige broodjes uit de bakkerij horen bij hartig broodje.;ja
+Maaltijden, salades;lahmacun;Turkse pizza's van dun deeg met gekruid vlees, zoals lahmacun met gehakt of kip döner.;Italiaanse pizza's horen bij pizza.;ja
 Maaltijden, salades;maaltijd;Verse kant-en-klare maaltijden om op te warmen, ongeacht keuken of gerecht, zoals lasagne, pasta carbonara, stamppot andijvie, butter chicken, nasi en rendang.;Verse pizza (pizza), maaltijdsalades (maaltijdsalade), verse soep (verse soep).;ja
 Maaltijden, salades;maaltijdsalade;Kant-en-klare salades als maaltijd, ongeacht smaak, zoals pastasalade, caesarsalade, couscoussalade en salade met kip.;"Losse sla en slamelange zijn groente; huzarensalade en aardappelsalade (aardappelsalade); koolsalade (rauwkostsalade).";ja
 Maaltijden, salades;magnetronburger;Kant-en-klare hamburgers in een broodje om op te warmen, zoals cheeseburger of chickenburger.;Rauwe hamburgers horen bij hamburgers.;ja
@@ -502,6 +512,8 @@ Pasta, rijst, wereldkeuken;boekweit;Droge boekweitkorrels om te koken als bijger
 Pasta, rijst, wereldkeuken;bulgur;Droge bulgur om te koken, zoals volkoren bulgur.;Couscous hoort bij couscous.;ja
 Pasta, rijst, wereldkeuken;couscous;Couscous, ongeacht merk, ook volkoren.;;ja
 Pasta, rijst, wereldkeuken;currypasta;Kruidenpasta's voor Indiase of andere curry's, zoals tandoori- of korma-pasta.;Indonesische kruidenpasta hoort bij boemboe, kant-en-klare currysaus bij een saustype.;ja
+Pasta, rijst, wereldkeuken;dessertrijst;Rijst om zelf rijstepap of rijstdesserts van te koken, zoals Lassie dessertrijst.;Gewone rijst (rijst), kant-en-klare rijstepap (pap).;ja
+Pasta, rijst, wereldkeuken;falafelmix;Droge mix om zelf falafel van te maken, zoals Smaakt falafelmix.;Kant-en-klare falafelballetjes (falafel).;ja
 Pasta, rijst, wereldkeuken;gebakken uitjes;Gebakken uitjes en seroendeng als topping, ongeacht merk.;Verse uien (uien).;ja
 Pasta, rijst, wereldkeuken;gedroogde paddenstoelen;Gedroogde paddenstoelen om te weken en mee te koken, zoals gedroogde porcini of een gedroogde paddenstoelenmix.;Verse paddenstoelen (paddenstoelen), verse champignons (champignons).;ja
 Pasta, rijst, wereldkeuken;gedroogde peulvruchten;Droge bonen, erwten en linzen om zelf te koken, zoals adukibonen en spliterwten.;Bonen en linzen in pot of blik horen bij hun eigen type, zoals bruine bonen of linzen.;ja
@@ -513,10 +525,14 @@ Pasta, rijst, wereldkeuken;ingelegde pepers;Ingelegde pepers in pot, zoals jalap
 Pasta, rijst, wereldkeuken;instant noedels;Instant noedels in beker of zakje om met heet water te bereiden, zoals Knorr Good Noodles en Unox noodles.;Gedroogde woknoedels (noedels), instantsoep (cup-a-soup).;ja
 Pasta, rijst, wereldkeuken;ketjap;Zoete sojasaus, ongeacht merk: ketjap manis.;Zoute sojasaus (sojasaus).;ja
 Pasta, rijst, wereldkeuken;kimchi;Gefermenteerde Koreaanse kool in pot, mild of pittig.;Zuurkool hoort bij zuurkool.;ja
+Pasta, rijst, wereldkeuken;konjacrijst;Koolhydraatarme rijstvervanger van konjac, zoals Smaakt konjac rijst.;Gewone rijst (rijst).;ja
 Pasta, rijst, wereldkeuken;kroepoek;Kroepoek, ongeacht merk of soort: naturel, cassave, Jakarta, Java, Bali, saté, pittig.;Chips (chips).;ja
 Pasta, rijst, wereldkeuken;maaltijdpakket;Pakketten met de droge ingrediënten en kruiden voor een compleet gerecht, zoals Honig Oosterse wraps of een burritopakket.;Losse kruidenmixen horen bij kruidenmix, pizzapakketten bij pizza kit.;ja
 Pasta, rijst, wereldkeuken;mirin;Mirin en zoete Japanse rijstwijn om mee te koken, ongeacht merk.;Sojasaus (sojasaus), woksaus (woksaus).;ja
+Pasta, rijst, wereldkeuken;misopasta;Gefermenteerde sojabonenpasta om mee te koken, zoals shiro of rode miso.;Instant misosoep hoort bij cup-a-soup.;ja
 Pasta, rijst, wereldkeuken;noedels;Gedroogde noedels voor wokgerechten, ongeacht merk of soort: woknoodles, mie, volkoren noodles, rijstnoedels, mihoen.;Italiaanse pasta (pasta).;ja
+Pasta, rijst, wereldkeuken;nori;Gedroogde zeewiervellen om zelf sushi te maken, zoals sushi nori.;Zeewiersnacks horen bij zeewiersnacks.;ja
+Pasta, rijst, wereldkeuken;oestersaus;Aziatische oestersaus in een fles of pot, ongeacht merk, zoals Lee Kum Kee en Go-Tan oestersaus.;Woksaus (woksaus), sojasaus (sojasaus), vissaus (vissaus).;ja
 Pasta, rijst, wereldkeuken;parelgerst;Droge parelgerst en gort om te koken, zoals biologische parelgerst.;Kant-en-klare gortepap hoort bij pap.;ja
 Pasta, rijst, wereldkeuken;passata;Gezeefde tomaten in fles of pak, naturel of met basilicum.;Tomatenblokjes (tomatenblokjes), pastasaus (pastasaus).;ja
 Pasta, rijst, wereldkeuken;pasta;Alle gedroogde pasta, ongeacht vorm, merk of biologisch: penne, rigatoni, schelpen, spaghetti, tagliatelle, lasagnebladen, volkoren.;"Ravioli en verse gevulde pasta (apart); noedels en mie (noedels).";ja
@@ -526,18 +542,23 @@ Pasta, rijst, wereldkeuken;pizza kit;Pakket om zelf pizza te maken met bodem of 
 Pasta, rijst, wereldkeuken;pizzabodems;Voorgebakken pizzabodems om zelf te beleggen, zoals Bertolli pizzabodems.;Een pakket met bodem en saus hoort bij pizza kit.;ja
 Pasta, rijst, wereldkeuken;pizzasaus;Saus om zelf een pizza mee te beleggen, zoals Bertolli pizzasaus traditionale.;Pastasaus hoort bij pastasaus en passata bij passata.;ja
 Pasta, rijst, wereldkeuken;polenta;Maisgriesmeel om polenta van te koken, ook instant.;Maismeel om te bakken hoort bij meel.;ja
+Pasta, rijst, wereldkeuken;ponzu;Japanse citrus-sojasaus als dressing of dip, zoals ponzu met yuzu.;Gewone zoute sojasaus hoort bij sojasaus.;ja
 Pasta, rijst, wereldkeuken;quinoa;Droge quinoa om te koken, wit, rood of tricolore.;Quinoa in een bakje voor door de sla hoort bij slaverrijker.;ja
 Pasta, rijst, wereldkeuken;ravioli;Gevulde verse pasta en ravioli uit blik, zoals tortellini, ravioli kaas of spinazie.;Gedroogde pasta (pasta).;ja
 Pasta, rijst, wereldkeuken;rijst;Rijst, ongeacht merk of soort: witte rijst, pandanrijst, basmatirijst, zilvervliesrijst.;"Risottorijst (risottorijst); rijstnoedels (noedels).";ja
 Pasta, rijst, wereldkeuken;risottorijst;Rijst voor risotto, ongeacht merk: arborio, carnaroli.;Gewone rijst (rijst).;ja
+Pasta, rijst, wereldkeuken;rotivellen;Kant-en-klare rotivellen om op te warmen voor Surinaamse roti, zoals Paloeloe rotivellen.;Wraps en tortilla's horen bij wraps, naanbrood bij naanbrood.;ja
 Pasta, rijst, wereldkeuken;salsa;Mexicaanse salsa en tacosaus met suiker, ongeacht merk of pittigheid.;Salsa zero added sugar (salsa zero).;ja
 Pasta, rijst, wereldkeuken;salsa zero;Salsa zonder toegevoegde suiker, ongeacht merk: chunky tex-mex salsa zero added sugar.;Gewone salsa (salsa).;ja
 Pasta, rijst, wereldkeuken;satésaus;Satésaus en pindasaus, kant-en-klaar of als blok, ongeacht merk.;Pindakaas (pindakaas).;ja
 Pasta, rijst, wereldkeuken;sojasaus;Zoute sojasaus, ongeacht merk: conimex, go-tan, kikkoman.;"Zoete sojasaus (ketjap); woksaus met sojasmaak (woksaus).";ja
+Pasta, rijst, wereldkeuken;sushigember;Ingelegde gember in pot of zakje voor bij sushi of poke, zoals sushi ginger en ginger sticks.;Verse gember hoort bij gember.;ja
 Pasta, rijst, wereldkeuken;tahin;Sesampasta zoals tahin naturel of wit.;Hummus (hummus), pindakaas (pindakaas).;ja
+Pasta, rijst, wereldkeuken;tamarinde;Tamarindepasta en tamarindeblokken om mee te koken, zoals Kokki Djawa tamarinde pasta.;Indonesische kruidenpasta hoort bij boemboe.;ja
 Pasta, rijst, wereldkeuken;thaise currysaus;Thaise currysaus voor een maaltijd, ongeacht merk of kleur: gele, rode en groene curry.;"Woksaus (woksaus); kokosmelk (kokosmelk).";ja
 Pasta, rijst, wereldkeuken;tomatenblokjes;Tomatenblokjes en gepelde tomaten uit blik of pak, ongeacht merk: mutti polpa, tomatenblokjes met basilicum.;Passata (passata), verse tomaten (tomaten), pastasaus (pastasaus).;ja
 Pasta, rijst, wereldkeuken;tomatenpuree;Geconcentreerde tomatenpuree in blik, tube of pakje, ongeacht merk.;Gezeefde tomaten horen bij passata, tomatenblokjes bij tomatenblokjes.;ja
+Pasta, rijst, wereldkeuken;tteokbokki;Koreaanse rijstcakejes met saus om snel te bereiden, zoals Yopokki sweet & spicy of jjajang.;Instant noedels horen bij instant noedels, kimchi in pot bij kimchi.;ja
 Pasta, rijst, wereldkeuken;vissaus;Aziatische vissaus in een fles, ongeacht merk.;Sojasaus hoort bij sojasaus.;ja
 Pasta, rijst, wereldkeuken;woksaus;Kant-en-klare woksaus in een zakje of fles, ongeacht merk of smaak: teriyaki, zoete soja, sweet & sour, hoisin, sweet chili, yakitori.;"Sojasaus (sojasaus); ketjap (ketjap); babi pangang saus (babi pangang saus); Thaise curry (thaise currysaus).";ja
 Pasta, rijst, wereldkeuken;wraps;Wraps en tortilla's, ongeacht merk of formaat: naturel, volkoren, mini.;"Naanbrood (naanbrood); bao buns (bao buns).";ja
@@ -567,6 +588,9 @@ Soepen, sauzen, kruiden, olie;erwtensoep;Kant-en-klare erwtensoep, hollands of p
 Soepen, sauzen, kruiden, olie;fritessaus;Fritessaus in pot of knijpfles, ongeacht merk.;Mayonaise (mayonaise).;ja
 Soepen, sauzen, kruiden, olie;fritessaus zero;Fritessaus zonder toegevoegde suiker, zoals Remia fritessaus zero.;Gewone fritessaus hoort bij fritessaus.;ja
 Soepen, sauzen, kruiden, olie;frituurolie;Frituurolie en frituurvet, vloeibaar of vast.;Zonnebloemolie voor bakken (zonnebloemolie).;ja
+Soepen, sauzen, kruiden, olie;gehakt citroengras;Gehakt citroengras in pot of tube, zoals Go-Tan gehakte lemon grass.;Verse citroengrasstengels horen bij citroengras.;ja
+Soepen, sauzen, kruiden, olie;gehakte gember;Gehakte of geraspte gember in pot of tube, zoals Go-Tan gehakte gember.;Verse gemberwortel hoort bij gember, sushigember bij sushigember.;ja
+Soepen, sauzen, kruiden, olie;gehakte knoflook;Gehakte knoflook in pot of tube, zoals Go-Tan gehakte knoflook.;Verse knoflook hoort bij knoflook, knoflookpoeder bij kruiden.;ja
 Soepen, sauzen, kruiden, olie;gelatine;Bindmiddelen om desserts te laten opstijven, zoals gelatineblaadjes en agar agar.;Maizena om sauzen te binden hoort bij maizena.;ja
 Soepen, sauzen, kruiden, olie;gembersiroop;Gembersiroop voor in de keuken.;Limonadesiroop (siroop).;ja
 Soepen, sauzen, kruiden, olie;groentesaus;Saus voor over groente, zoals hollandaise-achtige groentesaus van knorr of maggi.;Kaassaus heeft een eigen type.;ja
@@ -582,9 +606,11 @@ Soepen, sauzen, kruiden, olie;knakworst;Knakworstjes in pot of blik, ongeacht me
 Soepen, sauzen, kruiden, olie;knoflooksaus;Koude knoflooksaus in fles of bakje, ongeacht merk: yildriz, look saus voor shoarma of friet.;Aioli (aioli), knoflookpoeder (kruiden).;ja
 Soepen, sauzen, kruiden, olie;kokosolie;Kokosolie en kokosvet om mee te bakken, geurloos of onverhit.;Kokosmelk (kokosmelk), zonnebloemolie (zonnebloemolie).;ja
 Soepen, sauzen, kruiden, olie;kokosrasp;Gedroogde geraspte kokos om mee te bakken of te koken, fijn of grof.;Kokosmelk (kokosmelk), kokosolie (kokosolie).;ja
+Soepen, sauzen, kruiden, olie;kookchocolade;Chocolade om mee te bakken en koken, zoals Verkade kookchocolade.;Chocoladerepen om te eten horen bij chocolade.;ja
 Soepen, sauzen, kruiden, olie;kruiden;Losse kruiden en specerijen, ongeacht merk: peperkorrels, paprikapoeder, kerrie, komijn.;"Mixen voor een gerecht (kruidenmix); specerijmengsels met eigen smaak (specerijmengsel).";ja
 Soepen, sauzen, kruiden, olie;kruidenmix;Kruidenmixen voor een gerecht of vleessoort, ongeacht merk: bami, nasi, chili con carne, burrito, stamppot, macaroni, gehakt, shoarma, kip, vis, aardappel, patat, provençaalse en Italiaanse kruiden, persillade.;"Een mix die een saus heet, zoals macaronisaus, roomsaus, lasagnesaus en kaassaus (sausmix); world spice blends en mengsels met een eigen smaak, zoals cajun en garam masala (specerijmengsel), speculaaskruiden (speculaaskruiden), boemboe (boemboe), marinademix (marinade).";ja
 Soepen, sauzen, kruiden, olie;linzen;Linzen in pot of blik.;Linzensoep (soep).;ja
+Soepen, sauzen, kruiden, olie;maaltijdsaus;Kant-en-klare sauzen in pot om kip of vlees in te garen, zoals Chicken Tonight kerrie of romige tomaat.;Pastasaus (pastasaus), woksaus (woksaus), Indiase currysaus (indiase currysaus).;ja
 Soepen, sauzen, kruiden, olie;maggi;Vloeibare smaakmaker in fles, zoals maggi aroma en vergelijkbare aroma's.;Sausmixen in een zakje (sausmix), jus (jus), sojasaus (sojasaus).;ja
 Soepen, sauzen, kruiden, olie;mais;Maiskorrels in blik of pot.;Verse maiskolven, popcornmais.;ja
 Soepen, sauzen, kruiden, olie;maizena;Maizena en maïszetmeel om te binden, ook sausbinder.;Bloem en bakmeel.;ja
@@ -665,11 +691,13 @@ Vis;surimi;Surimi en krabsticks, ongeacht merk.;Surimi-krabsalade (vissalade).;j
 Vis;tonijn;Tonijn uit blik of pot, op water of olie, ongeacht merk.;Tonijnsalade (vissalade).;ja
 Vis;tonijnsteak;Verse of diepgevroren rauwe tonijnsteak en tonijnfilet.;Tonijn uit blik hoort bij tonijn.;ja
 Vis;viskuit;Viskuit in een potje, zoals zalmeitjes en kaviaar.;Gerookte zalm (gerookte zalm).;ja
+Vis;visovenschotel;Vis of schaaldieren in saus in een bakje voor de oven, zoals zalm in teriyakisaus.;Kant-en-klare maaltijden horen bij maaltijd, rauwe zalmfilet bij zalmfilet.;ja
 Vis;witte vis;Filet van witvis, vers of diepgevroren, ongeacht soort: kabeljauw, schol, pangasius, koolvis, tilapia, heek, barramundi.;Gepaneerde of gefrituurde vis (vissticks, kibbeling), zalm (zalmfilet).;ja
 Vis;zalmfilet;Verse of diepgevroren rauwe zalmfilet, ongeacht herkomst, merk of biologisch: zalmfilet, zalmfilet à la minute, wilde sockeye zalm.;Gerookte zalm (gerookte zalm), zalmsalade (vissalade).;ja
 Vlees;biefstuk;Runderbiefstuk, kogelbiefstuk, entrecote en ossenhaas.;Hertenbiefstuk (hertenbiefstuk), stoofvlees (stoofvlees).;ja
 Vlees;braadworst;Rauwe braadworst, verse worst en barbecueworstjes.;Rookworst (rookworst).;ja
 Vlees;eendenborst;Verse eendenborstfilet.;;ja
+Vlees;gegrilde kip;Kant-en-klare gegrilde of gebraden kip, heel of half, zoals halve kip naturel.;Rauwe hele kip hoort bij hele kip.;ja
 Vlees;gehakt;Half-om-half gehakt en varkensgehakt, naturel of gekruid.;Rundergehakt (rundergehakt), kipgehakt (kipgehakt), gehaktballen (gehaktballen).;ja
 Vlees;gehaktballen;Rauwe of voorgegaarde gehaktballen en balletjes.;Los gehakt (gehakt), slavinken (slavinken).;ja
 Vlees;hamblokjes;Hamblokjes en hamreepjes om mee te koken, bijvoorbeeld voor pasta of quiche.;Ham in plakken voor op brood (vleeswaren), spekblokjes (spekreepjes).;ja
@@ -687,6 +715,7 @@ Vlees;kipvleugels;Kipvleugels en kippenvleugeltjes, ook gemarineerd als sticky c
 Vlees;lamsvlees;Vers of diepgevroren lamsvlees om te bereiden, zoals lamskoteletten, lamshaasjes en lams chumps.;Wildvlees zoals hertenbiefstuk (hertenbiefstuk).;ja
 Vlees;nasivlees;Gekruid varkensvlees in reepjes of blokjes voor nasi of bami.;Hele varkenshaas (varkenshaas), roerbakvlees (roerbakvlees).;ja
 Vlees;ontbijtspek;Plakjes spek om te bakken, gerookt of ongerookt: ontbijtspek, bacon in plakjes.;Spekreepjes en spekblokjes (spekreepjes), speklappen (speklappen).;ja
+Vlees;ovenschotel;Rauw vlees of kip in een ovenschaal met saus om zo in de oven te zetten, zoals ovenschotel kipfilet pesto of gehaktballetjes in tomatensaus.;Kant-en-klare maaltijden om op te warmen (maaltijd), los vlees zonder saus (eigen vleestype).;ja
 Vlees;roerbakvlees;Reepjes varkens- of rundvlees om te roerbakken, naturel of gekruid, zoals Indische stijl.;Shoarma en gyros (shoarma), nasivlees (nasivlees).;ja
 Vlees;rookworst;Rookworst in elke soort en verpakking: gelderse rookworst, kiprookworst, magere rookworst, magnetronrookworst.;Rauwe braadworst (braadworst), knakworst (vleeswaren).;ja
 Vlees;rundergehakt;Rundergehakt, naturel of gekruid, bijvoorbeeld Italiaanse of Mexicaanse stijl.;Half-om-half gehakt (gehakt), kipgehakt (kipgehakt).;ja
@@ -704,10 +733,12 @@ Vleeswaren;chorizo;Chorizo in plakjes, blokjes of als hele worst, ongeacht merk.
 Vleeswaren;filet americain;Smeerbare filet americain en kalfsfilet voor op brood, ook met uitjes of pittig.;Tartaar en ossenworst (tartaar), carpaccio (carpaccio).;ja
 Vleeswaren;fricandeau;Gebraden fricandeau in plakken voor op brood.;Ham (ham).;ja
 Vleeswaren;gebraden gehakt;Gegrild, gebraden of roasted gehakt in plakken voor op brood.;Rauw gehakt voor de maaltijd hoort niet bij vleeswaren.;ja
+Vleeswaren;gerookte eendenborst;Gerookte eendenborstfilet in plakjes als beleg of voorgerecht.;Verse eendenborst om te bakken hoort bij eendenborst.;ja
 Vleeswaren;grillworst;Grillworst in plakken voor op brood.;Boterhamworst (boterhamworst), rookworst voor de maaltijd.;ja
 Vleeswaren;ham;Gekookte, gegrilde en gebraden ham in plakken: yorkham, beenham, roasted ham.;Gedroogde ham als serrano of parma (rauwe ham), hamworst.;ja
 Vleeswaren;katenspek;Gerookt spek in plakken voor op brood, zoals katenspek en bacon als beleg.;Ontbijtspek om te bakken (ontbijtspek), spekreepjes (spekreepjes).;ja
 Vleeswaren;kip- en kalkoenfilet;Kalkoen- en kipfilet in plakken voor op brood: kalkoenborstfilet, gerookte kipfilet.;Rauwe kipfilet voor de maaltijd (kipfilet).;ja
+Vleeswaren;kookworst;Gekookte worst als hele worst of in plakken, zoals Gelderse gekookte worst.;Gerookte worst hoort bij rookworst, boterhamworst bij boterhamworst.;ja
 Vleeswaren;leverworst;Leverworst, smeerbaar of in plakken: saksische smeerleverworst, grove leverworst.;Paté (paté).;ja
 Vleeswaren;likkepot;Likkepot en vergelijkbare smeerbare vleesspread uit de kookworstafdeling.;Smeerleverworst (leverworst), paté (paté).;ja
 Vleeswaren;paté;Alle paté, ongeacht smaak: ardenner paté, cremepaté, cranberry paté, groene peper paté.;Leverworst (leverworst).;ja
@@ -721,11 +752,13 @@ Zuivel, eieren;boter;Roomboter en smeerbare boter, gezouten of ongezouten, ook p
 Zuivel, eieren;broodsalade;Salades voor op brood, ook plantaardig: kip-kerriesalade, eiersalade, kip-sambasalade, Johma.;Belegd broodje (belegd broodje), smeerkaas (eigen type).;ja
 Zuivel, eieren;chocolademelk;Chocolademelk met suiker, zoals chocomel of huismerk chocolademelk.;Chocomel 0% en andere suikervrije varianten (eigen type), eiwitdranken met chocoladesmaak (eiwitdrank).;ja
 Zuivel, eieren;chocolademelk 0%;Chocolademelk zonder toegevoegde suiker, zoals chocomel 0%.;Chocolademelk met suiker hoort bij chocolademelk.;ja
+Zuivel, eieren;cholesterolverlagende drank;Kleine flesjes zuiveldrank met plantensterolen tegen cholesterol, zoals Becel ProActiv drink.;Drinkyoghurt hoort bij drinkyoghurt.;ja
 Zuivel, eieren;crème fraîche;Crème fraîche, ook light niet: alleen de gewone variant van elk merk.;Kookroom (kookroom), slagroom (slagroom).;ja
 Zuivel, eieren;crème fraîche light;Crème fraîche met minder vet, zoals PLUS crème fraîche light.;Gewone crème fraîche (crème fraîche).;ja
 Zuivel, eieren;drinkyoghurt;Drinkyoghurt van elk merk of smaak, zoals Optimel drink of Melkunie drinkyoghurt.;Eiwitdranken (eiwitdrank), ontbijtdranken als Alpro Meal to go (ontbijtdrank), karnemelk (karnemelk).;ja
 Zuivel, eieren;eieren;Eieren en scharreleieren, ook vrije-uitloop en biologisch.;Eiersalade (broodsalade).;ja
 Zuivel, eieren;eiwitdrank;Alle kant-en-klare eiwitdranken en -shakes, ongeacht merk of smaak: Melkunie Protein, Hipro, XXL Nutrition.;Eiwitpoeder (eigen type), proteïnekwark (kwark), proteïnepudding (pudding).;ja
+Zuivel, eieren;gecondenseerde melk;Gezoete gecondenseerde melk in blik of tube voor desserts en koffie, ook van kokos.;Kokosmelk om mee te koken (kokosmelk), koffiemelk (koffiemelk).;ja
 Zuivel, eieren;griekse yoghurt;Griekse yoghurt en yoghurt Griekse stijl, ongeacht merk, vetgehalte of smaak: 0%, 2%, 10%, met honing.;Gewone yoghurt (yoghurt), skyr (skyr), kwark (kwark), plantaardige yoghurt (plantaardige yoghurt).;ja
 Zuivel, eieren;halfvolle melk;Halfvolle melk van elk merk, ook biologisch of lang houdbaar.;Volle melk (volle melk), melk zonder vetgehalte (melk).;ja
 Zuivel, eieren;halvarine;Halvarine, margarine en plantaardige smeersels voor op brood, ongeacht merk: Blue Band, Bona.;Smeerbare boter en roomboter (boter), vloeibare bakboter (bakboter).;ja
@@ -733,9 +766,11 @@ Zuivel, eieren;karnemelk;Karnemelk van elk merk.;Drinkyoghurt (drinkyoghurt).;ja
 Zuivel, eieren;kefir;Kefir en gefermenteerde melkdranken, naturel of met smaak.;Probiotische yoghurt als Activia (yoghurt), drinkyoghurt (drinkyoghurt).;ja
 Zuivel, eieren;koffiemelk;Koffiemelk en koffieroom in fles of cupjes, zoals Friesche Vlag.;Melk (melk), slagroom (slagroom).;ja
 Zuivel, eieren;kokosmelk;Kokosmelk in blik of pak om mee te koken.;Kokosdrink als melkvervanger (plantaardige melk), kokosyoghurt (plantaardige yoghurt).;ja
+Zuivel, eieren;kokosmelk light;Kokosmelk met minder vet om mee te koken, zoals Go-Tan lower in fat of kokosmelk light.;Gewone kokosmelk (kokosmelk).;ja
 Zuivel, eieren;kookroom;Kookroom en kookzuivel, ook plantaardige kookroom: Blue Band Finesse, Campina kookroom.;Slagroom (slagroom), kokosmelk (kokosmelk), crème fraîche (crème fraîche).;ja
 Zuivel, eieren;kruidenboter;Boter met kruiden en knoflook voor bij brood of vlees, zoals smeerbare kruidenboter of kruidenboterrolletjes.;Smaakboter voor de borrel (borrelboter), gewone roomboter (boter).;ja
 Zuivel, eieren;kwark;Alle zuivelkwark ongeacht merk, vetgehalte of smaak: magere, volle, kwark met smaak, proteïnekwark, Danio, Optimel.;Plantaardige kwark (plantaardige kwark), skyr (skyr), yoghurt (yoghurt).;ja
+Zuivel, eieren;magere melk;Magere melk met 0% vet van elk merk, vers of houdbaar, zoals Campina Langlekker magere melk.;Halfvolle melk (halfvolle melk), volle melk (volle melk).;ja
 Zuivel, eieren;melk;Gewone en biologische melk zonder vermelding van vetgehalte, in pak of fles.;Halfvolle melk (halfvolle melk), volle melk (volle melk), karnemelk (karnemelk), sojadrink (plantaardige melk).;ja
 Zuivel, eieren;melkdrank;Gekoelde melkdrank met smaak in fles, ongeacht merk: müllermilch banaan, aardbei, vanille.;Chocolademelk (chocolademelk), drinkyoghurt (drinkyoghurt), eiwitdrank (eiwitdrank).;ja
 Zuivel, eieren;ontbijtdrank;Kant-en-klare ontbijtdranken als maaltijd onderweg: Alpro Meal to go, Breaker.;Drinkyoghurt (drinkyoghurt), eiwitdranken (eiwitdrank).;ja
