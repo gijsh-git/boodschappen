@@ -200,7 +200,11 @@ Deno.serve(async (req) => {
 
   const porties: Artikel[][] = [];
   for (let i = 0; i < artikelen.length; i += PORTIE) porties.push(artikelen.slice(i, i + PORTIE));
-  const uitkomsten = await Promise.allSettled(porties.map(beoordeel));
+  // De eerste portie alleen: die schrijft de typelijst (ruim 60.000 tokens) in de cache, en de rest leest hem daarna
+  // voor een tiende van de prijs. Tegelijk starten betekent dat elke portie hem apart wegschrijft.
+  const eerste = await Promise.allSettled(porties.slice(0, 1).map(beoordeel));
+  const rest = await Promise.allSettled(porties.slice(1).map(beoordeel));
+  const uitkomsten = [...eerste, ...rest];
   const rijen: Rij[] = [];
   let mislukt = 0;
   let melding = "";
