@@ -216,7 +216,7 @@ Klaar als: de bonus van deze week elke week vanzelf in de database staat.
 Gebouwd en doorgevoerd op 7 oktober 2026; de taak in GitHub Actions heeft die dag met de hand gedraaid en de week opgeslagen:
 
 - Tabellen `articles`, `offers` en `offer_articles`, gevuld door de functie `save_offers` (migratie `aanbiedingen`). De oude tabel `deals` met testdata is in stap 5 vervallen.
-- Ophalen draait in GitHub Actions (`.github/workflows/ah-bonus.yml`), maandag- en donderdagochtend: het bestaande `scripts/ah-bonus` en daarna `scripts/ah-bonus-opslaan.py`.
+- Ophalen draait in GitHub Actions (`.github/workflows/ah-bonus.yml`), maandagochtend: het bestaande `scripts/ah-bonus` en daarna `scripts/ah-bonus-opslaan.py`.
 - De service role key staat niet in GitHub: de repo is openbaar en die sleutel geeft toegang tot alles. Het script stuurt de week naar de Edge Function `aanbiedingen-opslaan`, die een eigen sleutel (`AANBIEDINGEN_SLEUTEL`) controleert en alleen `save_offers` aanroept. Wie die sleutel heeft kan alleen aanbiedingen opslaan.
 - Een aanbieding blijft tot 28 dagen na de laatste geldige dag staan; artikelen blijven altijd.
 - Een artikel zonder `hq_id` (1 van de 2423) wordt overgeslagen.
@@ -590,7 +590,7 @@ Uitkomst (10 oktober 2026), volledig in `docs/verkenning-plus.md`:
 - [x] EAN en de inhoud als getal komen van de productpagina van PLUS, één verzoek per artikel, en alleen voor artikelen die de database nog niet kent. Het ophaalscript vraagt daarvoor eerst welke artikelnummers al een EAN hebben: de Edge Function `aanbiedingen-opslaan` krijgt er een leesvraag bij, met dezelfde sleutel. De eerste ronde is dat de hele week (ongeveer 1500 verzoeken, tien minuten), daarna alleen wat nieuw is.
 - [x] PLUS-winkels zijn franchisezaken. De bron vraagt niet om een winkel: zonder winkelkeuze komen alleen de landelijke aanbiedingen, dus er is geen vaste winkel gekozen. `store_only` is gevuld bij wat alleen in de winkel te koop is (sterke drank).
 - [x] Inhoud bij het opslaan omzetten naar hoeveelheid en eenheid (`articles.quantity` en `unit`: g, ml of st), voor de prijs per eenheid in deel 4. Ook voor AH, uit de tekst van de inhoud.
-- [x] Een eigen workflowbestand voor PLUS met een eigen schema (een schema geldt per workflow, niet per job): `.github/workflows/plus-aanbiedingen.yml`, woensdag- en vrijdagochtend. Een mislukte PLUS-ronde raakt AH dan niet.
+- [x] Een eigen workflowbestand voor PLUS met een eigen schema (een schema geldt per workflow, niet per job): `.github/workflows/plus-aanbiedingen.yml`, woensdagochtend. Een mislukte PLUS-ronde raakt AH dan niet.
 - [x] Nieuwe PLUS-artikelen gaan door `artikelen-classificeren`, net als AH: één keer per artikel, daarna alleen de nieuwe van die week. De eerste keer kost dat meer AI-aanroepen.
 - [x] `product_types.main_group` is de eigen indeling van de app, begonnen als de hoofdcategorie van AH. De categorie van een winkel is alleen invoer voor de AI. In de code is dat al zo (een nieuw type krijgt alleen een hoofdgroep die al bestaat); bijwerken in `producttypes.md`. De terugval bij favorieten in `offers_for_me()` splitst `articles.category` nog op "/", de vorm van AH: die gaat de hoofdgroep van het type van het artikel gebruiken.
 - [x] Koppelingen: bij elk artikel de winkel tonen, met een filter per winkel.

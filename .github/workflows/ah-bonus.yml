@@ -1,7 +1,7 @@
 # Haalt de AH-bonus van de lopende week op en zet die in de database (roadmap stap 3). Nieuwe artikelen
 # krijgen daarna een producttype via de Edge Function artikelen-classificeren (zelfde sleutel).
-# De bonusweek loopt van maandag tot en met zondag. Donderdag draait het nog eens: dat vangt een mislukte
-# maandag op en neemt wijzigingen van AH mee. Opnieuw draaien voegt niets dubbel toe.
+# De bonusweek loopt van maandag tot en met zondag; het draait elke maandagochtend. Een mislukte ronde start
+# je met de hand opnieuw (workflow_dispatch). Opnieuw draaien voegt niets dubbel toe.
 # Nodig: de secret AANBIEDINGEN_SLEUTEL (Settings > Secrets and variables > Actions), met dezelfde waarde als
 # de secret met die naam in Supabase. Daarmee kan alleen de Edge Function aanbiedingen-opslaan worden aangeroepen.
 name: AH-bonus ophalen
@@ -10,7 +10,6 @@ on:
   schedule:
     # In UTC: 06:30 Nederlandse tijd in de zomer, 05:30 in de winter
     - cron: "30 4 * * 1"
-    - cron: "30 4 * * 4"
   workflow_dispatch:
 
 permissions:
